@@ -5,6 +5,7 @@ import { QUARTER_MS, STARTING_CASH } from '@cryptomeme/shared';
 import { CATALOG, FACILITY_TYPES, NETWORKS, POOLS } from './catalog';
 import { BANKS, EVENT_TYPES } from './economy-catalog';
 import { COMPANIES } from '../src/stocks/catalog';
+import { ACHIEVEMENTS, COSMETICS } from '../src/meta/catalog';
 
 const prisma = new PrismaClient();
 
@@ -61,6 +62,16 @@ async function main() {
         price: c.price,
       },
     });
+  }
+
+  // ─── Méta : cosmétiques et succès ─────────────────────────────────
+  for (const [i, c] of COSMETICS.entries()) {
+    const data = { ...c, sortOrder: i, data: c.data as object };
+    await prisma.cosmetic.upsert({ where: { slug: c.slug }, update: data, create: data });
+  }
+  for (const [i, a] of ACHIEVEMENTS.entries()) {
+    const data = { ...a, hidden: a.hidden ?? false, rewardSlug: a.rewardSlug ?? null, sortOrder: i };
+    await prisma.achievement.upsert({ where: { slug: a.slug }, update: data, create: data });
   }
 
   // ─── Bourse ───────────────────────────────────────────────────────

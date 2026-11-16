@@ -27,6 +27,8 @@ import { NotificationsController, NotificationsService } from './economy/notific
 import { BanksController, BanksService } from './economy/banks.service';
 import { EventsService } from './economy/events.service';
 import { StocksService } from './stocks/stocks.service';
+import { MetaService } from './meta/meta.service';
+import { MetaController } from './meta/meta.controller';
 import { AdminStocksController, StocksController } from './stocks/stocks.controller';
 import { AdminEconomyController, EventsController } from './economy/events.controller';
 
@@ -50,7 +52,7 @@ import { AdminEconomyController, EventsController } from './economy/events.contr
     ModifiersModule,
     AuthModule,
   ],
-  controllers: [MarketController, TradingController, PlayersController, AdminController, MiningController, AdminMiningController, NotificationsController, BanksController, EventsController, AdminEconomyController, StocksController, AdminStocksController],
+  controllers: [MarketController, TradingController, PlayersController, AdminController, MiningController, AdminMiningController, NotificationsController, BanksController, EventsController, AdminEconomyController, StocksController, AdminStocksController, MetaController],
   providers: [
     MarketService,
     MarketGateway,
@@ -63,6 +65,7 @@ import { AdminEconomyController, EventsController } from './economy/events.contr
     BanksService,
     EventsService,
     StocksService,
+    MetaService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
   ],

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { z } from 'zod';
-import { PlayersService } from './players.service';
+import { Category, CATEGORIES, PlayersService } from './players.service';
 import { AuthUser, CurrentUser, Public } from '../common/auth.decorators';
 import { ZodPipe } from '../common/zod.pipe';
 import { PrismaService } from '../prisma/prisma.service';
@@ -18,8 +18,9 @@ export class PlayersController {
 
   @Public()
   @Get('leaderboard')
-  leaderboard(@Query('season') season?: string) {
-    return this.players.leaderboard(season ? Number(season) : undefined);
+  leaderboard(@Query('season') season?: string, @Query('category') category?: string) {
+    const cat = (CATEGORIES as readonly string[]).includes(category ?? '') ? (category as Category) : 'general';
+    return this.players.leaderboard(season ? Number(season) : undefined, cat);
   }
 
   @Public()

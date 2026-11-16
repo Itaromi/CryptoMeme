@@ -36,6 +36,7 @@ const NAV = [
   { href: '/banks', label: 'Banques' },
   { href: '/events', label: 'Actu' },
   { href: '/leaderboard', label: 'Classement' },
+  { href: '/shop', label: 'Boutique' },
 ];
 
 export function Masthead() {

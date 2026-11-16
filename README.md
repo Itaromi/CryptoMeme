@@ -48,6 +48,13 @@ pnpm dev                                     # API :4000 + web :3000
 - **Brèves**, **OPA** (prime de 25–60 %, verdict sous 24 h : rachat en cash ou retour du cours), **faillite** (actions à zéro, risque croissant quand la santé s'effondre), **split** automatique au-dessus de 2 000 $, **réintroduction en bourse** 24 h après un rachat ou une faillite.
 - Tout est déclenchable depuis l'admin (onglet « Bourse »), avec motif et audit. Chaque mouvement de cash ou d'actions passe par le grand livre (`DIVIDEND`, `SPLIT`, `TAKEOVER`, `BANKRUPTCY`).
 
+## Méta (phase 5)
+
+- **Boutique** (`apps/api/src/meta/catalog.ts`) : cadres d'avatar, bannières, titres, badges (3 affichés max) et effets de pseudo, du commun au légendaire. Payés avec le cash de la saison (le patrimoine baisse), mais conservés d'une saison à l'autre. Avatar emoji gratuit. Aperçu en direct au survol.
+- **29 succès** (bronze → légendaire, certains secrets) évalués toutes les 2 min : trading, patrimoine, classement, minage, Bourse, banques, boutique. Les meilleurs offrent un cosmétique introuvable en boutique. Notification au déblocage, vitrine de 4 succès sur le profil.
+- **Classements par catégorie** : général, 24 h, 7 jours, meilleur trader, meilleur mineur, plus gros gain, plus grosse perte.
+- **Profil enrichi** : bannière, cadre, titre, badges, exposition (cryptos / actions / matériel / cash), flux de la saison (taxes, dividendes, banque, événements, boutique), carte de chaleur des ordres, rendement de l'électricité.
+
 ## Banques & événements (phase 4)
 
 - **5 banques** (`prisma/economy-catalog.ts`) : abonnement et intérêts au prorata toutes les 5 min, remise électricité, assurance matériel (pannes/incendies), bouclier fiscal, protection piratage, risque de faillite avec garantie des dépôts. Patrimoine minimum et frais d'ouverture ; un changement par 24 h. Compte clôturé (retour à la banque gratuite) si l'abonnement n'est plus payable.

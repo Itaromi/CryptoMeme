@@ -54,6 +54,7 @@ enum LedgerKind {
   SPLIT
   TAKEOVER
   BANKRUPTCY
+  SHOP
 }
 
 enum EventStatus {
@@ -107,6 +108,16 @@ model User {
   bannedAt        DateTime?
   banReason       String?
   bio             String?   @db.VarChar(280)
+  /// Avatar (emoji) et cosmétiques équipés (slugs)
+  avatar          String    @default("🙂")
+  frame           String?
+  banner          String?
+  title           String?
+  nameEffect      String?
+  /// Badges affichés (max 3, slugs de cosmétiques)
+  badges          String[]  @default([])
+  /// Succès mis en vitrine (max 4, slugs)
+  showcase        String[]  @default([])
   createdAt       DateTime  @default(now())
   lastLoginAt     DateTime?
 
@@ -115,6 +126,8 @@ model User {
   tokens        UserToken[]
   wallets       Wallet[]
   auditLogs     AuditLog[]     @relation("actor")
+  cosmetics     UserCosmetic[]
+  achievements  UserAchievement[]
 }
 
 model RefreshToken {
@@ -642,4 +655,83 @@ model Dividend {
 
   @@index([paidAt, recordAt])
   @@index([assetId, createdAt])
+}
+
+// ─── Méta (phase 5) ──────────────────────────────────────────────────
+
+enum CosmeticKind {
+  FRAME
+  BANNER
+  TITLE
+  BADGE
+  NAME_EFFECT
+}
+
+enum Rarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+/// Objet cosmétique. price = null → impossible à acheter (récompense de succès).
+model Cosmetic {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  kind        CosmeticKind
+  name        String
+  description String
+  rarity      Rarity
+  price       Decimal?     @db.Decimal(24, 2)
+  /// Données d'affichage (style, texte, icône…)
+  data        Json
+  available   Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  owners      UserCosmetic[]
+}
+
+/// Possession d'un cosmétique : liée au compte, conservée d'une saison à l'autre.
+model UserCosmetic {
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cosmeticId String
+  cosmetic   Cosmetic @relation(fields: [cosmeticId], references: [id], onDelete: Cascade)
+  source     String
+  acquiredAt DateTime @default(now())
+
+  @@id([userId, cosmeticId])
+}
+
+enum AchievementTier {
+  BRONZE
+  SILVER
+  GOLD
+  LEGENDARY
+}
+
+model Achievement {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  name        String
+  description String
+  icon        String
+  tier        AchievementTier
+  /// Caché tant qu'il n'est pas débloqué
+  hidden      Boolean         @default(false)
+  /// Cosmétique offert au déblocage
+  rewardSlug  String?
+  sortOrder   Int             @default(0)
+  unlocks     UserAchievement[]
+}
+
+model UserAchievement {
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  seasonNumber  Int
+  unlockedAt    DateTime    @default(now())
+
+  @@id([userId, achievementId])
+  @@index([unlockedAt])
 }
