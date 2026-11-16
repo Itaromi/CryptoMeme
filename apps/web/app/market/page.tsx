@@ -22,10 +22,10 @@ export default function MarketPage() {
   const [sort, setSort] = useState<SortKey>('marketCap');
 
   const rows = useMemo(
-    () => (data ?? []).filter((a) => filter === 'ALL' || a.tier === filter).sort((a, b) => b[sort] - a[sort]),
+    () => (data ?? []).filter((a) => a.kind !== 'STOCK' && (filter === 'ALL' || a.tier === filter)).sort((a, b) => b[sort] - a[sort]),
     [data, filter, sort],
   );
-  const movers = useMemo(() => [...(data ?? [])].sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))[0], [data]);
+  const movers = useMemo(() => [...(data ?? [])].filter((a) => a.kind !== 'STOCK').sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))[0], [data]);
 
   return (
     <div className="grid gap-12 lg:grid-cols-[1fr_300px]">

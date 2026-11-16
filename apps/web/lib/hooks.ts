@@ -18,6 +18,7 @@ export interface Me {
 export interface AssetRow {
   symbol: string;
   name: string;
+  kind?: 'CRYPTO' | 'STOCK';
   tier: string;
   emoji: string;
   color: string;

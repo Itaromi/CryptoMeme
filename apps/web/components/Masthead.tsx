@@ -29,7 +29,8 @@ function TickerTape() {
 }
 
 const NAV = [
-  { href: '/market', label: 'Marché' },
+  { href: '/market', label: 'Cryptos' },
+  { href: '/stocks', label: 'Bourse' },
   { href: '/portfolio', label: 'Portefeuille' },
   { href: '/mining', label: 'Minage' },
   { href: '/banks', label: 'Banques' },
@@ -42,6 +43,10 @@ export function Masthead() {
   const { data: pf } = usePortfolio(!!me);
   const path = usePathname();
   const router = useRouter();
+  const { data: assets } = useAssets();
+  // une fiche d'action vit sous /market/… mais appartient à la Bourse
+  const sym = path.startsWith('/market/') ? path.split('/')[2]?.toUpperCase() : null;
+  const section = sym && assets?.find((a) => a.symbol === sym)?.kind === 'STOCK' ? '/stocks' : path;
   const qc = useQueryClient();
 
   async function logout() {
@@ -62,7 +67,7 @@ export function Masthead() {
             <Link
               key={n.href}
               href={n.href}
-              className={`px-3 py-1.5 ${path.startsWith(n.href) ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
+              className={`px-3 py-1.5 ${section.startsWith(n.href) ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
             >
               {n.label}
             </Link>

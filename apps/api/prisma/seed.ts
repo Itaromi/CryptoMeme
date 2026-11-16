@@ -1,9 +1,10 @@
 import { PrismaClient, AssetTier } from '@prisma/client';
 import * as argon2 from 'argon2';
-import { DEFAULT_PARAMS, initialState } from '@cryptomeme/engine';
-import { STARTING_CASH } from '@cryptomeme/shared';
+import { DEFAULT_PARAMS, STOCK_PARAMS, initialState } from '@cryptomeme/engine';
+import { QUARTER_MS, STARTING_CASH } from '@cryptomeme/shared';
 import { CATALOG, FACILITY_TYPES, NETWORKS, POOLS } from './catalog';
 import { BANKS, EVENT_TYPES } from './economy-catalog';
+import { COMPANIES } from '../src/stocks/catalog';
 
 const prisma = new PrismaClient();
 
@@ -58,6 +59,45 @@ async function main() {
         quoteReserve: liq,
         baseReserve: liq / c.price,
         price: c.price,
+      },
+    });
+  }
+
+  // ─── Bourse ───────────────────────────────────────────────────────
+  const STOCK_LIQUIDITY: Partial<Record<AssetTier, number>> = { BLUE_CHIP: 3_000_000, MID_CAP: 800_000 };
+  for (const [i, c] of COMPANIES.entries()) {
+    if (await prisma.asset.findUnique({ where: { symbol: c.symbol } })) continue;
+    const liq = STOCK_LIQUIDITY[c.tier] ?? 500_000;
+    const eps = c.price / (4 * c.pe);
+    await prisma.asset.create({
+      data: {
+        symbol: c.symbol,
+        name: c.name,
+        kind: 'STOCK',
+        tier: c.tier,
+        description: c.description,
+        emoji: c.emoji,
+        color: c.color,
+        params: { ...STOCK_PARAMS, volatility: STOCK_PARAMS.volatility * c.volMul, noiseVolume: STOCK_PARAMS.noiseVolume * c.volMul } as object,
+        state: initialState(c.price) as object,
+        quoteReserve: liq,
+        baseReserve: liq / c.price,
+        price: c.price,
+        company: {
+          create: {
+            sector: c.sector,
+            ceo: c.ceo,
+            eps,
+            growth: c.growth,
+            epsVol: c.epsVol,
+            pe: c.pe,
+            payout: c.payout,
+            consensus: eps * Math.exp(c.growth),
+            ipoPrice: c.price,
+            // publications étalées sur le premier trimestre
+            nextEarningsAt: new Date(Date.now() + 2 * 3_600_000 + (i / COMPANIES.length) * QUARTER_MS),
+          },
+        },
       },
     });
   }

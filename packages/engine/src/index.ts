@@ -3,3 +3,4 @@ export * from './amm';
 export * from './market';
 export * from './random';
 export * from './mining';
+export * from './stocks';

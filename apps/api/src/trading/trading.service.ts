@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { buyWithCash, liquidationValue, sellForCash, SwapError, SwapResult } from '@cryptomeme/engine';
-import { MIN_ORDER_CASH, ORDER_COOLDOWN_MS, OrderInput } from '@cryptomeme/shared';
+import { MIN_ORDER_CASH, ORDER_COOLDOWN_MS, OrderInput, stockMarketStatus } from '@cryptomeme/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeasonsService } from '../seasons/seasons.service';
 import { MarketGateway } from '../market/market.gateway';
@@ -41,6 +41,11 @@ export class TradingService {
         const found = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "Asset" WHERE symbol = ${symbol} FOR UPDATE`;
         if (!found.length) throw new NotFoundException('Actif inconnu');
         const asset = await tx.asset.findUniqueOrThrow({ where: { id: found[0].id } });
+        if (asset.kind === 'STOCK') {
+          const company = await tx.company.findUnique({ where: { assetId: asset.id } });
+          if (company && !['LISTED', 'TAKEOVER'].includes(company.status)) throw new BadRequestException('Cette action est retirée de la cote');
+          if (!stockMarketStatus().open) throw new BadRequestException('La Bourse est fermée (ouverture de 9 h à 22 h, heure de Paris)');
+        }
         if (asset.frozen) throw new BadRequestException('Marché gelé par un administrateur');
 
         const holding = await tx.holding.findUnique({ where: { walletId_assetId: { walletId, assetId: asset.id } } });

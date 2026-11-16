@@ -26,6 +26,8 @@ import { ModifiersModule } from './economy/modifiers.service';
 import { NotificationsController, NotificationsService } from './economy/notifications';
 import { BanksController, BanksService } from './economy/banks.service';
 import { EventsService } from './economy/events.service';
+import { StocksService } from './stocks/stocks.service';
+import { AdminStocksController, StocksController } from './stocks/stocks.controller';
 import { AdminEconomyController, EventsController } from './economy/events.controller';
 
 @Module({
@@ -48,7 +50,7 @@ import { AdminEconomyController, EventsController } from './economy/events.contr
     ModifiersModule,
     AuthModule,
   ],
-  controllers: [MarketController, TradingController, PlayersController, AdminController, MiningController, AdminMiningController, NotificationsController, BanksController, EventsController, AdminEconomyController],
+  controllers: [MarketController, TradingController, PlayersController, AdminController, MiningController, AdminMiningController, NotificationsController, BanksController, EventsController, AdminEconomyController, StocksController, AdminStocksController],
   providers: [
     MarketService,
     MarketGateway,
@@ -60,6 +62,7 @@ import { AdminEconomyController, EventsController } from './economy/events.contr
     NotificationsService,
     BanksService,
     EventsService,
+    StocksService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
   ],

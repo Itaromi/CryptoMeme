@@ -126,6 +126,8 @@ export class EventsService {
   private async chooseTarget(slug: string, p: Params): Promise<boolean> {
     if (['airdrop', 'exceptional-dividend', 'elon-tweet', 'rug-pull'].includes(slug) && !p.assetId) {
       const where: Prisma.AssetWhereInput = { frozen: false, ...(p.tiers ? { tier: { in: p.tiers } } : {}) };
+      // Airdrops, tweets et rug pulls, c'est un truc de crypto
+      if (slug !== 'exceptional-dividend') where.kind = 'CRYPTO';
       if (slug === 'exceptional-dividend') where.holdings = { some: { quantity: { gt: 0 } } };
       const a = pick(await this.prisma.asset.findMany({ where, select: { id: true, symbol: true } }));
       if (!a) return false;

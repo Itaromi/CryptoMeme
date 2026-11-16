@@ -8,6 +8,24 @@ export const QTY_DECIMALS = 8;
 export const MIN_ORDER_CASH = 1;
 export const ORDER_COOLDOWN_MS = 1_000;
 
+// ─── Bourse (actions) ───────────────────────────────────────────────
+export const STOCK_OPEN_MINUTE = 9 * 60; // 9 h, heure de Paris
+export const STOCK_CLOSE_MINUTE = 22 * 60; // 22 h
+export const STOCK_TZ = 'Europe/Paris';
+/** Un « trimestre » de jeu dure 3 jours réels (≈ 10 publications par saison). */
+export const QUARTER_MS = 3 * 86_400_000;
+
+/** Bourse ouverte ? et dans combien de ms elle change d'état. */
+export function stockMarketStatus(now = new Date()): { open: boolean; nextChangeAt: number } {
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: STOCK_TZ, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })
+    .formatToParts(now)
+    .reduce<Record<string, number>>((o, p) => (p.type === 'literal' ? o : { ...o, [p.type]: Number(p.value) }), {});
+  const m = parts.hour * 60 + parts.minute + parts.second / 60;
+  const open = m >= STOCK_OPEN_MINUTE && m < STOCK_CLOSE_MINUTE;
+  const wait = open ? STOCK_CLOSE_MINUTE - m : m < STOCK_OPEN_MINUTE ? STOCK_OPEN_MINUTE - m : 1440 - m + STOCK_OPEN_MINUTE;
+  return { open, nextChangeAt: now.getTime() + Math.round(wait * 60_000) };
+}
+
 export const WS_EVENTS = {
   TICK: 'market:tick',
   TRADE: 'market:trade',

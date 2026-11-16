@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { AssetParams, MarketState, mathRng, stepMarket } from '@cryptomeme/engine';
-import { TICK_MS } from '@cryptomeme/shared';
+import { TICK_MS, stockMarketStatus } from '@cryptomeme/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { MarketGateway } from './market.gateway';
 import { MarketService, poolOf } from './market.service';
@@ -34,7 +34,8 @@ export class TickService {
         const dt = Math.min(now - this.lastTick, 60_000);
         this.lastTick = now;
         const ids = await this.prisma.asset.findMany({ where: { frozen: false }, select: { id: true } });
-        for (const { id } of ids) await this.stepAsset(id, dt);
+        const open = stockMarketStatus(new Date(now)).open;
+        for (const { id } of ids) await this.stepAsset(id, dt, open);
         const list = await this.market.list();
         this.gateway.broadcastTicks(
           list.map((a) => ({ symbol: a.symbol, price: a.price, change24h: a.change24h, volume24h: a.volume24h, regime: a.regime, t: now })),
@@ -47,20 +48,35 @@ export class TickService {
     }
   }
 
-  private async stepAsset(id: string, dt: number) {
+  private async stepAsset(id: string, dt: number, stocksOpen: boolean) {
     await this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Asset" WHERE id = ${id} FOR UPDATE`;
       const a = await tx.asset.findUniqueOrThrow({ where: { id } });
       if (a.frozen) return;
-      const r = stepMarket(poolOf(a), a.state as unknown as MarketState, a.params as unknown as AssetParams, dt, mathRng);
+      const st = a.state as unknown as MarketState & { closed?: boolean };
+      const isStock = a.kind === 'STOCK';
+      // Bourse fermée : la valeur juste continue de bouger (news, résultats) mais personne ne trade.
+      // À l'ouverture, enchère : le prix saute d'un coup à la valeur juste → gap.
+      const closed = isStock && !stocksOpen;
+      const opening = isStock && stocksOpen && st.closed;
+      const r = stepMarket(poolOf(a), st, a.params as unknown as AssetParams, dt, mathRng, closed ? { noTrade: true } : opening ? { pull: 1 } : {});
       const price = r.pool.quote.div(r.pool.base);
+      const state = isStock ? { ...r.state, closed } : r.state;
+      if (closed) {
+        await tx.asset.update({ where: { id }, data: { state: state as object } });
+        return;
+      }
+      if (opening) {
+        const gap = price.div(a.price).toNumber() - 1;
+        await tx.marketEvent.create({ data: { assetId: id, type: 'OPEN', detail: `Ouverture : ${gap >= 0 ? '+' : ''}${(gap * 100).toFixed(1).replace('.', ',')} % par rapport à la clôture` } });
+      }
       await tx.asset.update({
         where: { id },
         data: {
           baseReserve: r.pool.base.toString(),
           quoteReserve: r.pool.quote.toString(),
           price: price.toString(),
-          state: r.state as object,
+          state: state as object,
         },
       });
       const volume = r.trades.reduce((s, t) => s + Number(t.side === 'BUY' ? t.swap.amountIn : t.swap.amountOut), 0);

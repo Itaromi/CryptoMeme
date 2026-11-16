@@ -39,6 +39,15 @@ pnpm dev                                     # API :4000 + web :3000
 - Le matériel compte dans le patrimoine à sa valeur de revente (60 % × (1 − usure)), les locaux à 50 %.
 - Ticks protégés par un bail en base (`JobLease`) : une seule instance de l'API les exécute.
 
+## Bourse (phase 3)
+
+- **12 sociétés parodiques** (`apps/api/src/stocks/catalog.ts`) échangées sur le même moteur AMM que les cryptos, page « Bourse ».
+- **Horaires** : cotation de 9 h à 22 h (heure de Paris). Hors séance, ordres refusés mais la valeur juste continue de bouger (brèves, résultats) ; à l'ouverture, enchère → le prix saute d'un coup (gap).
+- **Résultats trimestriels** (un trimestre = 3 jours réels) : BPA publié vs consensus des analystes, réaction du cours, révision des perspectives et de la santé financière. La valeur fondamentale (BPA annualisé × PER du secteur) sert d'ancrage au prix.
+- **Dividendes** déclarés aux résultats, versés 6 h plus tard aux détenteurs ; le cours baisse du même montant au détachement. Suspendus si la santé est mauvaise.
+- **Brèves**, **OPA** (prime de 25–60 %, verdict sous 24 h : rachat en cash ou retour du cours), **faillite** (actions à zéro, risque croissant quand la santé s'effondre), **split** automatique au-dessus de 2 000 $, **réintroduction en bourse** 24 h après un rachat ou une faillite.
+- Tout est déclenchable depuis l'admin (onglet « Bourse »), avec motif et audit. Chaque mouvement de cash ou d'actions passe par le grand livre (`DIVIDEND`, `SPLIT`, `TAKEOVER`, `BANKRUPTCY`).
+
 ## Banques & événements (phase 4)
 
 - **5 banques** (`prisma/economy-catalog.ts`) : abonnement et intérêts au prorata toutes les 5 min, remise électricité, assurance matériel (pannes/incendies), bouclier fiscal, protection piratage, risque de faillite avec garantie des dépôts. Patrimoine minimum et frais d'ouverture ; un changement par 24 h. Compte clôturé (retour à la banque gratuite) si l'abonnement n'est plus payable.

@@ -9,6 +9,9 @@ import { ago, compactMoney, money, pct, price, qty, REGIME_LABEL, TIER_LABEL, to
 import { LivePrice } from '@/components/LivePrice';
 import { PriceChart } from '@/components/PriceChart';
 import { OrderForm } from '@/components/OrderForm';
+import { CompanyPanel } from '@/components/CompanyPanel';
+import { countdown } from '@/lib/economy';
+import { useMarketClock, useStock } from '@/lib/stocks';
 
 interface Trade {
   id: string;
@@ -23,6 +26,7 @@ interface Trade {
 interface Detail {
   symbol: string;
   name: string;
+  kind: 'CRYPTO' | 'STOCK';
   tier: string;
   emoji: string;
   color: string;
@@ -53,6 +57,9 @@ export default function AssetPage({ params }: { params: Promise<{ symbol: string
   const { data: pf } = usePortfolio(!!me);
   const position = pf?.positions.find((p) => p.symbol === symbol);
   const [liveTrades, setLiveTrades] = useState<Trade[]>([]);
+  const isStock = data?.kind === 'STOCK';
+  const { data: company } = useStock(symbol, isStock);
+  const clock = useMarketClock();
 
   useEffect(() => {
     const s = getSocket();
@@ -76,7 +83,7 @@ export default function AssetPage({ params }: { params: Promise<{ symbol: string
 
   return (
     <div className="rise">
-      <Link href="/market" className="text-sm text-ink-2 hover:text-ink">← Marché</Link>
+      <Link href={isStock ? '/stocks' : '/market'} className="text-sm text-ink-2 hover:text-ink">← {isStock ? 'Bourse' : 'Marché'}</Link>
       <header className="mt-3 mb-8 flex flex-wrap items-end justify-between gap-6 border-b-2 border-ink pb-6">
         <div className="flex items-end gap-5">
           <span className="grid size-20 place-items-center text-5xl" style={{ background: `color-mix(in oklch, ${data.color} 35%, transparent)` }}>
@@ -84,7 +91,7 @@ export default function AssetPage({ params }: { params: Promise<{ symbol: string
           </span>
           <div>
             <p className="text-sm font-semibold uppercase tracking-widest text-ink-2">
-              {data.symbol} · {TIER_LABEL[data.tier]}
+              {data.symbol} · {isStock ? (company?.sector ?? 'Action') : TIER_LABEL[data.tier]}
               {data.frozen && <span className="ml-2 bg-down px-1.5 text-paper">Marché gelé</span>}
             </p>
             <h1 className="display text-[clamp(2.5rem,6vw,5rem)] font-extrabold">{data.name}</h1>
@@ -112,6 +119,8 @@ export default function AssetPage({ params }: { params: Promise<{ symbol: string
           </dl>
 
           <p className="max-w-2xl text-xl leading-relaxed">{data.description}</p>
+
+          {company && <CompanyPanel c={company} />}
 
           <div className="grid gap-10 md:grid-cols-2">
             <section>
@@ -144,7 +153,7 @@ export default function AssetPage({ params }: { params: Promise<{ symbol: string
                 <ul className="space-y-2 text-sm">
                   {data.events.map((e, i) => (
                     <li key={i} className={e.type === 'RUG_PULL' ? 'font-bold text-down' : ''}>
-                      {e.type === 'RUG_PULL' ? 'Rug pull' : e.type === 'JUMP' ? 'Saut' : 'Changement d’ambiance'} : {e.detail}
+                      {EVENT_LABEL[e.type] ?? 'Changement d’ambiance'} : {e.detail}
                       <span className="ml-2 text-xs font-normal text-ink-3">{ago(e.at)}</span>
                     </li>
                   ))}
@@ -155,8 +164,16 @@ export default function AssetPage({ params }: { params: Promise<{ symbol: string
         </div>
 
         <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
-          {data.frozen ? (
+          {company && company.status !== 'LISTED' && company.status !== 'TAKEOVER' ? (
+            <p className="border-2 border-ink p-5 font-semibold">{data.name} n'est plus cotée : impossible d'acheter ou de vendre.</p>
+          ) : data.frozen ? (
             <p className="border-2 border-down p-5 font-semibold text-down">Les échanges sur {data.name} sont suspendus par l'administration.</p>
+          ) : isStock && !clock.open ? (
+            <div className="border-2 border-ink bg-paper-2 p-5">
+              <p className="text-xs font-bold uppercase tracking-widest">Séance fermée</p>
+              <p className="display mt-1 text-3xl font-bold">Ouverture dans {countdown(new Date(clock.nextChangeAt), clock.now)}</p>
+              <p className="mt-2 text-sm text-ink-2">La Bourse cote de 9 h à 22 h (Paris). Les nouvelles de la nuit se répercutent d'un coup à l'ouverture.</p>
+            </div>
           ) : (
             <OrderForm symbol={symbol} name={data.name} />
           )}
@@ -179,6 +196,20 @@ export default function AssetPage({ params }: { params: Promise<{ symbol: string
     </div>
   );
 }
+
+const EVENT_LABEL: Record<string, string> = {
+  RUG_PULL: 'Rug pull',
+  JUMP: 'Saut',
+  EVENT: 'Événement',
+  EARNINGS: 'Résultats',
+  NEWS: 'Brève',
+  DIVIDEND: 'Dividende',
+  OPEN: 'Ouverture',
+  TAKEOVER: 'OPA',
+  BANKRUPTCY: 'Faillite',
+  SPLIT: 'Split',
+  IPO: 'Introduction en bourse',
+};
 
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (

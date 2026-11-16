@@ -66,6 +66,13 @@ const REGIMES: Record<Regime, { volMul: number; drift: number; next: Partial<Rec
 
 const DAY_MS = 86_400_000;
 
+export interface StepOptions {
+  /** Marché fermé : la valeur juste évolue mais personne ne trade (→ gap à l'ouverture). */
+  noTrade?: boolean;
+  /** Force la fraction de rattrapage des PNJ (1 = enchère d'ouverture, le prix saute à la valeur juste). */
+  pull?: number;
+}
+
 export function initialState(price: number): MarketState {
   const l = Math.log(price);
   return { logFair: l, logAnchor: l, regime: 'NORMAL' };
@@ -84,6 +91,7 @@ export function stepMarket(
   params: AssetParams,
   dtMs: number,
   rng: Rng,
+  opts: StepOptions = {},
 ): TickResult {
   const dt = dtMs / DAY_MS;
   const events: TickEvent[] = [];
@@ -97,8 +105,11 @@ export function stepMarket(
   const r = { volMul: 1 + (REGIMES[regime].volMul - 1) * rs, drift: REGIMES[regime].drift * rs };
 
   // 2. Effet troupeau : la valeur juste suit en partie le prix réel (actions des joueurs)
-  const logSpot = Math.log(spotPrice(pool).toNumber());
-  s.logFair += (logSpot - s.logFair) * (1 - Math.exp(-params.herding * dt));
+  // (pas de troupeau quand le marché est fermé : sinon les nouvelles de la nuit seraient effacées)
+  if (!opts.noTrade) {
+    const logSpot = Math.log(spotPrice(pool).toNumber());
+    s.logFair += (logSpot - s.logFair) * (1 - Math.exp(-params.herding * dt));
+  }
 
   // 3. Ornstein-Uhlenbeck + régime + bruit
   const sigma = params.volatility * r.volMul;
@@ -125,16 +136,17 @@ export function stepMarket(
   // 5. Les PNJ tradent contre le pool
   const trades: TickResult['trades'] = [];
   let p = pool;
+  if (opts.noTrade) return { pool: p, state: s, trades, events };
 
   const fair = new Decimal(Math.exp(s.logFair));
   const rug = events.some((e) => e.type === 'RUG_PULL');
-  const pull = rug ? 1 : 1 - Math.exp(-params.npcActivity * dt);
+  const pull = rug ? 1 : (opts.pull ?? 1 - Math.exp(-params.npcActivity * dt));
   const correction = cashToReachPrice(p, fair).mul(pull);
   const noise = p.quote.mul(params.noiseVolume * r.volMul * Math.sqrt(dt) * gaussian(rng));
   const flow = correction.add(noise);
 
   // garde-fou : jamais plus de 50 % de la réserve en un tick
-  const cap = p.quote.mul(0.5);
+  const cap = p.quote.mul(opts.pull === 1 ? 2 : 0.5);
   const cashFlow = Decimal.min(Decimal.max(flow, cap.neg()), cap);
 
   try {
@@ -156,6 +168,19 @@ export function stepMarket(
 
   return { pool: p, state: s, trades, events };
 }
+
+/** Actions : peu de bruit, forte attraction vers la valeur fondamentale (les résultats font le prix). */
+export const STOCK_PARAMS: AssetParams = {
+  volatility: 0.025,
+  meanReversion: 1.2,
+  jumpIntensity: 0,
+  jumpSize: 0,
+  rugRisk: 0,
+  npcActivity: 300,
+  herding: 3,
+  noiseVolume: 0.04,
+  regimeSensitivity: 0.2,
+};
 
 export const DEFAULT_PARAMS: Record<'BLUE_CHIP' | 'MID_CAP' | 'SHITCOIN', AssetParams> = {
   BLUE_CHIP: {
