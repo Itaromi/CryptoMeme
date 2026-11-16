@@ -1,0 +1,115 @@
+@import 'tailwindcss';
+
+/* ─── Thème « salle des marchés tabloïd » ───────────────────────────
+   Papier journal crème, encre presque noire, jaune acide pour l'action.
+   Vert/rouge réservés aux variations de prix — jamais décoratifs. */
+@theme {
+  --color-paper: oklch(0.965 0.018 95);
+  --color-paper-2: oklch(0.93 0.026 95);
+  --color-paper-3: oklch(0.88 0.03 95);
+  --color-ink: oklch(0.2 0.02 95);
+  --color-ink-2: oklch(0.42 0.025 95);
+  --color-ink-3: oklch(0.58 0.025 95);
+  --color-acid: oklch(0.92 0.2 112);
+  --color-acid-ink: oklch(0.3 0.08 112);
+  --color-up: oklch(0.55 0.15 150);
+  --color-up-bg: oklch(0.9 0.08 150);
+  --color-down: oklch(0.55 0.2 27);
+  --color-down-bg: oklch(0.92 0.06 27);
+  --color-line: oklch(0.2 0.02 95 / 0.14);
+
+  --font-display: var(--font-bricolage), ui-sans-serif, sans-serif;
+  --font-sans: var(--font-instrument), ui-sans-serif, sans-serif;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+}
+
+/* Bandeau défilant des prix */
+@keyframes tape {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.tape {
+  animation: tape 60s linear infinite;
+}
+.tape:hover {
+  animation-play-state: paused;
+}
+
+/* Flash de variation de prix */
+@keyframes flash-up {
+  from { background: var(--color-up-bg); }
+  to { background: transparent; }
+}
+@keyframes flash-down {
+  from { background: var(--color-down-bg); }
+  to { background: transparent; }
+}
+.flash-up { animation: flash-up 900ms var(--ease-out-quart); }
+.flash-down { animation: flash-down 900ms var(--ease-out-quart); }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.rise {
+  animation: rise 600ms var(--ease-out-expo) both;
+}
+
+@layer components {
+/* Bouton principal : bloc d'encre qui « s'enfonce » */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  padding: 0.7rem 1.1rem;
+  border: 2px solid var(--color-ink);
+  box-shadow: 3px 3px 0 var(--color-ink);
+  transition: transform 120ms var(--ease-out-quart), box-shadow 120ms var(--ease-out-quart);
+}
+.btn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--color-ink); }
+.btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--color-ink); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.field {
+  width: 100%;
+  background: var(--color-paper);
+  border: 2px solid var(--color-ink);
+  padding: 0.65rem 0.8rem;
+  outline: none;
+}
+.field:focus-visible { box-shadow: 0 0 0 3px var(--color-acid); }
+
+}
+
+:focus-visible { outline: 3px solid var(--color-acid); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tape, .rise, .flash-up, .flash-down { animation: none; }
+}

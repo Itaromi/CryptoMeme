@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cryptomeme
+      POSTGRES_PASSWORD: cryptomeme
+      POSTGRES_DB: cryptomeme
+    ports: ["5434:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports: ["8025:8025", "1025:1025"]
+volumes:
+  pgdata:

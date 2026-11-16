@@ -1,0 +1,565 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PLAYER
+  MODERATOR
+  ADMIN
+}
+
+enum SeasonStatus {
+  ACTIVE
+  ENDED
+}
+
+enum AssetKind {
+  CRYPTO
+  STOCK
+}
+
+enum AssetTier {
+  BLUE_CHIP
+  MID_CAP
+  SHITCOIN
+}
+
+enum Side {
+  BUY
+  SELL
+}
+
+enum LedgerKind {
+  SEASON_GRANT
+  TRADE
+  FEE
+  ADMIN_ADJUST
+  MINING_REWARD
+  ELECTRICITY
+  HARDWARE_BUY
+  HARDWARE_SELL
+  REPAIR
+  BANK_FEE
+  BANK_INTEREST
+  BANK_SWITCH
+  INSURANCE
+  TAX
+  EVENT
+}
+
+enum EventStatus {
+  SCHEDULED
+  ACTIVE
+  DONE
+  CANCELLED
+}
+
+enum EventMood {
+  POSITIVE
+  NEGATIVE
+  MARKET
+}
+
+enum ComponentKind {
+  CPU
+  GPU
+  ASIC
+  PSU
+  MOTHERBOARD
+  COOLING
+  RACK
+}
+
+enum ItemStatus {
+  OK
+  BROKEN
+  DESTROYED
+}
+
+enum PoolType {
+  PPS
+  PPLNS
+  SOLO
+  SHADY
+}
+
+enum TokenKind {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  username        String    @unique
+  passwordHash    String
+  role            Role      @default(PLAYER)
+  emailVerifiedAt DateTime?
+  bannedAt        DateTime?
+  banReason       String?
+  bio             String?   @db.VarChar(280)
+  createdAt       DateTime  @default(now())
+  lastLoginAt     DateTime?
+
+  refreshTokens RefreshToken[]
+  notifications Notification[]
+  tokens        UserToken[]
+  wallets       Wallet[]
+  auditLogs     AuditLog[]     @relation("actor")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  family    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  ip        String?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([family])
+}
+
+model UserToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      TokenKind
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Season {
+  id           String       @id @default(cuid())
+  number       Int          @unique
+  name         String
+  status       SeasonStatus @default(ACTIVE)
+  startingCash Decimal      @db.Decimal(24, 2)
+  startsAt     DateTime     @default(now())
+  endsAt       DateTime?
+  wallets      Wallet[]
+}
+
+model Bank {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  description      String
+  color            String   @default("#94a3b8")
+  monthlyFee       Decimal  @default(0) @db.Decimal(24, 2)
+  /// Frais d'ouverture payés en rejoignant la banque
+  openingFee       Decimal  @default(0) @db.Decimal(24, 2)
+  /// Patrimoine minimum pour ouvrir un compte
+  minNetWorth      Decimal  @default(0) @db.Decimal(24, 2)
+  tradingFeeBps    Int      @default(30)
+  /// Intérêts sur le cash, en % par mois (versés toutes les heures)
+  interestMonthly  Float    @default(0)
+  /// Remise sur l'électricité (0–1)
+  elecDiscount     Float    @default(0)
+  /// Part du matériel remboursée en cas de panne / incendie (0–1)
+  insuranceRate    Float    @default(0)
+  /// Part des taxes évitée (0–1)
+  taxShield        Float    @default(0)
+  /// Part des pertes de piratage couverte (0–1)
+  hackShield       Float    @default(0)
+  /// Probabilité de faillite par jour
+  failRiskPerDay   Float    @default(0)
+  /// Garantie des dépôts en cas de faillite (null = tout est garanti)
+  depositGuarantee Decimal? @db.Decimal(24, 2)
+  isDefault        Boolean  @default(false)
+  available        Boolean  @default(true)
+  wallets          Wallet[]
+}
+
+/// Un wallet = un joueur pour une saison. Reset de saison = nouveau wallet.
+model Wallet {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seasonId    String
+  season      Season    @relation(fields: [seasonId], references: [id])
+  bankId      String
+  bank        Bank      @relation(fields: [bankId], references: [id])
+  cash        Decimal   @db.Decimal(24, 2)
+  /// Patrimoine net (valeur liquidative), recalculé périodiquement pour le classement.
+  netWorth    Decimal   @db.Decimal(24, 2)
+  peakNetWorth Decimal  @db.Decimal(24, 2)
+  lastOrderAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  /// Valeur de revente du matériel de minage (incluse dans netWorth)
+  hardwareValue Decimal @default(0) @db.Decimal(24, 2)
+  /// Coupure de courant faute de cash
+  powerCut      Boolean @default(false)
+  bankSince     DateTime @default(now())
+  /// Frais bancaires et intérêts pas encore crédités/débités (fractions de centime)
+  bankAccrued   Decimal  @default(0) @db.Decimal(24, 8)
+  /// Électricité consommée pas encore facturée (fractions de centime)
+  elecAccrued   Decimal @default(0) @db.Decimal(24, 8)
+
+  holdings     Holding[]
+  trades       Trade[]
+  ledger       LedgerEntry[]
+  snapshots    NetWorthSnapshot[]
+  items        ComponentItem[]
+  facilities   Facility[]
+  rigs         Rig[]
+  poolBalances PoolBalance[]
+  miningLogs   MiningLog[]
+
+  @@unique([userId, seasonId])
+  @@index([seasonId, netWorth])
+}
+
+model Asset {
+  id           String    @id @default(cuid())
+  symbol       String    @unique
+  name         String
+  kind         AssetKind @default(CRYPTO)
+  tier         AssetTier
+  description  String
+  color        String    @default("#a3e635")
+  emoji        String    @default("🪙")
+  /// Paramètres du moteur (AssetParams)
+  params       Json
+  /// État du moteur (MarketState)
+  state        Json
+  baseReserve  Decimal   @db.Decimal(38, 18)
+  quoteReserve Decimal   @db.Decimal(38, 18)
+  feeBps       Int       @default(30)
+  price        Decimal   @db.Decimal(38, 18)
+  frozen       Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  holdings Holding[]
+  trades   Trade[]
+  candles  Candle[]
+  events   MarketEvent[]
+  network  MiningNetwork?
+  pools    MiningPool[]
+}
+
+model Holding {
+  walletId    String
+  wallet      Wallet  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  assetId     String
+  asset       Asset   @relation(fields: [assetId], references: [id])
+  quantity    Decimal @db.Decimal(38, 8)
+  /// Coût total d'acquisition de la quantité détenue (pour PRU / PnL latent)
+  costBasis   Decimal @db.Decimal(24, 2)
+  realizedPnl Decimal @default(0) @db.Decimal(24, 2)
+
+  @@id([walletId, assetId])
+}
+
+model Trade {
+  id            String   @id @default(cuid())
+  walletId      String?
+  wallet        Wallet?  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  assetId       String
+  asset         Asset    @relation(fields: [assetId], references: [id])
+  side          Side
+  quantity      Decimal  @db.Decimal(38, 8)
+  cash          Decimal  @db.Decimal(24, 2)
+  fee           Decimal  @db.Decimal(24, 2)
+  price         Decimal  @db.Decimal(38, 18)
+  slippageBps   Int
+  realizedPnl   Decimal? @db.Decimal(24, 2)
+  clientOrderId String?
+  createdAt     DateTime @default(now())
+
+  @@unique([walletId, clientOrderId])
+  @@index([assetId, createdAt])
+  @@index([walletId, createdAt])
+}
+
+model Candle {
+  assetId  String
+  asset    Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  interval String
+  t        DateTime
+  o        Decimal  @db.Decimal(38, 18)
+  h        Decimal  @db.Decimal(38, 18)
+  l        Decimal  @db.Decimal(38, 18)
+  c        Decimal  @db.Decimal(38, 18)
+  v        Decimal  @db.Decimal(38, 8)
+
+  @@id([assetId, interval, t])
+}
+
+/// Grand livre : chaque mouvement de cash ou d'actif d'un wallet. assetId null = cash.
+model LedgerEntry {
+  id           String     @id @default(cuid())
+  walletId     String
+  wallet       Wallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  kind         LedgerKind
+  assetId      String?
+  delta        Decimal    @db.Decimal(38, 8)
+  balanceAfter Decimal    @db.Decimal(38, 8)
+  refType      String?
+  refId        String?
+  memo         String?
+  createdAt    DateTime   @default(now())
+
+  @@index([walletId, createdAt])
+}
+
+model NetWorthSnapshot {
+  walletId String
+  wallet   Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  t        DateTime
+  netWorth Decimal  @db.Decimal(24, 2)
+  cash     Decimal  @db.Decimal(24, 2)
+
+  @@id([walletId, t])
+}
+
+model MarketEvent {
+  id        String   @id @default(cuid())
+  assetId   String
+  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  type      String
+  detail    String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  actor      User     @relation("actor", fields: [actorId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  reason     String?
+  payload    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ─── Minage ─────────────────────────────────────────────────────────
+
+/// Catalogue du matériel (modèles), généré par le seed et éditable en admin.
+model ComponentModel {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  kind        ComponentKind
+  brand       String
+  name        String
+  tier        Int
+  price       Decimal       @db.Decimal(24, 2)
+  /// Conso (W) — pour une alimentation : puissance max
+  watts       Int
+  /// MH/s par algo
+  hashrates   Json          @default("{}")
+  efficiency  Float?
+  socket      String?
+  gpuSlots    Int?
+  coolingW    Int?
+  rackSlots   Int?
+  airflow     Float?
+  failureRate Float         @default(0.0005)
+  description String?
+  available   Boolean       @default(true)
+  items       ComponentItem[]
+
+  @@index([kind, price])
+}
+
+/// Un exemplaire possédé par un joueur.
+model ComponentItem {
+  id            String          @id @default(cuid())
+  walletId      String
+  wallet        Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  modelId       String
+  model         ComponentModel  @relation(fields: [modelId], references: [id])
+  wear          Float           @default(0)
+  status        ItemStatus      @default(OK)
+  purchasePrice Decimal         @db.Decimal(24, 2)
+  /// Pour un composant monté dans une rig
+  rigId         String?
+  rig           Rig?            @relation("RigParts", fields: [rigId], references: [id], onDelete: SetNull)
+  /// Pour un rack installé dans un local
+  facilityId    String?
+  facility      Facility?       @relation(fields: [facilityId], references: [id], onDelete: SetNull)
+  rigsInRack    Rig[]           @relation("RackRigs")
+  createdAt     DateTime        @default(now())
+
+  @@index([walletId, status])
+}
+
+model FacilityType {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  name        String
+  description String
+  price       Decimal    @db.Decimal(24, 2)
+  elecPrice   Float
+  maxPowerKw  Float
+  rackSlots   Int
+  ambientTemp Float
+  facilities  Facility[]
+}
+
+model Facility {
+  id        String          @id @default(cuid())
+  walletId  String
+  wallet    Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  typeId    String
+  type      FacilityType    @relation(fields: [typeId], references: [id])
+  name      String
+  racks     ComponentItem[]
+  createdAt DateTime        @default(now())
+}
+
+model Rig {
+  id          String          @id @default(cuid())
+  walletId    String
+  wallet      Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  rackId      String
+  rack        ComponentItem   @relation("RackRigs", fields: [rackId], references: [id])
+  name        String
+  poolId      String?
+  pool        MiningPool?     @relation(fields: [poolId], references: [id], onDelete: SetNull)
+  overclock   Int             @default(0)
+  running     Boolean         @default(false)
+  /// Derniers chiffres calculés par le tick (affichage)
+  temperature Float           @default(0)
+  hashrate    Float           @default(0)
+  lastMinedAt DateTime?
+  minedTotal  Decimal         @default(0) @db.Decimal(38, 8)
+  parts       ComponentItem[] @relation("RigParts")
+  createdAt   DateTime        @default(now())
+}
+
+model MiningNetwork {
+  assetId          String   @id
+  asset            Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  algo             String
+  /// Pièces émises par minute pour tout le réseau
+  blockReward      Decimal  @db.Decimal(38, 8)
+  npcHashrate      Float
+  baseNpcHashrate  Float
+  initialPrice     Float
+  halvingEveryDays Float    @default(14)
+  lastHalvingAt    DateTime @default(now())
+  totalMined       Decimal  @default(0) @db.Decimal(38, 8)
+  /// Hashrate total des joueurs au dernier tick
+  playerHashrate   Float    @default(0)
+}
+
+model MiningPool {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String
+  assetId     String
+  asset       Asset         @relation(fields: [assetId], references: [id])
+  type        PoolType
+  /// Frais en bps ; négatif = bonus (pools louches)
+  feeBps      Int
+  federation  String?
+  /// Probabilité d'exit scam par jour (pools louches)
+  scamRisk    Float         @default(0)
+  active      Boolean       @default(true)
+  rigs        Rig[]
+  balances    PoolBalance[]
+}
+
+/// Gains en attente dans un pool louche (versés toutes les 6 h… s'il ne disparaît pas avant)
+model PoolBalance {
+  walletId   String
+  wallet     Wallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  poolId     String
+  pool       MiningPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  pending    Decimal    @default(0) @db.Decimal(38, 8)
+  lastPaidAt DateTime   @default(now())
+
+  @@id([walletId, poolId])
+}
+
+model MiningLog {
+  id        String   @id @default(cuid())
+  walletId  String
+  wallet    Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type      String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([walletId, createdAt])
+}
+
+/// Bail d'exécution des jobs planifiés : une seule instance de l'API fait tourner chaque tick.
+model JobLease {
+  name      String   @id
+  holder    String
+  expiresAt DateTime
+}
+
+// ─── Événements ─────────────────────────────────────────────────────
+
+/// Catalogue des types d'événements (probabilités réglables en admin).
+model EventType {
+  id             String      @id @default(cuid())
+  slug           String      @unique
+  name           String
+  description    String
+  mood           EventMood
+  /// Nombre moyen de déclenchements spontanés par jour
+  ratePerDay     Float
+  cooldownHours  Float       @default(24)
+  /// Préavis avant que l'événement frappe (0 = immédiat)
+  noticeMinutes  Int         @default(0)
+  /// Durée d'effet (0 = instantané)
+  durationMinutes Int        @default(0)
+  params         Json        @default("{}")
+  enabled        Boolean     @default(true)
+  events         GameEvent[]
+}
+
+model GameEvent {
+  id          String      @id @default(cuid())
+  typeId      String
+  type        EventType   @relation(fields: [typeId], references: [id])
+  status      EventStatus @default(SCHEDULED)
+  title       String
+  description String
+  params      Json        @default("{}")
+  /// Résumé de l'impact (joueurs touchés, montants…)
+  result      Json?
+  announcedAt DateTime    @default(now())
+  startsAt    DateTime
+  endsAt      DateTime?
+  /// null = déclenché par le hasard ; sinon id de l'admin
+  triggeredBy String?
+
+  @@index([status, startsAt])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  amount    Decimal?  @db.Decimal(24, 2)
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
