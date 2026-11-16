@@ -40,6 +40,7 @@ interface Detail {
   frozen: boolean;
   feeBps: number;
   holders: number;
+  creator: string | null;
   trades: Trade[];
   events: Array<{ type: string; detail: string; at: string }>;
 }
@@ -119,6 +120,11 @@ export default function AssetPage({ params }: { params: Promise<{ symbol: string
           </dl>
 
           <p className="max-w-2xl text-xl leading-relaxed">{data.description}</p>
+          {data.creator && (
+            <p className="-mt-6 text-sm text-ink-2">
+              Créée par <Link href={`/u/${data.creator}`} className="font-semibold text-ink underline">@{data.creator}</Link> · liquidité verrouillée, part du créateur en vesting
+            </p>
+          )}
 
           {company && <CompanyPanel c={company} />}
 

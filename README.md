@@ -55,6 +55,13 @@ pnpm dev                                     # API :4000 + web :3000
 - **Classements par catégorie** : général, 24 h, 7 jours, meilleur trader, meilleur mineur, plus gros gain, plus grosse perte.
 - **Profil enrichi** : bannière, cadre, titre, badges, exposition (cryptos / actions / matériel / cash), flux de la saison (taxes, dividendes, banque, événements, boutique), carte de chaleur des ordres, rendement de l'électricité.
 
+## Création d'actifs (phase 6)
+
+- Page « Créer » : **sa crypto** (25 000 $ + 20 k–500 k$ de liquidité), **son entreprise cotée** (50 000 $ + 50 k–1 M$, secteur, part des bénéfices versée en dividende réglable) ou **son pool de minage** (15 000 $, PPS/PPLNS/Solo, commission 0–5 %).
+- **Modération** : frais et dépôt séquestrés à la demande, l'admin (onglet « Créations ») accepte ou refuse avec motif ; refus = remboursement intégral. 2 créations vivantes max par type.
+- **Garde-fous** : liquidité verrouillée à vie dans le pool (pas de rug pull du créateur, pas de rug aléatoire non plus) ; part du créateur = 10 % de l'offre, versée sur 7 jours ; royalties = 1/3 des frais payés par les *autres* joueurs, prélevés sur les frais (aucun argent créé) ; la commission d'un pool de joueur est la part retenue sur l'émission du réseau.
+- Les entreprises de joueurs vivent comme les autres : résultats trimestriels, dividendes, OPA, faillite, réintroduction.
+
 ## Banques & événements (phase 4)
 
 - **5 banques** (`prisma/economy-catalog.ts`) : abonnement et intérêts au prorata toutes les 5 min, remise électricité, assurance matériel (pannes/incendies), bouclier fiscal, protection piratage, risque de faillite avec garantie des dépôts. Patrimoine minimum et frais d'ouverture ; un changement par 24 h. Compte clôturé (retour à la banque gratuite) si l'abonnement n'est plus payable.

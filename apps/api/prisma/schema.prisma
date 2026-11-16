@@ -55,6 +55,11 @@ enum LedgerKind {
   TAKEOVER
   BANKRUPTCY
   SHOP
+  CREATION
+  CREATION_REFUND
+  VESTING
+  ROYALTY
+  POOL_FEE
 }
 
 enum EventStatus {
@@ -128,6 +133,9 @@ model User {
   auditLogs     AuditLog[]     @relation("actor")
   cosmetics     UserCosmetic[]
   achievements  UserAchievement[]
+  creations     Creation[]
+  createdAssets Asset[]        @relation("createdAssets")
+  ownedPools    MiningPool[]   @relation("ownedPools")
 }
 
 model RefreshToken {
@@ -266,6 +274,20 @@ model Asset {
   network  MiningNetwork?
   pools    MiningPool[]
   company  Company?
+
+  /// Actif créé par un joueur (phase 6)
+  creatorId      String?
+  creator        User?     @relation("createdAssets", fields: [creatorId], references: [id])
+  /// Part du créateur, versée progressivement (vesting)
+  vestTotal      Decimal   @default(0) @db.Decimal(38, 8)
+  vestDone       Decimal   @default(0) @db.Decimal(38, 8)
+  vestStart      DateTime?
+  vestEnd        DateTime?
+  /// Royalties du créateur : part des frais de trading des joueurs, en attente de versement
+  royaltyShare   Float     @default(0)
+  royaltyAccrued Decimal   @default(0) @db.Decimal(24, 8)
+  royaltiesPaid  Decimal   @default(0) @db.Decimal(24, 2)
+  creation       Creation?
 }
 
 model Holding {
@@ -493,6 +515,12 @@ model MiningPool {
   /// Probabilité d'exit scam par jour (pools louches)
   scamRisk    Float         @default(0)
   active      Boolean       @default(true)
+  /// Pool créé par un joueur : il touche la commission
+  ownerId     String?
+  owner       User?         @relation("ownedPools", fields: [ownerId], references: [id])
+  /// Commission totale encaissée par le propriétaire (en pièces)
+  earned      Decimal       @default(0) @db.Decimal(38, 8)
+  creation    Creation?
   rigs        Rig[]
   balances    PoolBalance[]
 }
@@ -734,4 +762,48 @@ model UserAchievement {
 
   @@id([userId, achievementId])
   @@index([unlockedAt])
+}
+
+// ─── Création d'actifs (phase 6) ─────────────────────────────────────
+
+enum CreationKind {
+  CRYPTO
+  COMPANY
+  POOL
+}
+
+enum CreationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// Demande de création (crypto, entreprise, pool). Frais + dépôt séquestrés jusqu'à la décision de l'admin.
+model Creation {
+  id          String         @id @default(cuid())
+  kind        CreationKind
+  status      CreationStatus @default(PENDING)
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletId    String
+  name        String
+  symbol      String?
+  emoji       String
+  color       String
+  description String
+  /// Paramètres propres au type (prix initial, secteur, dividende, réseau, type de pool, commission…)
+  params      Json
+  fee         Decimal        @db.Decimal(24, 2)
+  deposit     Decimal        @db.Decimal(24, 2)
+  assetId     String?        @unique
+  asset       Asset?         @relation(fields: [assetId], references: [id])
+  poolId      String?        @unique
+  pool        MiningPool?    @relation(fields: [poolId], references: [id])
+  reviewNote  String?
+  reviewedBy  String?
+  createdAt   DateTime       @default(now())
+  decidedAt   DateTime?
+
+  @@index([status, createdAt])
+  @@index([userId])
 }

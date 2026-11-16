@@ -190,7 +190,7 @@ Les événements sont annoncés en live (bannière + notif), certains avec **pr�
 
 - **Cosmétiques** : cadres, bannières, titres, badges animés, effets de pseudo.
 - **Succès** : « Diamond Hands » (garder une coin −90 % sans vendre), « Rug Survivor », « Pyromane » (rig brûlée), « Premier million »… certains débloquent des cosmétiques exclusifs.
-- **Création d'une crypto** : coût élevé + liquidité initiale à fournir au pool. Garde-fous : **liquidité verrouillée** X jours, part du créateur en **vesting**, nom modéré par l'admin.
+- **Création d'une crypto** : coût élevé + liquidité initiale à fournir au pool. Garde-fous : **liquidité verrouillée** (à vie, décidé en phase 6 : un retrait par le créateur reviendrait à un rug pull des détenteurs), part du créateur en **vesting**, nom modéré par l'admin.
 - **Création d'une entreprise (IPO)** : le joueur fonde une boîte, met des actions en bourse, peut verser des dividendes ; sa valeur fondamentale dépend de règles du jeu.
 - **Création d'un pool de minage**.
 

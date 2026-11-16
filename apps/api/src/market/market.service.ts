@@ -83,6 +83,7 @@ export class MarketService {
   async detail(symbol: string) {
     const a = await this.bySymbol(symbol);
     const stats = await this.dayStats();
+    const creator = a.creatorId ? await this.prisma.user.findUnique({ where: { id: a.creatorId }, select: { username: true } }) : null;
     const [trades, events, holders] = await Promise.all([
       this.prisma.trade.findMany({
         where: { assetId: a.id },
@@ -97,6 +98,7 @@ export class MarketService {
       ...this.serialize(a, stats.get(a.id)),
       feeBps: a.feeBps,
       holders,
+      creator: creator?.username ?? null,
       trades: trades.map((t) => ({
         id: t.id,
         side: t.side,

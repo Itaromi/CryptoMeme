@@ -37,6 +37,7 @@ const NAV = [
   { href: '/events', label: 'Actu' },
   { href: '/leaderboard', label: 'Classement' },
   { href: '/shop', label: 'Boutique' },
+  { href: '/create', label: 'Créer' },
 ];
 
 export function Masthead() {

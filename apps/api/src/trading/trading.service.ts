@@ -90,10 +90,21 @@ export class TradingService {
           );
         }
 
-        const price = swap.pool.quote.div(swap.pool.base);
+        // Royalties du créateur (actif créé par un joueur) : prélevées sur les frais, jamais créées
+        const royalty =
+          asset.creatorId && asset.creatorId !== wallet.userId && asset.royaltyShare > 0
+            ? swap.fee.mul(asset.royaltyShare).toDecimalPlaces(8, Decimal.ROUND_DOWN)
+            : D(0);
+        const quote = order.side === 'SELL' ? swap.pool.quote.sub(royalty) : swap.pool.quote;
+        const price = quote.div(swap.pool.base);
         await tx.asset.update({
           where: { id: asset.id },
-          data: { baseReserve: swap.pool.base.toString(), quoteReserve: swap.pool.quote.toString(), price: price.toString() },
+          data: {
+            baseReserve: swap.pool.base.toString(),
+            quoteReserve: quote.toString(),
+            price: price.toString(),
+            ...(royalty.gt(0) ? { royaltyAccrued: { increment: royalty.toString() } } : {}),
+          },
         });
         await tx.wallet.update({ where: { id: walletId }, data: { cash: money(cashAfter), lastOrderAt: new Date() } });
         await tx.holding.upsert({

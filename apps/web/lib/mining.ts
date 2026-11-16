@@ -128,7 +128,7 @@ export interface PoolsInfo {
     nextHalving: string;
     totalMined: string;
   }>;
-  pools: Array<{ id: string; name: string; description: string; symbol: string; emoji: string; type: string; feeBps: number; federation: string | null; scamRisk: number; miners: number }>;
+  pools: Array<{ id: string; name: string; description: string; symbol: string; emoji: string; type: string; feeBps: number; federation: string | null; scamRisk: number; miners: number; owner: string | null }>;
 }
 
 export const useFarm = (enabled = true) =>

@@ -26,6 +26,71 @@ export function stockMarketStatus(now = new Date()): { open: boolean; nextChange
   return { open, nextChangeAt: now.getTime() + Math.round(wait * 60_000) };
 }
 
+// ─── Création d'actifs ──────────────────────────────────────────────
+export const CREATION = {
+  CRYPTO: { fee: 25_000, minDeposit: 20_000, maxDeposit: 500_000 },
+  COMPANY: { fee: 50_000, minDeposit: 50_000, maxDeposit: 1_000_000 },
+  POOL: { fee: 15_000, minDeposit: 0, maxDeposit: 0 },
+  /** Part de l'offre (ou des actions) réservée au créateur, versée sur VEST_DAYS jours */
+  creatorShare: 0.1,
+  vestDays: 7,
+  /** Part des frais de trading des joueurs reversée au créateur */
+  royaltyShare: 1 / 3,
+  /** Créations vivantes (en attente ou acceptées) max par joueur et par type */
+  maxPerKind: 2,
+  poolMaxFeeBps: 500,
+} as const;
+
+export const SECTORS: Record<string, number> = {
+  Tech: 30,
+  'E-commerce': 40,
+  Médias: 30,
+  Restauration: 22,
+  Distribution: 16,
+  Agroalimentaire: 15,
+  Énergie: 9,
+  Transport: 10,
+  Luxe: 26,
+  Automobile: 25,
+  'Semi-conducteurs': 45,
+  'Jeux vidéo': 28,
+};
+
+const symbolRe = /^[A-Z0-9]{2,8}$/;
+const hex = /^#[0-9a-fA-F]{6}$/;
+const baseCreation = {
+  name: z.string().trim().min(3).max(40),
+  emoji: z.string().min(1).max(8),
+  color: z.string().regex(hex),
+  description: z.string().trim().min(10).max(280),
+};
+export const creationSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('CRYPTO'),
+    ...baseCreation,
+    symbol: z.string().trim().toUpperCase().regex(symbolRe, '2 à 8 lettres ou chiffres'),
+    price: z.number().min(0.000001).max(1000),
+    deposit: z.number().min(CREATION.CRYPTO.minDeposit).max(CREATION.CRYPTO.maxDeposit),
+  }),
+  z.object({
+    kind: z.literal('COMPANY'),
+    ...baseCreation,
+    symbol: z.string().trim().toUpperCase().regex(symbolRe, '2 à 8 lettres ou chiffres'),
+    price: z.number().min(1).max(1000),
+    deposit: z.number().min(CREATION.COMPANY.minDeposit).max(CREATION.COMPANY.maxDeposit),
+    sector: z.string().refine((s) => s in SECTORS, 'Secteur inconnu'),
+    payout: z.number().min(0).max(0.8),
+  }),
+  z.object({
+    kind: z.literal('POOL'),
+    ...baseCreation,
+    network: z.string().trim().toUpperCase(),
+    poolType: z.enum(['PPS', 'PPLNS', 'SOLO']),
+    feeBps: z.number().int().min(0).max(CREATION.poolMaxFeeBps),
+  }),
+]);
+export type CreationInput = z.infer<typeof creationSchema>;
+
 export const WS_EVENTS = {
   TICK: 'market:tick',
   TRADE: 'market:trade',

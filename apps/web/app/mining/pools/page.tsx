@@ -67,6 +67,7 @@ export default function PoolsPage() {
                     <dd className={`inline font-semibold ${p.feeBps < 0 ? 'text-up' : ''}`}>{p.feeBps < 0 ? `+${(-p.feeBps / 100).toFixed(1)} % bonus` : `${(p.feeBps / 100).toFixed(1)} %`}</dd>
                   </div>
                   {p.federation && <div><dt className="inline text-ink-2">Fédération </dt><dd className="inline font-semibold">{p.federation}</dd></div>}
+                  {p.owner && <div><dt className="inline text-ink-2">Créé par </dt><dd className="inline font-semibold"><a href={`/u/${p.owner}`} className="underline">@{p.owner}</a></dd></div>}
                   <div><dt className="inline text-ink-2">Rigs </dt><dd className="inline font-semibold">{p.miners}</dd></div>
                   {p.scamRisk > 0 && <div className="text-down"><dt className="inline">Risque de fuite </dt><dd className="inline font-semibold">{(p.scamRisk * 100).toFixed(0)} %/j</dd></div>}
                 </dl>

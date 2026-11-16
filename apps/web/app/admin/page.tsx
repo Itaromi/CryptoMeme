@@ -6,9 +6,10 @@ import { useMe } from '@/lib/hooks';
 import { ago, money, price } from '@/lib/format';
 import { AdminMining } from '@/components/mining/AdminMining';
 import { AdminStocks } from '@/components/AdminStocks';
+import { AdminCreations } from '@/components/AdminCreations';
 import { AdminEconomy } from '@/components/AdminEconomy';
 
-const TABS = ['Économie', 'Joueurs', 'Actifs', 'Bourse', 'Minage', 'Événements & banques', 'Saisons', 'Audit'] as const;
+const TABS = ['Économie', 'Joueurs', 'Créations', 'Actifs', 'Bourse', 'Minage', 'Événements & banques', 'Saisons', 'Audit'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminPage() {
@@ -30,6 +31,7 @@ export default function AdminPage() {
       {tab === 'Économie' && <Overview />}
       {tab === 'Joueurs' && <Users isAdmin={isAdmin} />}
       {tab === 'Actifs' && <Assets isAdmin={isAdmin} />}
+      {tab === 'Créations' && <AdminCreations />}
       {tab === 'Bourse' && <AdminStocks isAdmin={isAdmin} />}
       {tab === 'Minage' && <AdminMining isAdmin={isAdmin} />}
       {tab === 'Événements & banques' && <AdminEconomy isAdmin={isAdmin} />}

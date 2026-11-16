@@ -81,20 +81,38 @@ export class MiningTickService {
     const byWallet = new Map<string, typeof computed>();
     for (const c of computed) byWallet.set(c.rig.walletId, [...(byWallet.get(c.rig.walletId) ?? []), c]);
     const minted = new Map<string, number>();
+    const cuts = new Map<string, number>(); // poolId → commission (pièces) due au propriétaire
 
     for (const [walletId, list] of byWallet) {
       try {
-        const m = await this.runWallet(walletId, list, netByAsset, playerHash, minutes);
+        const { minted: m, cuts: c } = await this.runWallet(walletId, list, netByAsset, playerHash, minutes);
         for (const [a, v] of m) minted.set(a, (minted.get(a) ?? 0) + v);
+        for (const [p, v] of c) cuts.set(p, (cuts.get(p) ?? 0) + v);
       } catch (e) {
         this.log.error(`Wallet ${walletId} : ${(e as Error).message}`);
       }
     }
 
-    // 3. Pools louches : paiements différés et exit scams
+    // 3. Commission des pools créés par des joueurs (après coup : jamais deux wallets verrouillés à la fois)
+    for (const [poolId, coins] of cuts) {
+      try {
+        const pool = await this.prisma.miningPool.findUniqueOrThrow({ where: { id: poolId } });
+        if (!pool.ownerId || coins <= 0) continue;
+        const owner = await this.seasons.wallet(pool.ownerId);
+        await this.prisma.$transaction(async (tx) => {
+          await this.credit(tx, owner.id, pool.assetId, coins, `Commission du pool ${pool.name}`, 'POOL_FEE');
+          await tx.miningPool.update({ where: { id: poolId }, data: { earned: { increment: coins.toFixed(8) } } });
+        });
+        minted.set(pool.assetId, (minted.get(pool.assetId) ?? 0) + coins);
+      } catch (e) {
+        this.log.error(`Commission pool ${poolId} : ${(e as Error).message}`);
+      }
+    }
+
+    // 4. Pools louches : paiements différés et exit scams
     await this.shadyPools(minutes);
 
-    // 4. Réseaux : PNJ, halving, total miné
+    // 5. Réseaux : PNJ, halving, total miné
     for (const n of nets) await this.updateNetwork(n, playerHash.get(n.assetId) ?? 0, minted.get(n.assetId) ?? 0, minutes);
   }
 
@@ -106,6 +124,7 @@ export class MiningTickService {
     minutes: number,
   ) {
     const minted = new Map<string, number>();
+    const cuts = new Map<string, number>();
     const logs: string[][] = [];
     await this.prisma.$transaction(
       async (tx) => {
@@ -164,6 +183,11 @@ export class MiningTickService {
           const share = total > 0 ? hash / total : 0;
           const coins = poolPayout(pool.type as PoolType, effectiveFee(pool, fed), share, { blockReward: Number(net.blockReward), npcHashrate: net.npcHashrate }, mathRng, minutes);
 
+          const fee = effectiveFee(pool, fed);
+          if (coins > 0 && pool.ownerId && pool.type !== 'SHADY' && fee > 0 && fee < 10_000) {
+            // La part retenue par le pool revient à son propriétaire (au lieu de disparaître)
+            cuts.set(pool.id, (cuts.get(pool.id) ?? 0) + (coins * fee) / (10_000 - fee));
+          }
           if (coins > 0) {
             if (pool.type === 'SHADY') shady.set(pool.id, (shady.get(pool.id) ?? 0) + coins);
             else rewards.set(pool.assetId, (rewards.get(pool.assetId) ?? 0) + coins);
@@ -221,11 +245,11 @@ export class MiningTickService {
       },
       { timeout: 20_000 },
     );
-    return minted;
+    return { minted, cuts };
   }
 
   /** Crédite des pièces minées (coût d'acquisition nul) + grand livre. */
-  private async credit(tx: Prisma.TransactionClient, walletId: string, assetId: string, coins: number, memo: string) {
+  private async credit(tx: Prisma.TransactionClient, walletId: string, assetId: string, coins: number, memo: string, kind: 'MINING_REWARD' | 'POOL_FEE' = 'MINING_REWARD') {
     const qty = coins.toFixed(8);
     if (Number(qty) <= 0) return;
     const h = await tx.holding.upsert({
@@ -233,7 +257,7 @@ export class MiningTickService {
       update: { quantity: { increment: qty } },
       create: { walletId, assetId, quantity: qty, costBasis: 0 },
     });
-    await tx.ledgerEntry.create({ data: { walletId, kind: 'MINING_REWARD', assetId, delta: qty, balanceAfter: h.quantity, memo } });
+    await tx.ledgerEntry.create({ data: { walletId, kind, assetId, delta: qty, balanceAfter: h.quantity, memo } });
   }
 
   private async shadyPools(minutes: number) {

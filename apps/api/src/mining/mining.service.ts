@@ -329,7 +329,7 @@ export class MiningService {
   async pools() {
     const [nets, pools] = await Promise.all([
       this.prisma.miningNetwork.findMany({ include: { asset: true } }),
-      this.prisma.miningPool.findMany({ where: { active: true }, include: { asset: true, _count: { select: { rigs: { where: { running: true } } } } } }),
+      this.prisma.miningPool.findMany({ where: { active: true }, include: { asset: true, owner: { select: { username: true } }, _count: { select: { rigs: { where: { running: true } } } } } }),
     ]);
     return {
       networks: nets.map((n) => ({
@@ -356,6 +356,7 @@ export class MiningService {
         federation: p.federation,
         scamRisk: p.scamRisk,
         miners: p._count.rigs,
+        owner: p.owner?.username ?? null,
       })),
     };
   }
