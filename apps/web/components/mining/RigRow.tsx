@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { money, qty } from '@/lib/format';
 import { ALGO_LABEL, hash, POOL_TYPE, PoolsInfo, RigView, tempTone, watts, KIND_SHORT } from '@/lib/mining';
+import { Glyph } from '@/lib/icons';
 
 const OC_LABEL = ['Stock', 'OC léger', 'OC costaud', 'OC suicidaire'];
 
@@ -75,7 +76,7 @@ export function RigRow({ rig, pools }: { rig: RigView; pools?: PoolsInfo }) {
           <option value="">Choisir un pool…</option>
           {compatible?.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.emoji} {p.symbol} · {p.name} ({POOL_TYPE[p.type].label})
+              <Glyph name={p.emoji} /> {p.symbol} · {p.name} ({POOL_TYPE[p.type].label})
             </option>
           ))}
         </select>

@@ -12,6 +12,7 @@ import { OrderForm } from '@/components/OrderForm';
 import { CompanyPanel } from '@/components/CompanyPanel';
 import { countdown } from '@/lib/economy';
 import { useMarketClock, useStock } from '@/lib/stocks';
+import { Glyph } from '@/lib/icons';
 
 interface Trade {
   id: string;
@@ -88,7 +89,7 @@ export default function AssetPage({ params }: { params: Promise<{ symbol: string
       <header className="mt-3 mb-8 flex flex-wrap items-end justify-between gap-6 border-b-2 border-ink pb-6">
         <div className="flex items-end gap-5">
           <span className="grid size-20 place-items-center text-5xl" style={{ background: `color-mix(in oklch, ${data.color} 35%, transparent)` }}>
-            {data.emoji}
+            <Glyph name={data.emoji} color={data.color} />
           </span>
           <div>
             <p className="text-sm font-semibold uppercase tracking-widest text-ink-2">

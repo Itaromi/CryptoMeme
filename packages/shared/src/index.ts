@@ -26,6 +26,20 @@ export function stockMarketStatus(now = new Date()): { open: boolean; nextChange
   return { open, nextChangeAt: now.getTime() + Math.round(wait * 60_000) };
 }
 
+// ─── Icônes (Phosphor) ──────────────────────────────────────────────
+/** Icônes autorisées pour les logos d'actifs, succès, badges et avatars (noms Phosphor). */
+export const ICON_GROUPS = {
+  Finance: ['Coin', 'CurrencyBtc', 'CurrencyEth', 'CurrencyCircleDollar', 'Coins', 'Money', 'Wallet', 'CreditCard', 'PiggyBank', 'Bank', 'Vault', 'HandCoins', 'ChartLineUp', 'ChartLineDown', 'TrendUp', 'TrendDown', 'ChartPie', 'Receipt', 'Scales', 'Scroll'],
+  Mèmes: ['Rocket', 'RocketLaunch', 'MoonStars', 'Diamond', 'Crown', 'Trophy', 'Fire', 'Lightning', 'Skull', 'Ghost', 'Alien', 'Robot', 'Bomb', 'Sparkle', 'ShootingStar', 'MagicWand', 'DiceFive', 'Spade', 'Club', 'ToiletPaper', 'HandFist', 'Parachute', 'Target', 'Infinity', 'Spiral', 'Cube', 'Hexagon'],
+  Animaux: ['Dog', 'Cat', 'Bird', 'Fish', 'Horse', 'Butterfly', 'Cow', 'Rabbit', 'Bug', 'PawPrint', 'Waves'],
+  Bouffe: ['Bread', 'Grains', 'Hamburger', 'Pizza', 'Coffee', 'Cookie', 'Cake', 'IceCream', 'Carrot', 'OrangeSlice', 'Pepper', 'Avocado', 'Cheese', 'Popcorn', 'Egg', 'Wine', 'BeerStein', 'BowlFood', 'Brandy'],
+  Industrie: ['Car', 'AirplaneTilt', 'Train', 'Package', 'ShoppingCart', 'Storefront', 'Factory', 'Buildings', 'GasPump', 'Drop', 'Cpu', 'Desktop', 'DeviceMobile', 'AppWindow', 'FilmStrip', 'FilmSlate', 'Hammer', 'Wrench', 'Shovel', 'Handbag', 'Tote', 'Plug', 'Atom', 'Flask', 'Brain', 'Leaf', 'Plant', 'Tree', 'Cactus', 'Flower', 'Sun', 'Planet', 'Mountains', 'Island', 'Yarn', 'Couch', 'Barbell', 'Handshake', 'CursorClick', 'BatteryWarning', 'FireExtinguisher', 'Gavel', 'Megaphone', 'Newspaper'],
+  Têtes: ['Smiley', 'SmileyWink', 'SmileySticker', 'SmileyXEyes', 'SmileyMelting', 'SmileyNervous', 'SmileyAngry', 'SmileyBlank', 'Sunglasses', 'MaskHappy', 'Detective'],
+} as const;
+export type IconName = (typeof ICON_GROUPS)[keyof typeof ICON_GROUPS][number];
+export const ICON_NAMES: readonly IconName[] = Object.values(ICON_GROUPS).flat();
+export const isIconName = (v: string): v is IconName => (ICON_NAMES as readonly string[]).includes(v);
+
 // ─── Création d'actifs ──────────────────────────────────────────────
 export const CREATION = {
   CRYPTO: { fee: 25_000, minDeposit: 20_000, maxDeposit: 500_000 },
@@ -60,7 +74,7 @@ const symbolRe = /^[A-Z0-9]{2,8}$/;
 const hex = /^#[0-9a-fA-F]{6}$/;
 const baseCreation = {
   name: z.string().trim().min(3).max(40),
-  emoji: z.string().min(1).max(8),
+  emoji: z.string().refine(isIconName, 'Icône inconnue'),
   color: z.string().regex(hex),
   description: z.string().trim().min(10).max(280),
 };

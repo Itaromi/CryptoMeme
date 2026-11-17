@@ -7,6 +7,7 @@ import { useMe } from '@/lib/hooks';
 import { money, pct, tone } from '@/lib/format';
 import type { Look } from '@/lib/meta';
 import { Avatar, Name, PlayerTag } from '@/components/PlayerTag';
+import { Glyph } from '@/lib/icons';
 
 const CATS = [
   { id: 'general', label: 'Général', hint: 'Patrimoine net' },
@@ -15,7 +16,7 @@ const CATS = [
   { id: 'trader', label: 'Trader', hint: 'Plus-values réalisées sur la saison' },
   { id: 'miner', label: 'Mineur', hint: 'Valeur des cryptos minées (prix actuel)' },
   { id: 'best-trade', label: 'Plus gros gain', hint: 'Meilleure vente de la saison' },
-  { id: 'worst-trade', label: 'Plus grosse perte 💀', hint: 'Pire vente de la saison' },
+  { id: 'worst-trade', label: 'Plus grosse perte', hint: 'Pire vente de la saison' },
 ] as const;
 type Cat = (typeof CATS)[number]['id'];
 
@@ -107,7 +108,7 @@ export default function LeaderboardPage() {
             </span>
             <span className={`mt-2 block font-bold group-hover:underline ${i === 0 ? 'text-3xl' : 'text-xl'}`}>
               <Name username={e.username} look={e.look} />
-              {e.look?.badges.map((b) => <span key={b.name} className="ml-1.5 text-[0.7em]">{b.icon}</span>)}
+              {e.look?.badges.map((b) => <span key={b.name} className="ml-1.5 text-[0.7em]"><Glyph name={b.icon} /></span>)}
             </span>
             {e.look?.title && <span className="block text-xs uppercase tracking-widest text-ink-2">{e.look.title}</span>}
             <span className={`num mt-1 block text-lg font-semibold ${valueTone(e)}`}>{fmt(e)}</span>

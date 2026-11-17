@@ -3,7 +3,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { RealIpThrottlerGuard } from './common/security';
+import { validateEnv } from './common/env';
+import { HealthController } from './common/health.controller';
 import { PrismaModule } from './prisma/prisma.service';
 import { SeasonsModule } from './seasons/seasons.service';
 import { AuthGuard } from './common/auth.guard';
@@ -36,7 +39,7 @@ import { AdminEconomyController, EventsController } from './economy/events.contr
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     JwtModule.registerAsync({
       global: true,
       inject: [ConfigService],
@@ -54,7 +57,7 @@ import { AdminEconomyController, EventsController } from './economy/events.contr
     ModifiersModule,
     AuthModule,
   ],
-  controllers: [MarketController, TradingController, PlayersController, AdminController, MiningController, AdminMiningController, NotificationsController, BanksController, EventsController, AdminEconomyController, StocksController, AdminStocksController, MetaController, CreationsController, AdminCreationsController],
+  controllers: [HealthController, MarketController, TradingController, PlayersController, AdminController, MiningController, AdminMiningController, NotificationsController, BanksController, EventsController, AdminEconomyController, StocksController, AdminStocksController, MetaController, CreationsController, AdminCreationsController],
   providers: [
     MarketService,
     MarketGateway,
@@ -69,7 +72,7 @@ import { AdminEconomyController, EventsController } from './economy/events.contr
     StocksService,
     MetaService,
     CreationsService,
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: RealIpThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
   ],
 })

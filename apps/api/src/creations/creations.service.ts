@@ -126,7 +126,7 @@ export class CreationsService {
       {
         userId: c.userId,
         type: 'CREATION',
-        title: `${c.emoji} ${c.name} est en ligne !`,
+        title: `${c.name} est en ligne !`,
         body: c.kind === 'POOL' ? 'Ton pool accepte maintenant les mineurs. Tu touches sa commission.' : `${KIND_LABEL[c.kind]} est cotée. Ta part arrive en ${CREATION.vestDays} jours, les royalties dès le premier trade.`,
         link: c.kind === 'POOL' ? '/mining/pools' : `/market/${c.symbol}`,
       },

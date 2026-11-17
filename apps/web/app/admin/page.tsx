@@ -8,6 +8,7 @@ import { AdminMining } from '@/components/mining/AdminMining';
 import { AdminStocks } from '@/components/AdminStocks';
 import { AdminCreations } from '@/components/AdminCreations';
 import { AdminEconomy } from '@/components/AdminEconomy';
+import { Glyph } from '@/lib/icons';
 
 const TABS = ['Économie', 'Joueurs', 'Créations', 'Actifs', 'Bourse', 'Minage', 'Événements & banques', 'Saisons', 'Audit'] as const;
 type Tab = (typeof TABS)[number];
@@ -265,7 +266,7 @@ function AssetLine({ a, isAdmin }: { a: AdminAsset; isAdmin: boolean }) {
     <div className="border-2 border-ink p-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-lg font-bold">
-          {a.emoji} {a.name} <span className="text-sm font-normal text-ink-2">{a.symbol} · {a.tier} · {a.state.regime}</span>
+          <Glyph name={a.emoji} /> {a.name} <span className="text-sm font-normal text-ink-2">{a.symbol} · {a.tier} · {a.state.regime}</span>
           {a.frozen && <span className="ml-2 bg-down px-1.5 text-sm text-paper">gelé</span>}
         </p>
         <p className="num text-sm">

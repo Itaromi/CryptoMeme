@@ -200,7 +200,7 @@ export class MiningTickService {
           const userId = list[0].userId;
           if (poissonHit(mathRng, s.firePerHour * 24, minutes / 1440)) {
             await tx.componentItem.updateMany({ where: { rigId: rig.id }, data: { status: 'DESTROYED', wear: 1 } });
-            logs.push(['FIRE', `🔥 INCENDIE dans ${rig.name} (${Math.round(s.temperature)} °C). Tous les composants sont carbonisés.`]);
+            logs.push(['FIRE', `INCENDIE dans ${rig.name} (${Math.round(s.temperature)} °C). Tous les composants sont carbonisés.`]);
             const loss = rig.parts.reduce((sum, p) => sum + Number(p.model.price) * 0.6 * (1 - p.wear), 0);
             await this.banks.insure(tx, walletId, userId, loss, `incendie de ${rig.name}`);
             stopped = true;
@@ -213,7 +213,7 @@ export class MiningTickService {
               await tx.componentItem.update({ where: { id: p.id }, data: { wear, ...(broken ? { status: 'BROKEN' } : {}) } });
               if (broken) {
                 await this.banks.insure(tx, walletId, userId, Number(p.model.price) * 0.3, `panne ${p.model.name}`);
-                logs.push(['BREAK', `💥 ${p.model.brand} ${p.model.name} a lâché dans ${rig.name}${wear >= 1 ? ' (usure totale)' : ''}. Rig arrêtée.`]);
+                logs.push(['BREAK', `${p.model.brand} ${p.model.name} a lâché dans ${rig.name}${wear >= 1 ? ' (usure totale)' : ''}. Rig arrêtée.`]);
                 stopped = true;
               }
             }
@@ -269,7 +269,7 @@ export class MiningTickService {
           this.prisma.poolBalance.updateMany({ where: { poolId: pool.id }, data: { pending: 0, lastPaidAt: new Date() } }),
           ...victims.map((v) =>
             this.prisma.miningLog.create({
-              data: { walletId: v.walletId, type: 'SCAM', message: `🏃 EXIT SCAM : ${pool.name} a disparu avec tes ${Number(v.pending).toFixed(4)} ${pool.asset.symbol} en attente. Le site affiche maintenant une page « En maintenance ».` },
+              data: { walletId: v.walletId, type: 'SCAM', message: `EXIT SCAM : ${pool.name} a disparu avec tes ${Number(v.pending).toFixed(4)} ${pool.asset.symbol} en attente. Le site affiche maintenant une page « En maintenance ».` },
             }),
           ),
           this.prisma.marketEvent.create({ data: { assetId: pool.assetId, type: 'POOL_SCAM', detail: `${pool.name} part avec la caisse` } }),

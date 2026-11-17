@@ -6,6 +6,8 @@ import { api } from '@/lib/api';
 import { useMe, usePortfolio } from '@/lib/hooks';
 import { countdown } from '@/lib/economy';
 import { money } from '@/lib/format';
+import { Glyph } from '@/lib/icons';
+import { IconPicker } from '@/components/IconPicker';
 
 type Kind = 'CRYPTO' | 'COMPANY' | 'POOL';
 
@@ -120,7 +122,7 @@ function CreateForm({ kind, cfg }: { kind: Kind; cfg: Config }) {
   const [f, setF] = useState({
     name: '',
     symbol: '',
-    emoji: kind === 'POOL' ? '⛏️' : kind === 'COMPANY' ? '🏢' : '🐸',
+    emoji: kind === 'POOL' ? 'Shovel' : kind === 'COMPANY' ? 'Buildings' : 'Coin',
     color: '#a3e635',
     description: '',
     price: kind === 'COMPANY' ? '50' : '0.01',
@@ -169,7 +171,7 @@ function CreateForm({ kind, cfg }: { kind: Kind; cfg: Config }) {
     <form onSubmit={submit} className="space-y-5">
       {/* Aperçu de la fiche */}
       <div className="flex items-center gap-4 border-2 border-ink p-4">
-        <span className="grid size-16 place-items-center text-4xl" style={{ background: `color-mix(in oklch, ${f.color} 35%, transparent)` }}>{f.emoji || '?'}</span>
+        <span className="grid size-16 place-items-center text-4xl" style={{ background: `color-mix(in oklch, ${f.color} 35%, transparent)` }}><Glyph name={f.emoji} color={f.color} /></span>
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-widest text-ink-2">
             {kind === 'POOL' ? `Pool ${f.poolType} · ${f.network}` : `${f.symbol || 'SYMB'} · ${kind === 'COMPANY' ? f.sector : 'Crypto'}`}
@@ -184,8 +186,10 @@ function CreateForm({ kind, cfg }: { kind: Kind; cfg: Config }) {
           <Field label="Symbole"><input className="field uppercase" required pattern="[A-Za-z0-9]{2,8}" maxLength={8} value={f.symbol} onChange={set('symbol')} /></Field>
         )}
       </div>
-      <div className="grid grid-cols-[100px_100px_1fr] gap-4">
-        <Field label="Emoji"><input className="field text-center text-xl" required maxLength={8} value={f.emoji} onChange={set('emoji')} /></Field>
+      <div className="grid gap-4 sm:grid-cols-[1fr_100px]">
+        <Field label="Logo">
+          <IconPicker value={f.emoji} color={f.color} onChange={(v) => setF({ ...f, emoji: v })} />
+        </Field>
         <Field label="Couleur"><input type="color" className="field h-[46px] p-1" value={f.color} onChange={set('color')} /></Field>
       </div>
       <Field label="Description">
@@ -219,7 +223,7 @@ function CreateForm({ kind, cfg }: { kind: Kind; cfg: Config }) {
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Réseau">
             <select className="field" value={f.network} onChange={set('network')}>
-              {cfg.networks.map((n) => <option key={n.symbol} value={n.symbol}>{n.emoji} {n.symbol}</option>)}
+              {cfg.networks.map((n) => <option key={n.symbol} value={n.symbol}>{n.symbol} · {n.name}</option>)}
             </select>
           </Field>
           <Field label="Type">
@@ -277,7 +281,7 @@ function MineRow({ c, cfg }: { c: Mine; cfg?: Config }) {
     <li className="border-b border-line pb-5">
       <div className="flex items-start justify-between gap-3">
         <p className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center text-2xl" style={{ background: `color-mix(in oklch, ${c.color} 35%, transparent)` }}>{c.emoji}</span>
+          <span className="grid size-10 place-items-center text-2xl" style={{ background: `color-mix(in oklch, ${c.color} 35%, transparent)` }}><Glyph name={c.emoji} color={c.color} /></span>
           <span>
             {a ? <Link href={`/market/${a.symbol}`} className="font-bold hover:underline">{c.name}</Link> : <strong>{c.name}</strong>}
             <span className="block text-xs text-ink-2">{c.symbol ?? (c.pool ? `Pool ${c.pool.type} · ${c.pool.symbol}` : 'Pool')}</span>

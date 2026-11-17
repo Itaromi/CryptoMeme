@@ -7,6 +7,7 @@ import { compactMoney, pct, tone } from '@/lib/format';
 import { healthLabel, pctFr, STATUS_LABEL, useMarketClock, useStocks, VERDICT } from '@/lib/stocks';
 import { LivePrice } from '@/components/LivePrice';
 import { Spark } from '@/components/Spark';
+import { Glyph } from '@/lib/icons';
 
 type SortKey = 'change24h' | 'marketCap' | 'yield' | 'earnings';
 
@@ -88,7 +89,7 @@ export default function StocksPage() {
                   <tr key={s.symbol} className={`group border-b border-line hover:bg-paper-2 ${off ? 'text-ink-3' : ''}`}>
                     <td className="py-3 pr-4">
                       <Link href={`/market/${s.symbol}`} className="flex items-center gap-3">
-                        <span className="grid size-9 place-items-center text-xl" style={{ background: `color-mix(in oklch, ${s.color} 30%, transparent)` }}>{s.emoji}</span>
+                        <span className="grid size-9 place-items-center text-xl" style={{ background: `color-mix(in oklch, ${s.color} 30%, transparent)` }}><Glyph name={s.emoji} color={s.color} /></span>
                         <span>
                           <span className="block font-semibold group-hover:underline">{s.name}</span>
                           <span className="text-xs text-ink-2">
@@ -131,7 +132,7 @@ export default function StocksPage() {
           <ol className="space-y-2">
             {calendar.map((s) => (
               <li key={s.symbol} className="flex items-baseline justify-between gap-3">
-                <Link href={`/market/${s.symbol}`} className="font-semibold hover:underline">{s.emoji} {s.name}</Link>
+                <Link href={`/market/${s.symbol}`} className="font-semibold hover:underline"><Glyph name={s.emoji} color={s.color} /> {s.name}</Link>
                 <span className="num whitespace-nowrap text-sm text-ink-2">{countdown(s.company.nextEarningsAt, clock.now)}</span>
               </li>
             ))}
@@ -146,7 +147,7 @@ export default function StocksPage() {
               {data.recentReports.map((r, i) => (
                 <li key={i}>
                   <p className="flex items-baseline justify-between gap-2">
-                    <Link href={`/market/${r.symbol}`} className="font-semibold hover:underline">{r.emoji} {r.name}</Link>
+                    <Link href={`/market/${r.symbol}`} className="font-semibold hover:underline"><Glyph name={r.emoji} /> {r.name}</Link>
                     <span className={`num px-1 text-sm font-bold ${VERDICT[r.verdict].cls}`}>{pctFr(r.reaction)}</span>
                   </p>
                   <p className="text-sm text-ink-2">{r.headline}</p>

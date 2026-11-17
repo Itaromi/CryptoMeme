@@ -8,6 +8,7 @@ import { NetWorthChart } from '@/components/NetWorthChart';
 import { Avatar, Name } from '@/components/PlayerTag';
 import { Look, PublicAchievement, TIER, useAchievements } from '@/lib/meta';
 import Link from 'next/link';
+import { Glyph } from '@/lib/icons';
 
 interface Profile {
   username: string;
@@ -68,7 +69,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
             <h1 className="display break-words text-[clamp(2.75rem,8vw,6.5rem)] font-extrabold">
               <Name username={data.username} look={data.look} />
               {data.look.badges.map((b) => (
-                <span key={b.name} title={b.name} className="ml-3 align-middle text-[0.5em]">{b.icon}</span>
+                <span key={b.name} title={b.name} className="ml-3 align-middle text-[0.5em]"><Glyph name={b.icon} /></span>
               ))}
             </h1>
             <Bio bio={data.bio} editable={isMe} username={data.username} />
@@ -108,7 +109,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                   .map((a) => (
                     <li key={a.symbol} className="num">
                       <div className="flex justify-between text-sm">
-                        <span className="font-semibold">{a.emoji} {a.symbol}</span>
+                        <span className="font-semibold"><Glyph name={a.emoji} color={a.color} /> {a.symbol}</span>
                         <span>{((a.value / allocTotal) * 100).toFixed(1)} %</span>
                       </div>
                       <div className="mt-1 h-2 bg-paper-2">
@@ -323,7 +324,7 @@ function Showcase({ data, isMe }: { data: Profile; isMe: boolean }) {
                   onClick={() => setPick(on ? pick.filter((x) => x !== u.slug) : [...pick, u.slug].slice(-4))}
                   className={`border-2 border-ink px-2 py-1 text-sm ${on ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
                 >
-                  {u.icon} {u.name}
+                  <Glyph name={u.icon} /> {u.name}
                 </button>
               );
             })}
@@ -339,7 +340,7 @@ function Showcase({ data, isMe }: { data: Profile; isMe: boolean }) {
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {a.featured.map((f) => (
             <li key={f.slug} className={`border-2 border-ink p-4 ${TIER[f.tier].cls}`}>
-              <span className="text-4xl" aria-hidden>{f.icon}</span>
+              <span className="block text-4xl" aria-hidden><Glyph name={f.icon} /></span>
               <p className="mt-2 font-bold">{f.name}</p>
               <p className="text-sm opacity-80">{f.description}</p>
             </li>

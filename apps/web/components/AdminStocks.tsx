@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { countdown } from '@/lib/economy';
 import { money } from '@/lib/format';
 import { healthLabel, STATUS_LABEL, StockRow, useStocks } from '@/lib/stocks';
+import { Glyph } from '@/lib/icons';
 
 const ACTIONS = [
   { id: 'earnings', label: 'Publier les résultats maintenant' },
@@ -73,7 +74,7 @@ function Row({ s, disabled, run }: { s: StockRow; disabled: boolean; run: (symbo
   };
   return (
     <tr className="border-b border-line">
-      <td className="py-2 font-semibold">{s.emoji} {s.name} <span className="text-xs text-ink-2">{s.symbol}</span></td>
+      <td className="py-2 font-semibold"><Glyph name={s.emoji} color={s.color} /> {s.name} <span className="text-xs text-ink-2">{s.symbol}</span></td>
       <td>{STATUS_LABEL[c.status]}</td>
       <td>{money(s.price)}</td>
       <td>{c.eps.toFixed(2)} / {c.consensus.toFixed(2)}</td>

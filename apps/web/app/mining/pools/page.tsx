@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { money, price } from '@/lib/format';
 import { ALGO_LABEL, hash, POOL_TYPE, usePools } from '@/lib/mining';
 import { MiningNav } from '@/components/mining/MiningNav';
+import { Glyph } from '@/lib/icons';
 
 export default function PoolsPage() {
   const { data } = usePools();
@@ -34,7 +35,7 @@ export default function PoolsPage() {
               {data?.networks.map((n) => (
                 <tr key={n.symbol} className="border-b border-line">
                   <td className="py-3 pr-4">
-                    <Link href={`/market/${n.symbol}`} className="font-semibold hover:underline">{n.emoji} {n.name}</Link>
+                    <Link href={`/market/${n.symbol}`} className="font-semibold hover:underline"><Glyph name={n.emoji} /> {n.name}</Link>
                   </td>
                   <td className="py-3 pr-4">{ALGO_LABEL[n.algo]}</td>
                   <td className="py-3 pr-4 text-right">{price(n.price)}</td>
@@ -57,7 +58,7 @@ export default function PoolsPage() {
               <article key={p.id} className={`border-t-2 pt-3 ${p.type === 'SHADY' ? 'border-down' : 'border-ink'}`}>
                 <div className="flex items-baseline justify-between gap-3">
                   <h3 className="text-xl font-bold">{p.name}</h3>
-                  <span className="text-sm">{p.emoji} {p.symbol}</span>
+                  <span className="text-sm"><Glyph name={p.emoji} /> {p.symbol}</span>
                 </div>
                 <p className="mt-1 text-sm text-ink-2">{p.description}</p>
                 <dl className="num mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">

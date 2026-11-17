@@ -4,6 +4,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useMe, usePortfolio } from '@/lib/hooks';
 import { ago, money, pct, price, qty, tone } from '@/lib/format';
+import { Glyph } from '@/lib/icons';
 
 interface TradeRow {
   id: string;
@@ -126,7 +127,7 @@ export default function PortfolioPage() {
                     <tr key={p.symbol} className="border-b border-line hover:bg-paper-2">
                       <td className="py-3 pr-4">
                         <Link href={`/market/${p.symbol}`} className="font-semibold hover:underline">
-                          {p.emoji} {p.name}
+                          <Glyph name={p.emoji} color={p.color} /> {p.name}
                         </Link>
                       </td>
                       <td className="py-3 pr-4 text-right">{qty(p.quantity)}</td>
@@ -170,7 +171,7 @@ export default function PortfolioPage() {
                   <tr key={t.id} className="border-b border-line">
                     <td className="py-2 pr-4 text-ink-2">{ago(t.at)}</td>
                     <td className="py-2 pr-4">
-                      <span className={`font-semibold ${t.side === 'BUY' ? 'text-up' : 'text-down'}`}>{t.side === 'BUY' ? 'Achat' : 'Vente'}</span> {t.emoji} {t.symbol}
+                      <span className={`font-semibold ${t.side === 'BUY' ? 'text-up' : 'text-down'}`}>{t.side === 'BUY' ? 'Achat' : 'Vente'}</span> <Glyph name={t.emoji} /> {t.symbol}
                     </td>
                     <td className="py-2 pr-4 text-right">{qty(t.quantity)}</td>
                     <td className="py-2 pr-4 text-right">{money(t.cash)}</td>

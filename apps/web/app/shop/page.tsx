@@ -7,6 +7,8 @@ import { useMe, usePortfolio } from '@/lib/hooks';
 import { money } from '@/lib/format';
 import { CosmeticKind, Equipped, KIND_LABEL, Look, RARITY, ShopItem, useShop, withItem } from '@/lib/meta';
 import { Avatar, Name } from '@/components/PlayerTag';
+import { Glyph } from '@/lib/icons';
+import { Check, Lock } from '@phosphor-icons/react';
 
 const KINDS: CosmeticKind[] = ['FRAME', 'BANNER', 'TITLE', 'BADGE', 'NAME_EFFECT'];
 const SLOT: Record<Exclude<CosmeticKind, 'BADGE'>, 'frame' | 'banner' | 'title' | 'nameEffect'> = {
@@ -82,7 +84,7 @@ export default function ShopPage() {
             <Avatar look={shown} size="lg" />
             <p className="display mt-3 text-3xl font-bold">
               <Name username={me?.username ?? 'toi'} look={shown} />
-              <span className="ml-2 text-xl">{shown.badges.map((b) => b.icon).join(' ')}</span>
+              <span className="ml-2 inline-flex gap-1 align-middle text-xl">{shown.badges.map((b) => <Glyph key={b.name} name={b.icon} />)}</span>
             </p>
             <p className="text-sm uppercase tracking-widest text-ink-2">{shown.title ?? 'Sans titre'}</p>
           </div>
@@ -100,7 +102,7 @@ export default function ShopPage() {
                   aria-pressed={eq?.avatar === a}
                   className={`grid size-10 place-items-center text-xl ${eq?.avatar === a ? 'bg-ink' : 'hover:bg-paper-2'}`}
                 >
-                  {a}
+                  <Glyph name={a} className={eq?.avatar === a ? 'text-paper' : ''} />
                 </button>
               ))}
             </div>
@@ -140,10 +142,10 @@ export default function ShopPage() {
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   {i.owned ? (
                     <button className={`btn py-1.5 text-sm ${equipped ? 'bg-ink text-paper' : 'bg-paper'}`} onClick={() => toggle(i)}>
-                      {equipped ? 'Équipé ✓' : 'Équiper'}
+                      {equipped ? <><Check weight="bold" /> Équipé</> : 'Équiper'}
                     </button>
                   ) : locked ? (
-                    <span className="text-sm font-semibold">🔒 Succès : {i.unlockedBy ?? 'secret'}</span>
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold"><Lock weight="bold" /> Succès : {i.unlockedBy ?? 'secret'}</span>
                   ) : confirm === i.slug ? (
                     <>
                       <button className="btn bg-acid py-1.5 text-sm" onClick={() => buy(i)}>Payer {money(i.price!)}</button>
@@ -169,7 +171,7 @@ export default function ShopPage() {
 function lookOf(eq: Equipped | null | undefined, bySlug: Map<string, ShopItem>): Look {
   const get = (s: string | null | undefined) => (s ? bySlug.get(s) : undefined);
   return {
-    avatar: eq?.avatar ?? '🙂',
+    avatar: eq?.avatar ?? 'Smiley',
     frame: get(eq?.frame)?.data.style ?? null,
     banner: get(eq?.banner)?.data.style ?? null,
     title: get(eq?.title)?.data.text ?? null,
@@ -193,7 +195,7 @@ function Preview({ item, base, username }: { item: ShopItem; base: Look; usernam
     case 'TITLE':
       return <div className={`${box} bg-paper-2`}><span className="display px-4 text-center text-3xl font-bold">« {item.data.text} »</span></div>;
     case 'BADGE':
-      return <div className={`${box} bg-paper`}><span className="text-6xl">{item.data.icon}</span></div>;
+      return <div className={`${box} bg-paper`}><span className="text-6xl"><Glyph name={item.data.icon} /></span></div>;
     case 'NAME_EFFECT':
       return <div className={`${box} bg-paper`}><span className="display text-4xl font-extrabold"><Name username={username} look={look} /></span></div>;
   }

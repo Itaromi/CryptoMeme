@@ -9,6 +9,7 @@ import { Farm, Item, KIND_SHORT, modelSpecs, useFarm, usePools, watts } from '@/
 import { MiningNav } from '@/components/mining/MiningNav';
 import { RigBuilder } from '@/components/mining/RigBuilder';
 import { RigRow } from '@/components/mining/RigRow';
+import { Lightning } from '@phosphor-icons/react';
 
 const LOG_STYLE: Record<string, string> = {
   FIRE: 'font-bold text-down',
@@ -46,7 +47,7 @@ export default function MiningPage() {
 
       {farm.powerCut && (
         <p className="mb-6 border-2 border-down bg-down-bg p-4 font-semibold">
-          ⚡ Coupure de courant : tu n’avais plus de cash pour payer l’électricité. Rentre du cash (vends des coins) puis redémarre tes rigs.
+          <Lightning weight="fill" className="mr-1 inline align-[-0.15em]" />Coupure de courant : tu n’avais plus de cash pour payer l’électricité. Rentre du cash (vends des coins) puis redémarre tes rigs.
         </p>
       )}
 

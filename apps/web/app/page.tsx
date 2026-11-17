@@ -7,6 +7,7 @@ import { useAssets, useMe } from '@/lib/hooks';
 import { money, pct, tone } from '@/lib/format';
 import { EventFeed } from '@/components/EventFeed';
 import { LivePrice } from '@/components/LivePrice';
+import { Glyph } from '@/lib/icons';
 
 interface Board {
   season: { name: string };
@@ -49,7 +50,7 @@ export default function Home() {
             <Link href={`/market/${top.symbol}`} className="block border-2 border-ink bg-up-bg p-5 hover:bg-paper-2">
               <p className="text-xs font-bold uppercase tracking-widest">En feu aujourd'hui</p>
               <p className="display mt-2 text-4xl font-bold">
-                {top.emoji} {top.name}
+                <Glyph name={top.emoji} color={top.color} /> {top.name}
               </p>
               <p className="num mt-1 text-lg">
                 <LivePrice value={top.price} /> <span className={`font-semibold ${tone(top.change24h)}`}>{pct(top.change24h)}</span>
@@ -60,7 +61,7 @@ export default function Home() {
             <Link href={`/market/${flop.symbol}`} className="block border-2 border-ink bg-down-bg p-5 hover:bg-paper-2">
               <p className="text-xs font-bold uppercase tracking-widest">Dans le rouge</p>
               <p className="display mt-2 text-4xl font-bold">
-                {flop.emoji} {flop.name}
+                <Glyph name={flop.emoji} color={flop.color} /> {flop.name}
               </p>
               <p className="num mt-1 text-lg">
                 <LivePrice value={flop.price} /> <span className={`font-semibold ${tone(flop.change24h)}`}>{pct(flop.change24h)}</span>

@@ -6,6 +6,7 @@ import { compactMoney, pct, REGIME_LABEL, TIER_LABEL, tone } from '@/lib/format'
 import { LivePrice } from '@/components/LivePrice';
 import { Spark } from '@/components/Spark';
 import { EventFeed } from '@/components/EventFeed';
+import { Glyph } from '@/lib/icons';
 
 const FILTERS = [
   { id: 'ALL', label: 'Tout' },
@@ -37,7 +38,7 @@ export default function MarketPage() {
               <p className="mt-2 text-ink-2">
                 La star du jour :{' '}
                 <Link href={`/market/${movers.symbol}`} className="font-semibold text-ink underline">
-                  {movers.emoji} {movers.name}
+                  <Glyph name={movers.emoji} color={movers.color} /> {movers.name}
                 </Link>{' '}
                 <span className={`num font-semibold ${tone(movers.change24h)}`}>{pct(movers.change24h)}</span>
               </p>
@@ -85,7 +86,7 @@ export default function MarketPage() {
                   <td className="py-3 pr-4">
                     <Link href={`/market/${a.symbol}`} className="flex items-center gap-3">
                       <span className="grid size-9 place-items-center text-xl" style={{ background: `color-mix(in oklch, ${a.color} 30%, transparent)` }}>
-                        {a.emoji}
+                        <Glyph name={a.emoji} color={a.color} />
                       </span>
                       <span>
                         <span className="block font-semibold group-hover:underline">{a.name}</span>

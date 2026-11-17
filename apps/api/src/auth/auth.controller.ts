@@ -1,3 +1,4 @@
+import { clientIp } from '../common/security';
 import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
@@ -23,7 +24,7 @@ export class AuthController {
   ) {}
 
   private meta(req: Request) {
-    return { ip: req.ip, userAgent: req.headers['user-agent'] };
+    return { ip: clientIp(req), userAgent: req.headers['user-agent'] };
   }
 
   private setCookies(res: Response, s: { accessToken: string; refreshToken: string; accessTtlMs: number }) {

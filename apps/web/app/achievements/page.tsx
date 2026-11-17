@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useMe } from '@/lib/hooks';
 import { TIER, useAchievements } from '@/lib/meta';
+import { Glyph } from '@/lib/icons';
 
 export default function AchievementsPage() {
   const { data } = useAchievements();
@@ -31,8 +32,8 @@ export default function AchievementsPage() {
           const done = !!a.unlockedAt;
           return (
             <li key={a.slug} className={`flex items-start gap-4 border-b border-line py-4 ${done ? '' : 'text-ink-2'}`}>
-              <span className={`grid size-14 shrink-0 place-items-center border-2 text-3xl ${done ? `border-ink ${TIER[a.tier].cls}` : 'border-dashed border-ink-3 grayscale'}`} aria-hidden>
-                {a.icon}
+              <span className={`grid size-14 shrink-0 place-items-center border-2 text-3xl ${done ? `border-ink ${TIER[a.tier].cls}` : 'border-dashed border-ink-3 opacity-60'}`} aria-hidden>
+                <Glyph name={a.icon} />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-baseline gap-x-2">

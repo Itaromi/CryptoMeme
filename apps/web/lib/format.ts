@@ -33,8 +33,8 @@ export const ago = (d: string | number | Date) => {
 export const REGIME_LABEL: Record<string, string> = {
   CALM: 'Calme plat',
   NORMAL: 'Normal',
-  HYPE: 'Hype 🚀',
-  PANIC: 'Panique 🔥',
+  HYPE: 'Hype',
+  PANIC: 'Panique',
 };
 
 export const TIER_LABEL: Record<string, string> = {

@@ -8,8 +8,8 @@ import { D, money } from '../common/decimal';
 import { applyCash } from '../economy/ledger';
 import { NotificationInput, NotificationsService } from '../economy/notifications';
 
-/** Avatars gratuits proposés à tous. */
-export const AVATARS = ['🙂', '😎', '🤑', '🤡', '🐸', '🦊', '🐼', '🐵', '🦄', '🐙', '👽', '🤖', '🧙', '🥷', '🧛', '🐶', '🐱', '🦈', '🦍', '🍌'];
+export { AVATARS } from './catalog';
+import { AVATARS } from './catalog';
 
 export interface EquipInput {
   avatar?: string;
@@ -174,7 +174,7 @@ export class MetaService {
           slug: a.slug,
           name: secret ? '???' : a.name,
           description: secret ? 'Succès secret. Continue de jouer… ou de perdre.' : a.description,
-          icon: secret ? '❔' : a.icon,
+          icon: secret ? 'Spiral' : a.icon,
           tier: a.tier,
           hidden: a.hidden,
           rewardSlug: secret ? null : a.rewardSlug,
@@ -201,7 +201,7 @@ export class MetaService {
       notes.push({
         userId,
         type: 'ACHIEVEMENT',
-        title: `${a.icon} Succès débloqué : ${a.name}`,
+        title: `Succès débloqué : ${a.name}`,
         body: `${a.description}${reward ? ` Récompense : ${reward.name}.` : ''}`,
         link: '/achievements',
       });

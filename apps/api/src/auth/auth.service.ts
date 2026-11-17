@@ -102,14 +102,22 @@ export class AuthService {
   private async consumeUserToken(raw: string, kind: TokenKind) {
     const t = await this.prisma.userToken.findUnique({ where: { tokenHash: sha256(raw) } });
     if (!t || t.kind !== kind || t.usedAt || t.expiresAt < new Date()) throw new BadRequestException('Lien invalide ou expiré');
-    await this.prisma.userToken.update({ where: { id: t.id }, data: { usedAt: new Date() } });
+    // Usage unique, même en cas de double clic simultané
+    const used = await this.prisma.userToken.updateMany({ where: { id: t.id, usedAt: null }, data: { usedAt: new Date() } });
+    if (!used.count) throw new BadRequestException('Lien invalide ou expiré');
     return t.userId;
   }
 
   async sendVerification(userId: string, email: string) {
     const raw = await this.createUserToken(userId, 'EMAIL_VERIFY', 48 * 3600 * 1000);
     const url = `${this.config.get('WEB_URL')}/verify?token=${raw}`;
-    await this.mail.send(email, 'Confirme ton email — CryptoMeme', `Bienvenue sur CryptoMeme ! Confirme ton email : ${url}`);
+    await this.mail.send(email, {
+      subject: 'Confirme ton e-mail — CryptoMeme',
+      heading: 'Bienvenue sur le marché !',
+      paragraphs: ['Tu as 10 000 $ fictifs, des cryptos absurdes et une saison pour finir premier.', 'Confirme ton adresse pour sécuriser ton compte (et pouvoir récupérer ton mot de passe).'],
+      cta: { label: 'Confirmer mon e-mail', url },
+      footnote: 'Ce lien expire dans 48 heures.',
+    });
   }
 
   async verifyEmail(raw: string) {
@@ -122,7 +130,13 @@ export class AuthService {
     if (!user) return; // ne révèle pas si l'email existe
     const raw = await this.createUserToken(user.id, 'PASSWORD_RESET', 3600 * 1000);
     const url = `${this.config.get('WEB_URL')}/reset?token=${raw}`;
-    await this.mail.send(user.email, 'Réinitialisation du mot de passe — CryptoMeme', `Réinitialise ton mot de passe (valable 1 h) : ${url}`);
+    await this.mail.send(user.email, {
+      subject: 'Réinitialisation du mot de passe — CryptoMeme',
+      heading: 'Mot de passe oublié ?',
+      paragraphs: [`Quelqu'un (toi, espérons-le) a demandé à réinitialiser le mot de passe du compte @${user.username}.`],
+      cta: { label: 'Choisir un nouveau mot de passe', url },
+      footnote: 'Ce lien expire dans 1 heure et ne fonctionne qu’une fois.',
+    });
   }
 
   async resetPassword(raw: string, password: string) {
@@ -131,5 +145,12 @@ export class AuthService {
       this.prisma.user.update({ where: { id: userId }, data: { passwordHash: await argon2.hash(password, { type: argon2.argon2id }) } }),
       this.prisma.refreshToken.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } }),
     ]);
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { email: true, username: true } });
+    await this.mail.send(user.email, {
+      subject: 'Ton mot de passe a été modifié — CryptoMeme',
+      heading: 'Mot de passe modifié',
+      paragraphs: [`Le mot de passe du compte @${user.username} vient d'être changé et toutes tes sessions ont été déconnectées.`, "Si ce n'est pas toi, réinitialise-le immédiatement depuis la page « Mot de passe oublié »."],
+      cta: { label: 'Me connecter', url: `${this.config.get('WEB_URL')}/login` },
+    });
   }
 }

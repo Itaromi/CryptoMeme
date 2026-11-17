@@ -1,4 +1,5 @@
 import type { Look } from '@/lib/meta';
+import { Glyph } from '@/lib/icons';
 
 const SIZES = {
   sm: { box: 'size-8 text-base', name: 'font-semibold', title: 'text-[11px]' },
@@ -10,7 +11,7 @@ const SIZES = {
 export function Avatar({ look, size = 'sm' }: { look?: Look | null; size?: keyof typeof SIZES }) {
   return (
     <span className={`frame shrink-0 ${SIZES[size].box} ${look?.frame ? `frame-${look.frame}` : ''}`} aria-hidden>
-      {look?.avatar ?? '🙂'}
+      <Glyph name={look?.avatar ?? 'Smiley'} />
     </span>
   );
 }
@@ -30,7 +31,7 @@ export function PlayerTag({ username, look, size = 'sm' }: { username: string; l
         <span className="flex items-center gap-1.5">
           <Name username={username} look={look} className={`truncate ${s.name}`} />
           {look?.badges.map((b) => (
-            <span key={b.name} title={b.name} className="text-sm leading-none">{b.icon}</span>
+            <span key={b.name} title={b.name} className="text-sm leading-none"><Glyph name={b.icon} /></span>
           ))}
         </span>
         {look?.title && <span className={`block uppercase tracking-widest text-ink-2 ${s.title}`}>{look.title}</span>}

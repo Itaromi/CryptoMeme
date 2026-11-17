@@ -58,7 +58,9 @@ export interface Portfolio {
 // ─── Socket temps réel ──────────────────────────────────────────────
 let socket: Socket | null = null;
 export function getSocket() {
-  socket ??= io(process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:4000', { transports: ['websocket'] });
+  // Prod : même origine (le reverse proxy route /socket.io vers l'API). Dev : l'API écoute sur :4000.
+  const url = process.env.NEXT_PUBLIC_WS_URL || (window.location.port === '3000' ? 'http://localhost:4000' : undefined);
+  socket ??= url ? io(url, { transports: ['websocket'] }) : io({ transports: ['websocket'] });
   return socket;
 }
 

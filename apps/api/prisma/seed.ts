@@ -1,11 +1,11 @@
 import { PrismaClient, AssetTier } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { DEFAULT_PARAMS, STOCK_PARAMS, initialState } from '@cryptomeme/engine';
-import { QUARTER_MS, STARTING_CASH } from '@cryptomeme/shared';
+import { ICON_NAMES, QUARTER_MS, STARTING_CASH } from '@cryptomeme/shared';
 import { CATALOG, FACILITY_TYPES, NETWORKS, POOLS } from './catalog';
 import { BANKS, EVENT_TYPES } from './economy-catalog';
 import { COMPANIES } from '../src/stocks/catalog';
-import { ACHIEVEMENTS, COSMETICS } from '../src/meta/catalog';
+import { ACHIEVEMENTS, AVATARS, COSMETICS } from '../src/meta/catalog';
 
 const prisma = new PrismaClient();
 
@@ -16,18 +16,18 @@ const LIQUIDITY: Record<AssetTier, number> = {
 };
 
 const COINS: Array<{ symbol: string; name: string; tier: AssetTier; price: number; emoji: string; color: string; description: string }> = [
-  { symbol: 'BTCN', name: 'Bitconnard', tier: 'BLUE_CHIP', price: 42_069, emoji: '🟠', color: '#f7931a', description: "La crypto originelle. Créée par un inconnu qui a perdu son mot de passe depuis." },
-  { symbol: 'ETN', name: 'Ethernul', tier: 'BLUE_CHIP', price: 2_420, emoji: '💎', color: '#8b9dff', description: 'Smart contracts, gas fees et promesses de mise à jour « le mois prochain ».' },
-  { symbol: 'DCC', name: 'DogeCoinCoin', tier: 'MID_CAP', price: 0.69, emoji: '🐕', color: '#c2a633', description: "Un chien. Deux fois. Pourquoi pas." },
-  { symbol: 'BAGT', name: 'Baguette Token', tier: 'MID_CAP', price: 1.2, emoji: '🥖', color: '#e0a96d', description: 'Adossé à la baguette tradition. Grève prévue tous les jeudis.' },
-  { symbol: 'NFTRUC', name: 'NFTruc', tier: 'MID_CAP', price: 13.37, emoji: '🖼️', color: '#ff6ad5', description: "Un JPEG de singe qui s'ennuie, mais en token." },
-  { symbol: 'STONKS', name: 'Stonks Coin', tier: 'MID_CAP', price: 4.2, emoji: '📈', color: '#22c55e', description: 'Only up. (Avertissement : pas only up.)' },
-  { symbol: 'MAMIE', name: 'MamieCoin', tier: 'MID_CAP', price: 0.12, emoji: '👵', color: '#d8b4fe', description: "Mamie a tout mis dedans. Ne la décevez pas." },
-  { symbol: 'TWEET', name: 'ElonsTweet', tier: 'SHITCOIN', price: 0.0042, emoji: '🐦', color: '#38bdf8', description: "Son cours dépend d'un seul homme et de son humeur à 3 h du matin." },
-  { symbol: 'SAFEMM', name: 'SafeMoonMoon', tier: 'SHITCOIN', price: 0.000069, emoji: '🌙', color: '#facc15', description: 'Deux fois plus safe que SafeMoon. Donc pas du tout.' },
-  { symbol: 'RUGINU', name: 'RugPull Inu', tier: 'SHITCOIN', price: 0.0001, emoji: '🧶', color: '#f97316', description: 'Le nom est un avertissement. Personne ne lit les avertissements.' },
-  { symbol: 'KEBAB', name: 'KebabFi', tier: 'SHITCOIN', price: 0.33, emoji: '🥙', color: '#ef4444', description: 'DeFi salade-tomate-oignon. Rendement en sauce blanche.' },
-  { symbol: 'HODL', name: 'HODL Forever', tier: 'SHITCOIN', price: 0.015, emoji: '🙌', color: '#14b8a6', description: 'Mains de diamant obligatoires. Mains de papier punies.' },
+  { symbol: 'BTCN', name: 'Bitconnard', tier: 'BLUE_CHIP', price: 42_069, emoji: 'CurrencyBtc', color: '#f7931a', description: "La crypto originelle. Créée par un inconnu qui a perdu son mot de passe depuis." },
+  { symbol: 'ETN', name: 'Ethernul', tier: 'BLUE_CHIP', price: 2_420, emoji: 'CurrencyEth', color: '#8b9dff', description: 'Smart contracts, gas fees et promesses de mise à jour « le mois prochain ».' },
+  { symbol: 'DCC', name: 'DogeCoinCoin', tier: 'MID_CAP', price: 0.69, emoji: 'Dog', color: '#c2a633', description: "Un chien. Deux fois. Pourquoi pas." },
+  { symbol: 'BAGT', name: 'Baguette Token', tier: 'MID_CAP', price: 1.2, emoji: 'Grains', color: '#e0a96d', description: 'Adossé à la baguette tradition. Grève prévue tous les jeudis.' },
+  { symbol: 'NFTRUC', name: 'NFTruc', tier: 'MID_CAP', price: 13.37, emoji: 'Cube', color: '#ff6ad5', description: "Un JPEG de singe qui s'ennuie, mais en token." },
+  { symbol: 'STONKS', name: 'Stonks Coin', tier: 'MID_CAP', price: 4.2, emoji: 'TrendUp', color: '#22c55e', description: 'Only up. (Avertissement : pas only up.)' },
+  { symbol: 'MAMIE', name: 'MamieCoin', tier: 'MID_CAP', price: 0.12, emoji: 'Yarn', color: '#d8b4fe', description: "Mamie a tout mis dedans. Ne la décevez pas." },
+  { symbol: 'TWEET', name: 'ElonsTweet', tier: 'SHITCOIN', price: 0.0042, emoji: 'Bird', color: '#38bdf8', description: "Son cours dépend d'un seul homme et de son humeur à 3 h du matin." },
+  { symbol: 'SAFEMM', name: 'SafeMoonMoon', tier: 'SHITCOIN', price: 0.000069, emoji: 'MoonStars', color: '#facc15', description: 'Deux fois plus safe que SafeMoon. Donc pas du tout.' },
+  { symbol: 'RUGINU', name: 'RugPull Inu', tier: 'SHITCOIN', price: 0.0001, emoji: 'PawPrint', color: '#f97316', description: 'Le nom est un avertissement. Personne ne lit les avertissements.' },
+  { symbol: 'KEBAB', name: 'KebabFi', tier: 'SHITCOIN', price: 0.33, emoji: 'Pepper', color: '#ef4444', description: 'DeFi salade-tomate-oignon. Rendement en sauce blanche.' },
+  { symbol: 'HODL', name: 'HODL Forever', tier: 'SHITCOIN', price: 0.015, emoji: 'HandFist', color: '#14b8a6', description: 'Mains de diamant obligatoires. Mains de papier punies.' },
 ];
 
 
@@ -46,7 +46,10 @@ async function main() {
   for (const c of COINS) {
     const liq = LIQUIDITY[c.tier];
     const exists = await prisma.asset.findUnique({ where: { symbol: c.symbol } });
-    if (exists) continue;
+    if (exists) {
+      await prisma.asset.update({ where: { symbol: c.symbol }, data: { emoji: c.emoji } });
+      continue;
+    }
     await prisma.asset.create({
       data: {
         symbol: c.symbol,
@@ -64,6 +67,16 @@ async function main() {
     });
   }
 
+  // ─── Icônes : toute ancienne valeur emoji est remplacée par une icône
+  const icons = new Set<string>(ICON_NAMES);
+  for (const a of await prisma.asset.findMany({ select: { id: true, emoji: true } })) {
+    if (!icons.has(a.emoji)) await prisma.asset.update({ where: { id: a.id }, data: { emoji: 'Coin' } });
+  }
+  for (const c of await prisma.creation.findMany({ select: { id: true, emoji: true } })) {
+    if (!icons.has(c.emoji)) await prisma.creation.update({ where: { id: c.id }, data: { emoji: 'Coin' } });
+  }
+  await prisma.user.updateMany({ where: { avatar: { notIn: AVATARS } }, data: { avatar: 'Smiley' } });
+
   // ─── Méta : cosmétiques et succès ─────────────────────────────────
   for (const [i, c] of COSMETICS.entries()) {
     const data = { ...c, sortOrder: i, data: c.data as object };
@@ -77,7 +90,10 @@ async function main() {
   // ─── Bourse ───────────────────────────────────────────────────────
   const STOCK_LIQUIDITY: Partial<Record<AssetTier, number>> = { BLUE_CHIP: 3_000_000, MID_CAP: 800_000 };
   for (const [i, c] of COMPANIES.entries()) {
-    if (await prisma.asset.findUnique({ where: { symbol: c.symbol } })) continue;
+    if (await prisma.asset.findUnique({ where: { symbol: c.symbol } })) {
+      await prisma.asset.update({ where: { symbol: c.symbol }, data: { emoji: c.emoji } });
+      continue;
+    }
     const liq = STOCK_LIQUIDITY[c.tier] ?? 500_000;
     const eps = c.price / (4 * c.pe);
     await prisma.asset.create({
@@ -147,6 +163,10 @@ async function main() {
   const email = process.env.SEED_ADMIN_EMAIL;
   const password = process.env.SEED_ADMIN_PASSWORD;
   if (email && password) {
+    // En production, pas de mot de passe admin faible (le seed refuse de créer le compte)
+    if (process.env.NODE_ENV === 'production' && (password.length < 14 || /admin|1234|password/i.test(password))) {
+      throw new Error('SEED_ADMIN_PASSWORD trop faible pour la production (14 caractères minimum, pas de « admin »/« 1234 »).');
+    }
     await prisma.user.upsert({
       where: { email },
       update: { role: 'ADMIN' },

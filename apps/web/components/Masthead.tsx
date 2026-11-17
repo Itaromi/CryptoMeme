@@ -60,11 +60,12 @@ export function Masthead() {
   return (
     <header className="mb-8">
       <TickerTape />
-      <div className="mx-auto flex max-w-[1400px] flex-wrap items-end justify-between gap-x-8 gap-y-3 border-b-2 border-ink px-4 py-4 sm:px-8">
-        <Link href="/" className="display text-4xl font-extrabold sm:text-5xl">
+      {/* Logo à gauche, compte à droite ; le menu se place entre les deux sur grand écran, en dessous sinon */}
+      <div className="grid grid-cols-[1fr_auto] items-center gap-x-8 gap-y-3 border-b-2 border-ink px-4 py-4 sm:px-8 2xl:px-12 xl:grid-cols-[auto_1fr_auto]">
+        <Link href="/" className="display order-1 shrink-0 text-4xl font-extrabold sm:text-5xl">
           Crypto<span className="bg-acid px-1">Meme</span>
         </Link>
-        <nav className="flex flex-wrap items-center gap-1 text-sm font-semibold">
+        <nav className="order-3 col-span-2 -mx-1 flex items-center gap-1 overflow-x-auto text-sm font-semibold whitespace-nowrap xl:order-2 xl:col-span-1 xl:justify-center">
           {NAV.map((n) => (
             <Link
               key={n.href}
@@ -80,11 +81,11 @@ export function Masthead() {
             </Link>
           )}
         </nav>
-        <div className="flex items-center gap-4 text-sm">
+        <div className="order-2 flex items-center justify-end gap-4 text-sm xl:order-3">
           {me ? (
             <>
               {pf && (
-                <div className="num text-right leading-tight">
+                <div className="num border-r border-line pr-4 text-right leading-tight">
                   <div className="text-xs text-ink-2">Patrimoine</div>
                   <div className="font-semibold">{money(pf.netWorth)}</div>
                 </div>
@@ -93,7 +94,7 @@ export function Masthead() {
               <Link href={`/u/${me.username}`} className="font-semibold underline decoration-2 underline-offset-4 hover:bg-acid">
                 @{me.username}
               </Link>
-              <button onClick={logout} className="text-ink-2 hover:text-ink">
+              <button onClick={logout} className="text-ink-2 hover:text-ink" title="Se déconnecter">
                 Déconnexion
               </button>
             </>

@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <Masthead />
           <EventBanner />
-          <main className="mx-auto w-full max-w-[1400px] px-4 pb-24 sm:px-8">{children}</main>
+          <main className="w-full px-4 pb-24 sm:px-8 2xl:px-12">{children}</main>
         </Providers>
       </body>
     </html>

@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { money } from '@/lib/format';
 import { ALGO_LABEL, hash, Item, Kind, KIND_SHORT, modelSpecs, RigStatsView, tempTone, watts } from '@/lib/mining';
+import { Check, X } from '@phosphor-icons/react';
 
 interface Preview extends RigStatsView {
   revenue: Array<{ symbol: string; algo: string; hashrate: number; usdPerDay: number }>;
@@ -97,10 +98,10 @@ export function RigBuilder({ rackId, inventory, onDone }: { rackId: string; inve
           <>
             {p.errors.length > 0 ? (
               <ul className="space-y-1 text-down">
-                {p.errors.map((e) => <li key={e}>✕ {e}</li>)}
+                {p.errors.map((e) => <li key={e} className="flex items-start gap-1.5"><X weight="bold" className="mt-1 shrink-0" />{e}</li>)}
               </ul>
             ) : (
-              <p className="font-semibold text-up">✓ Configuration valide</p>
+              <p className="font-semibold text-up"><Check weight="bold" className="mr-1 inline align-[-0.15em]" />Configuration valide</p>
             )}
             <Bar label="Alimentation" value={p.power} max={p.psuCapacity} fmt={watts} />
             <Bar label="Refroidissement" value={p.power} max={p.coolingCapacity} fmt={watts} />

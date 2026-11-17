@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ago, money } from '@/lib/format';
+import { Glyph } from '@/lib/icons';
 
 interface Row {
   id: string;
@@ -61,7 +62,7 @@ function Item({ c }: { c: Row }) {
     <li className="border-2 border-ink p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid size-12 place-items-center text-3xl" style={{ background: `color-mix(in oklch, ${c.color} 35%, transparent)` }}>{c.emoji}</span>
+          <span className="grid size-12 place-items-center text-3xl" style={{ background: `color-mix(in oklch, ${c.color} 35%, transparent)` }}><Glyph name={c.emoji} color={c.color} /></span>
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-ink-2">{KIND[c.kind]} · par @{c.username} · {ago(c.createdAt)}</p>
             <p className="text-xl font-bold">{c.name} {c.symbol && <span className="text-ink-2">({c.symbol})</span>}</p>

@@ -1,5 +1,8 @@
 import { AchievementTier, CosmeticKind, Rarity } from '@prisma/client';
 
+/** Avatars gratuits proposés à tous. */
+export const AVATARS = ['Smiley', 'SmileyWink', 'SmileySticker', 'SmileyXEyes', 'SmileyMelting', 'SmileyNervous', 'SmileyAngry', 'Sunglasses', 'MaskHappy', 'Detective', 'Alien', 'Robot', 'Ghost', 'Skull', 'Dog', 'Cat', 'Bird', 'Butterfly', 'Horse', 'Rabbit'];
+
 export interface CosmeticSeed {
   slug: string;
   kind: CosmeticKind;
@@ -46,17 +49,17 @@ export const COSMETICS: CosmeticSeed[] = [
   { slug: 'title-diamond', kind: 'TITLE', name: 'Mains de diamant', description: '−90 % et toujours là.', rarity: 'EPIC', price: null, data: { text: 'Mains de diamant' } },
 
   // ── Badges
-  { slug: 'badge-rocket', kind: 'BADGE', name: 'Fusée', description: 'To the moon.', rarity: 'COMMON', price: P.COMMON, data: { icon: '🚀' } },
-  { slug: 'badge-ape', kind: 'BADGE', name: 'Singe', description: 'Ape together strong.', rarity: 'COMMON', price: P.COMMON, data: { icon: '🦍' } },
-  { slug: 'badge-bull', kind: 'BADGE', name: 'Taureau', description: 'Ça monte.', rarity: 'COMMON', price: P.COMMON, data: { icon: '🐂' } },
-  { slug: 'badge-bear', kind: 'BADGE', name: 'Ours', description: 'Ça descend.', rarity: 'COMMON', price: P.COMMON, data: { icon: '🐻' } },
-  { slug: 'badge-paper', kind: 'BADGE', name: 'Mains de papier', description: 'Assume.', rarity: 'RARE', price: P.RARE, data: { icon: '🧻' } },
-  { slug: 'badge-casino', kind: 'BADGE', name: 'Machine à sous', description: 'Ce n’est pas du trading, c’est du loisir.', rarity: 'RARE', price: P.RARE, data: { icon: '🎰' } },
-  { slug: 'badge-whale', kind: 'BADGE', name: 'Baleine', description: 'Gros portefeuille, gros ego.', rarity: 'EPIC', price: P.EPIC, data: { icon: '🐳' } },
-  { slug: 'badge-crown', kind: 'BADGE', name: 'Couronne', description: 'Le badge le plus cher du jeu. C’est tout.', rarity: 'LEGENDARY', price: P.LEGENDARY, data: { icon: '👑' } },
-  { slug: 'badge-diamond', kind: 'BADGE', name: 'Diamant', description: 'Mains de diamant certifiées.', rarity: 'EPIC', price: null, data: { icon: '💎' } },
-  { slug: 'badge-fire', kind: 'BADGE', name: 'Feu', description: 'Ta rig a brûlé. Tu as gardé ce badge.', rarity: 'RARE', price: null, data: { icon: '🔥' } },
-  { slug: 'badge-pick', kind: 'BADGE', name: 'Pioche', description: 'Mineur confirmé.', rarity: 'RARE', price: null, data: { icon: '⛏️' } },
+  { slug: 'badge-rocket', kind: 'BADGE', name: 'Fusée', description: 'To the moon.', rarity: 'COMMON', price: P.COMMON, data: { icon: 'Rocket' } },
+  { slug: 'badge-ape', kind: 'BADGE', name: 'Singe', description: 'Ape together strong.', rarity: 'COMMON', price: P.COMMON, data: { icon: 'HandFist' } },
+  { slug: 'badge-bull', kind: 'BADGE', name: 'Taureau', description: 'Ça monte.', rarity: 'COMMON', price: P.COMMON, data: { icon: 'Cow' } },
+  { slug: 'badge-bear', kind: 'BADGE', name: 'Ours', description: 'Ça descend.', rarity: 'COMMON', price: P.COMMON, data: { icon: 'TrendDown' } },
+  { slug: 'badge-paper', kind: 'BADGE', name: 'Mains de papier', description: 'Assume.', rarity: 'RARE', price: P.RARE, data: { icon: 'ToiletPaper' } },
+  { slug: 'badge-casino', kind: 'BADGE', name: 'Machine à sous', description: 'Ce n’est pas du trading, c’est du loisir.', rarity: 'RARE', price: P.RARE, data: { icon: 'DiceFive' } },
+  { slug: 'badge-whale', kind: 'BADGE', name: 'Baleine', description: 'Gros portefeuille, gros ego.', rarity: 'EPIC', price: P.EPIC, data: { icon: 'Waves' } },
+  { slug: 'badge-crown', kind: 'BADGE', name: 'Couronne', description: 'Le badge le plus cher du jeu. C’est tout.', rarity: 'LEGENDARY', price: P.LEGENDARY, data: { icon: 'Crown' } },
+  { slug: 'badge-diamond', kind: 'BADGE', name: 'Diamant', description: 'Mains de diamant certifiées.', rarity: 'EPIC', price: null, data: { icon: 'Diamond' } },
+  { slug: 'badge-fire', kind: 'BADGE', name: 'Feu', description: 'Ta rig a brûlé. Tu as gardé ce badge.', rarity: 'RARE', price: null, data: { icon: 'Fire' } },
+  { slug: 'badge-pick', kind: 'BADGE', name: 'Pioche', description: 'Mineur confirmé.', rarity: 'RARE', price: null, data: { icon: 'Shovel' } },
 
   // ── Effets de pseudo
   { slug: 'name-underline', kind: 'NAME_EFFECT', name: 'Surligné', description: 'Ton pseudo au fluo.', rarity: 'COMMON', price: P.COMMON, data: { style: 'highlight' } },
@@ -78,38 +81,38 @@ export interface AchievementSeed {
 
 export const ACHIEVEMENTS: AchievementSeed[] = [
   // Trading
-  { slug: 'first-trade', name: 'Premier ordre', description: 'Passer son premier ordre.', icon: '🖱️', tier: 'BRONZE' },
-  { slug: 'hyperactive', name: 'Hyperactif', description: 'Passer 100 ordres dans une saison.', icon: '⚡', tier: 'SILVER' },
-  { slug: 'big-volume', name: 'Gros bras', description: 'Atteindre 1 000 000 $ de volume échangé dans une saison.', icon: '💪', tier: 'GOLD' },
-  { slug: 'profit-10k', name: 'Ça paye', description: 'Encaisser 10 000 $ de plus-values dans une saison.', icon: '💰', tier: 'SILVER' },
-  { slug: 'big-win', name: 'Coup de maître', description: 'Gagner 5 000 $ sur une seule vente.', icon: '🎯', tier: 'GOLD' },
-  { slug: 'big-loss', name: 'Aïe', description: 'Perdre 5 000 $ sur une seule vente.', icon: '💀', tier: 'BRONZE', hidden: true },
-  { slug: 'diamond-hands', name: 'Mains de diamant', description: 'Garder une position à −90 % sans vendre.', icon: '💎', tier: 'GOLD', rewardSlug: 'badge-diamond' },
-  { slug: 'diamond-hands-title', name: 'Diamant pur', description: 'Garder une position à −95 % de plus de 1 000 $ de coût.', icon: '💠', tier: 'LEGENDARY', hidden: true, rewardSlug: 'title-diamond' },
-  { slug: 'rug-survivor', name: 'Survivant du rug', description: 'Détenir une coin au moment de son rug pull.', icon: '🧶', tier: 'SILVER', rewardSlug: 'title-survivor' },
+  { slug: 'first-trade', name: 'Premier ordre', description: 'Passer son premier ordre.', icon: 'CursorClick', tier: 'BRONZE' },
+  { slug: 'hyperactive', name: 'Hyperactif', description: 'Passer 100 ordres dans une saison.', icon: 'Lightning', tier: 'SILVER' },
+  { slug: 'big-volume', name: 'Gros bras', description: 'Atteindre 1 000 000 $ de volume échangé dans une saison.', icon: 'Barbell', tier: 'GOLD' },
+  { slug: 'profit-10k', name: 'Ça paye', description: 'Encaisser 10 000 $ de plus-values dans une saison.', icon: 'Money', tier: 'SILVER' },
+  { slug: 'big-win', name: 'Coup de maître', description: 'Gagner 5 000 $ sur une seule vente.', icon: 'Target', tier: 'GOLD' },
+  { slug: 'big-loss', name: 'Aïe', description: 'Perdre 5 000 $ sur une seule vente.', icon: 'Skull', tier: 'BRONZE', hidden: true },
+  { slug: 'diamond-hands', name: 'Mains de diamant', description: 'Garder une position à −90 % sans vendre.', icon: 'Diamond', tier: 'GOLD', rewardSlug: 'badge-diamond' },
+  { slug: 'diamond-hands-title', name: 'Diamant pur', description: 'Garder une position à −95 % de plus de 1 000 $ de coût.', icon: 'Sparkle', tier: 'LEGENDARY', hidden: true, rewardSlug: 'title-diamond' },
+  { slug: 'rug-survivor', name: 'Survivant du rug', description: 'Détenir une coin au moment de son rug pull.', icon: 'Parachute', tier: 'SILVER', rewardSlug: 'title-survivor' },
   // Patrimoine & classement
-  { slug: 'first-100k', name: 'Six chiffres', description: 'Atteindre 100 000 $ de patrimoine.', icon: '📈', tier: 'SILVER' },
-  { slug: 'first-million', name: 'Premier million', description: 'Atteindre 1 000 000 $ de patrimoine.', icon: '🏦', tier: 'LEGENDARY', rewardSlug: 'title-millionaire' },
-  { slug: 'millionaire-title', name: 'Double million', description: 'Atteindre 2 000 000 $ de patrimoine.', icon: '🥇', tier: 'LEGENDARY', hidden: true, rewardSlug: 'name-gold' },
-  { slug: 'gold-frame', name: 'Coffre-fort', description: 'Atteindre 5 000 000 $ de patrimoine.', icon: '🪙', tier: 'LEGENDARY', hidden: true, rewardSlug: 'frame-gold' },
-  { slug: 'podium', name: 'Podium', description: 'Être dans le top 3 du classement (10 joueurs minimum).', icon: '🏆', tier: 'GOLD', rewardSlug: 'banner-podium' },
-  { slug: 'broke', name: 'Fauché', description: 'Tomber sous 100 $ de patrimoine.', icon: '🪫', tier: 'BRONZE', hidden: true },
+  { slug: 'first-100k', name: 'Six chiffres', description: 'Atteindre 100 000 $ de patrimoine.', icon: 'ChartLineUp', tier: 'SILVER' },
+  { slug: 'first-million', name: 'Premier million', description: 'Atteindre 1 000 000 $ de patrimoine.', icon: 'Bank', tier: 'LEGENDARY', rewardSlug: 'title-millionaire' },
+  { slug: 'millionaire-title', name: 'Double million', description: 'Atteindre 2 000 000 $ de patrimoine.', icon: 'Crown', tier: 'LEGENDARY', hidden: true, rewardSlug: 'name-gold' },
+  { slug: 'gold-frame', name: 'Coffre-fort', description: 'Atteindre 5 000 000 $ de patrimoine.', icon: 'Vault', tier: 'LEGENDARY', hidden: true, rewardSlug: 'frame-gold' },
+  { slug: 'podium', name: 'Podium', description: 'Être dans le top 3 du classement (10 joueurs minimum).', icon: 'Trophy', tier: 'GOLD', rewardSlug: 'banner-podium' },
+  { slug: 'broke', name: 'Fauché', description: 'Tomber sous 100 $ de patrimoine.', icon: 'BatteryWarning', tier: 'BRONZE', hidden: true },
   // Minage
-  { slug: 'first-rig', name: 'Mineur du dimanche', description: 'Monter sa première rig.', icon: '🛠️', tier: 'BRONZE' },
-  { slug: 'industrial', name: 'Ferme industrielle', description: 'Posséder 10 rigs en même temps.', icon: '🏭', tier: 'GOLD', rewardSlug: 'badge-pick' },
-  { slug: 'pyromane', name: 'Pyromane', description: 'Laisser une rig prendre feu.', icon: '🔥', tier: 'SILVER', hidden: true, rewardSlug: 'title-pyro' },
-  { slug: 'pyro-badge', name: 'Pompier volontaire', description: 'Survivre à 3 incendies dans une saison.', icon: '🧯', tier: 'GOLD', hidden: true, rewardSlug: 'badge-fire' },
-  { slug: 'arsonist', name: 'Incendiaire en série', description: 'Cinq incendies dans une saison. Les assureurs ont ta photo.', icon: '🧨', tier: 'LEGENDARY', hidden: true, rewardSlug: 'frame-flames' },
-  { slug: 'miner-10k', name: 'Ça creuse', description: 'Miner pour 10 000 $ de cryptos dans une saison.', icon: '⛏️', tier: 'SILVER' },
+  { slug: 'first-rig', name: 'Mineur du dimanche', description: 'Monter sa première rig.', icon: 'Wrench', tier: 'BRONZE' },
+  { slug: 'industrial', name: 'Ferme industrielle', description: 'Posséder 10 rigs en même temps.', icon: 'Factory', tier: 'GOLD', rewardSlug: 'badge-pick' },
+  { slug: 'pyromane', name: 'Pyromane', description: 'Laisser une rig prendre feu.', icon: 'Fire', tier: 'SILVER', hidden: true, rewardSlug: 'title-pyro' },
+  { slug: 'pyro-badge', name: 'Pompier volontaire', description: 'Survivre à 3 incendies dans une saison.', icon: 'FireExtinguisher', tier: 'GOLD', hidden: true, rewardSlug: 'badge-fire' },
+  { slug: 'arsonist', name: 'Incendiaire en série', description: 'Cinq incendies dans une saison. Les assureurs ont ta photo.', icon: 'Bomb', tier: 'LEGENDARY', hidden: true, rewardSlug: 'frame-flames' },
+  { slug: 'miner-10k', name: 'Ça creuse', description: 'Miner pour 10 000 $ de cryptos dans une saison.', icon: 'Shovel', tier: 'SILVER' },
   // Bourse
-  { slug: 'shareholder', name: 'Actionnaire', description: 'Détenir une action.', icon: '📜', tier: 'BRONZE' },
-  { slug: 'rentier', name: 'Rentier', description: 'Toucher 500 $ de dividendes dans une saison.', icon: '🛋️', tier: 'SILVER' },
-  { slug: 'takeover', name: 'Vendu au plus offrant', description: 'Être racheté lors d’une OPA.', icon: '🤝', tier: 'SILVER' },
-  { slug: 'bankrupt', name: 'Ruiné par procuration', description: 'Détenir une action qui fait faillite.', icon: '📉', tier: 'BRONZE', hidden: true },
+  { slug: 'shareholder', name: 'Actionnaire', description: 'Détenir une action.', icon: 'Scroll', tier: 'BRONZE' },
+  { slug: 'rentier', name: 'Rentier', description: 'Toucher 500 $ de dividendes dans une saison.', icon: 'Couch', tier: 'SILVER' },
+  { slug: 'takeover', name: 'Vendu au plus offrant', description: 'Être racheté lors d’une OPA.', icon: 'Handshake', tier: 'SILVER' },
+  { slug: 'bankrupt', name: 'Ruiné par procuration', description: 'Détenir une action qui fait faillite.', icon: 'ChartLineDown', tier: 'BRONZE', hidden: true },
   // Banques & fiscalité
-  { slug: 'premium', name: 'Compte premium', description: 'Ouvrir un compte dans une banque payante.', icon: '💳', tier: 'BRONZE' },
-  { slug: 'offshore', name: 'Évadé fiscal', description: 'Ouvrir un compte à la Banque Suisse Discrète.', icon: '🏔️', tier: 'GOLD' },
-  { slug: 'taxpayer', name: 'Contribuable modèle', description: 'Payer 1 000 $ de taxes dans une saison.', icon: '🧾', tier: 'SILVER' },
+  { slug: 'premium', name: 'Compte premium', description: 'Ouvrir un compte dans une banque payante.', icon: 'CreditCard', tier: 'BRONZE' },
+  { slug: 'offshore', name: 'Évadé fiscal', description: 'Ouvrir un compte à la Banque Suisse Discrète.', icon: 'Mountains', tier: 'GOLD' },
+  { slug: 'taxpayer', name: 'Contribuable modèle', description: 'Payer 1 000 $ de taxes dans une saison.', icon: 'Receipt', tier: 'SILVER' },
   // Boutique
-  { slug: 'fashion', name: 'Fashion victim', description: 'Posséder 5 cosmétiques.', icon: '🛍️', tier: 'SILVER' },
+  { slug: 'fashion', name: 'Fashion victim', description: 'Posséder 5 cosmétiques.', icon: 'Tote', tier: 'SILVER' },
 ];

@@ -1,0 +1,110 @@
+# CryptoMeme — pile de production (NAS, VPS…).
+#
+#   cd deploy
+#   cp .env.example .env   # puis remplis les secrets
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Un seul port exposé (HTTP_PORT, 8088 par défaut) : Caddy route /api et /socket.io vers l'API, le reste vers le site.
+# Le HTTPS est assuré en amont (tunnel Cloudflare). La base n'est jamais exposée hors du réseau Docker.
+
+name: cryptomeme
+
+x-hardening: &hardening
+  restart: unless-stopped
+  security_opt: ['no-new-privileges:true']
+  cap_drop: [ALL]
+  logging:
+    driver: json-file
+    options: { max-size: '10m', max-file: '3' }
+
+services:
+  db:
+    image: postgres:16-alpine
+    <<: *hardening
+    cap_drop: []  # postgres a besoin de changer d'utilisateur au démarrage
+    environment:
+      POSTGRES_USER: cryptomeme
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?définis POSTGRES_PASSWORD dans .env}
+      POSTGRES_DB: cryptomeme
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cryptomeme -d cryptomeme']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  api:
+    image: ${API_IMAGE:-ghcr.io/itaromi/cryptomeme-api:latest}
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    <<: *hardening
+    read_only: true
+    tmpfs: [/tmp]
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://cryptomeme:${POSTGRES_PASSWORD}@db:5432/cryptomeme?schema=public
+      JWT_SECRET: ${JWT_SECRET:?définis JWT_SECRET dans .env}
+      WEB_URL: ${WEB_URL:?définis WEB_URL dans .env}
+      TRUST_PROXY: 1
+      TRUST_CLOUDFLARE: ${TRUST_CLOUDFLARE:-true}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-CryptoMeme <no-reply@example.com>}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+    networks: [internal]
+
+  web:
+    image: ${WEB_IMAGE:-ghcr.io/itaromi/cryptomeme-web:latest}
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    <<: *hardening
+    read_only: true
+    tmpfs: [/tmp, /app/apps/web/.next/cache]
+    depends_on: [api]
+    networks: [internal]
+
+  proxy:
+    image: caddy:2-alpine
+    <<: *hardening
+    cap_drop: []
+    cap_add: [NET_BIND_SERVICE]
+    depends_on: [web, api]
+    ports:
+      - '${HTTP_BIND:-0.0.0.0}:${HTTP_PORT:-8088}:80'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    networks: [internal]
+
+  # Sauvegarde quotidienne de la base (7 jours, 4 semaines, 6 mois) dans ./backups
+  backup:
+    image: prodrigestivill/postgres-backup-local:16
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: cryptomeme
+      POSTGRES_USER: cryptomeme
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      SCHEDULE: '@daily'
+      BACKUP_KEEP_DAYS: 7
+      BACKUP_KEEP_WEEKS: 4
+      BACKUP_KEEP_MONTHS: 6
+    volumes:
+      - ./backups:/backups
+    networks: [internal]
+
+volumes:
+  pgdata:
+  caddy_data:
+
+networks:
+  internal:

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ago } from '@/lib/format';
+import { Glyph } from '@/lib/icons';
 
 interface Ev {
   symbol: string;
@@ -30,7 +31,7 @@ export function EventFeed({ limit = 8 }: { limit?: number }) {
           {data.slice(0, limit).map((e, i) => (
             <li key={i} className="py-2.5">
               <Link href={`/market/${e.symbol}`} className={`block text-sm leading-snug hover:underline ${e.type === 'RUG_PULL' ? 'font-bold text-down' : ''}`}>
-                <span className="mr-1">{e.emoji}</span>
+                <span className="mr-1"><Glyph name={e.emoji} /></span>
                 {(HEADLINE[e.type] ?? ((x: Ev) => `${x.symbol} : ${x.detail}`))(e)}
               </Link>
               <span className="text-xs text-ink-3">{ago(e.at)}</span>

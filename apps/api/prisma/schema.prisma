@@ -114,7 +114,7 @@ model User {
   banReason       String?
   bio             String?   @db.VarChar(280)
   /// Avatar (emoji) et cosmétiques équipés (slugs)
-  avatar          String    @default("🙂")
+  avatar          String    @default("Smiley")
   frame           String?
   banner          String?
   title           String?

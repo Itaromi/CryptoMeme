@@ -1,6 +1,16 @@
 {
   "name": "cryptomeme",
+  "description": "Jeu de trading multijoueur de cryptos et d'actions 100 % fictives",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Itaromi/CryptoMeme.git"
+  },
+  "homepage": "https://cryptomeme.younsylvestre.fr",
+  "engines": {
+    "node": ">=22"
+  },
   "packageManager": "pnpm@10.19.0",
   "scripts": {
     "dev": "turbo run dev",

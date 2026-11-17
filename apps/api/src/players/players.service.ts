@@ -200,8 +200,8 @@ export class PlayersService {
       color: h.asset.color,
       value: Number(liquidationValue(poolOf(h.asset), D(h.quantity))),
     }));
-    allocation.push({ symbol: 'CASH', emoji: '💵', color: '#94a3b8', value: Number(wallet.cash) });
-    allocation.push({ symbol: 'MATÉRIEL', emoji: '⛏️', color: '#78716c', value: Number(wallet.hardwareValue) });
+    allocation.push({ symbol: 'CASH', emoji: 'Money', color: '#94a3b8', value: Number(wallet.cash) });
+    allocation.push({ symbol: 'MATÉRIEL', emoji: 'Shovel', color: '#78716c', value: Number(wallet.hardwareValue) });
     const [rigCount, mined, elec] = await Promise.all([
       this.prisma.rig.count({ where: { walletId: wallet.id } }),
       this.prisma.ledgerEntry.groupBy({ by: ['assetId'], where: { walletId: wallet.id, kind: 'MINING_REWARD' }, _sum: { delta: true } }),
