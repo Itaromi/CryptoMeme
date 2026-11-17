@@ -49,7 +49,7 @@ services:
       NODE_ENV: production
       PORT: 4000
       DATABASE_URL: postgresql://cryptomeme:${POSTGRES_PASSWORD}@db:5432/cryptomeme?schema=public
-      JWT_SECRET: ${JWT_SECRET:?définis JWT_SECRET dans .env}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?définis BETTER_AUTH_SECRET dans .env}
       WEB_URL: ${WEB_URL:?définis WEB_URL dans .env}
       TRUST_PROXY: 1
       TRUST_CLOUDFLARE: ${TRUST_CLOUDFLARE:-true}

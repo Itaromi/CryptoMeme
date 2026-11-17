@@ -18,7 +18,7 @@
 | Data front | **TanStack Query** + client WS | Cache + invalidation sur les events temps réel |
 | Graphiques | **lightweight-charts** (bougies) + **Recharts** (stats) | Bougies type TradingView, légères |
 | Validation | **Zod** dans `packages/shared` | Mêmes schémas côté API et formulaires |
-| Auth | Email + mot de passe (**argon2id**), JWT access court + refresh token en cookie httpOnly, vérif email, reset mdp | |
+| Auth | **Better Auth** : email + mot de passe (**argon2id**), session en base dans un cookie httpOnly, vérif email, reset mdp | |
 | Dev | **Docker Compose** (Postgres, Redis, Mailpit) | Environnement local en une commande |
 | Tests | Vitest/Jest + tests de simulation du moteur économique | L'économie doit être testée hors-ligne |
 

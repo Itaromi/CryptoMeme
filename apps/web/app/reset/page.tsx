@@ -13,7 +13,7 @@ function ResetForm() {
   const t = useTranslations('auth.reset');
   const token = useSearchParams().get('token') ?? '';
   const reset = useApiMutation({
-    mutationFn: (f: FormData) => api('/auth/reset-password', { method: 'POST', json: { token, password: f.get('password') } }),
+    mutationFn: (f: FormData) => api('/auth/reset-password', { method: 'POST', json: { token, newPassword: f.get('password') } }),
   });
   if (reset.isSuccess)
     return (

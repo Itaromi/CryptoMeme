@@ -12,7 +12,7 @@ export interface Me {
   email: string;
   username: string;
   role: 'PLAYER' | 'MODERATOR' | 'ADMIN';
-  emailVerifiedAt: string | null;
+  emailVerified: boolean;
   bio: string | null;
 }
 
@@ -73,7 +73,7 @@ export function useMe() {
     queryKey: queryKeys.me,
     queryFn: async () => {
       try {
-        return await api<Me>('/auth/me');
+        return await api<Me>('/me');
       } catch (e) {
         if (e instanceof ApiError && (e.status === 401 || e.status === 403)) return null;
         throw e;

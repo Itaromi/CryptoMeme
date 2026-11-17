@@ -49,7 +49,7 @@ export function Masthead() {
   const qc = useQueryClient();
 
   const logout = useApiMutation({
-    mutationFn: () => api('/auth/logout', { method: 'POST' }),
+    mutationFn: () => api('/auth/sign-out', { method: 'POST', json: {} }),
     onSuccess: () => {
       qc.clear();
       router.push('/');
@@ -109,14 +109,14 @@ export function Masthead() {
           )}
         </div>
       </div>
-      {me && !me.emailVerifiedAt && <VerifyBanner />}
+      {me && !me.emailVerified && <VerifyBanner email={me.email} />}
     </header>
   );
 }
 
-function VerifyBanner() {
+function VerifyBanner({ email }: { email: string }) {
   const t = useTranslations('common.masthead');
-  const resend = useApiMutation({ mutationFn: () => api('/auth/resend-verification', { method: 'POST' }) });
+  const resend = useApiMutation({ mutationFn: () => api('/auth/send-verification-email', { method: 'POST', json: { email } }) });
   return (
     <div className="border-b-2 border-ink bg-paper-2 px-4 py-2 text-center text-sm sm:px-8">
       {t('verifyPrompt')}{' '}

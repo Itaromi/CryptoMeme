@@ -15,17 +15,8 @@ export class ApiError extends Error {
   }
 }
 
-let refreshing: Promise<boolean> | null = null;
-
-async function refresh(): Promise<boolean> {
-  refreshing ??= fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
-    .then((r) => r.ok)
-    .finally(() => setTimeout(() => (refreshing = null), 0));
-  return refreshing;
-}
-
-/** Appel API same-origin (proxy Next). Rafraîchit la session une fois sur 401. */
-export async function api<T = unknown>(path: string, init: RequestInit & { json?: unknown } = {}, retry = true): Promise<T> {
+/** Appel API same-origin (proxy Next). La session est un cookie httpOnly posé par Better Auth (/api/auth/*). */
+export async function api<T = unknown>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
   const { json, ...rest } = init;
   const res = await fetch(`/api${path}`, {
     credentials: 'include',
@@ -33,12 +24,20 @@ export async function api<T = unknown>(path: string, init: RequestInit & { json?
     headers: { ...(json !== undefined ? { 'content-type': 'application/json' } : {}), ...rest.headers },
     body: json !== undefined ? JSON.stringify(json) : rest.body,
   });
-  if (res.status === 401 && retry && !path.startsWith('/auth/refresh') && !path.startsWith('/auth/login')) {
-    if (await refresh()) return api<T>(path, init, false);
-  }
   if (!res.ok) throw await apiError(res);
   return res.json() as Promise<T>;
 }
+
+/** Codes d'erreur propres à Better Auth, ramenés aux codes du jeu (traduits par le site). */
+const AUTH_CODES: Record<string, ErrorCode> = {
+  INVALID_EMAIL_OR_PASSWORD: 'BAD_CREDENTIALS',
+  USER_ALREADY_EXISTS: 'EMAIL_TAKEN',
+  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: 'EMAIL_TAKEN',
+  INVALID_EMAIL: 'EMAIL_INVALID',
+  PASSWORD_TOO_SHORT: 'PASSWORD_MIN',
+  INVALID_TOKEN: 'INVALID_LINK',
+  TOKEN_EXPIRED: 'INVALID_LINK',
+};
 
 /** Codes de repli quand l'API ne donne pas de code (erreurs du framework, du proxy…). */
 const STATUS_CODES: Partial<Record<number, ErrorCode>> = {
@@ -59,7 +58,7 @@ async function apiError(res: Response): Promise<ApiError> {
   const o = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
   const raw: unknown = Array.isArray(o.message) ? (o.message as unknown[])[0] : o.message;
   const message = typeof raw === 'string' ? raw : `HTTP ${res.status}`;
-  const code = isErrorCode(o.code) ? o.code : (STATUS_CODES[res.status] ?? null);
+  const code = isErrorCode(o.code) ? o.code : ((typeof o.code === 'string' ? AUTH_CODES[o.code] : undefined) ?? STATUS_CODES[res.status] ?? null);
   const params = o.params && typeof o.params === 'object' ? (o.params as TextParams) : {};
   return new ApiError(res.status, message, code, params);
 }

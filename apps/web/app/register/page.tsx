@@ -19,7 +19,7 @@ export default function RegisterPage() {
   // Messages de validation du schéma partagé, affichés tels quels
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const register = useApiMutation({
-    mutationFn: (input: RegisterInput) => api('/auth/register', { method: 'POST', json: input }),
+    mutationFn: (input: RegisterInput) => api('/auth/sign-up/email', { method: 'POST', json: { name: input.username, email: input.email, password: input.password } }),
     invalidate: [ALL_QUERIES],
     onSuccess: () => router.push('/market'),
   });

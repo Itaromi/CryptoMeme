@@ -168,17 +168,24 @@ async function main() {
     if (process.env.NODE_ENV === 'production' && (password.length < 14 || /admin|1234|password/i.test(password))) {
       throw new Error('SEED_ADMIN_PASSWORD trop faible pour la production (14 caractères minimum, pas de « admin »/« 1234 »).');
     }
-    await prisma.user.upsert({
+    const admin = await prisma.user.upsert({
       where: { email },
       update: { role: 'ADMIN' },
-      create: {
-        email,
-        username: 'admin',
-        role: 'ADMIN',
-        passwordHash: await argon2.hash(password, { type: argon2.argon2id }),
-        emailVerifiedAt: new Date(),
-      },
+      create: { email, username: 'admin', role: 'ADMIN', emailVerified: true },
     });
+    // Mot de passe au format Better Auth : compte « credential » (hash argon2id), créé une seule fois
+    const credential = await prisma.account.findFirst({ where: { userId: admin.id, providerId: 'credential' } });
+    if (!credential) {
+      await prisma.account.create({
+        data: {
+          id: `cred_${admin.id}`,
+          accountId: admin.id,
+          providerId: 'credential',
+          userId: admin.id,
+          password: await argon2.hash(password, { type: argon2.argon2id }),
+        },
+      });
+    }
   }
   console.log('Seed OK');
 }
