@@ -2,6 +2,10 @@
 
 Merci de ton intérêt ! Idées de cryptos absurdes, équilibrage, bugs, nouvelles mécaniques : tout est bienvenu.
 
+- **Une question ou une idée à débattre ?** Passe par les [Discussions](https://github.com/Itaromi/CryptoMeme/discussions).
+- **Un bug ?** Ouvre une [issue](https://github.com/Itaromi/CryptoMeme/issues/new/choose).
+- **Une modification à proposer ?** Ouvre une PR, en suivant les règles ci-dessous.
+
 ## Démarrer
 
 Prérequis : Node 26 (`.nvmrc`, 22 minimum), pnpm 10, Docker.

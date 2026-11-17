@@ -1,0 +1,19 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Pose ta question, quelqu'un te répondra. Quand une réponse t'a aidé, marque-la comme réponse pour les suivants.
+  - type: dropdown
+    id: sujet
+    attributes:
+      label: Sujet
+      options: [Le jeu (règles, stratégie), Installation en local, Déploiement, Le code]
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Ta question
+      description: Ce que tu cherches à faire, ce que tu as déjà essayé, et les messages d'erreur s'il y en a.
+    validations:
+      required: true

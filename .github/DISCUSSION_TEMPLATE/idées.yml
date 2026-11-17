@@ -1,0 +1,23 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Les idées se discutent ici d'abord. Si elle plaît et qu'elle tient la route, on en fera une issue.
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type d'idée
+      options: [Nouvelle crypto ou société, Événement, Mécanique de jeu, Équilibrage de l'économie, Interface, Autre]
+    validations:
+      required: true
+  - type: textarea
+    id: idee
+    attributes:
+      label: L'idée
+    validations:
+      required: true
+  - type: textarea
+    id: economie
+    attributes:
+      label: Impact sur l'économie
+      description: Est-ce que ça crée de l'argent ? Peut-on en abuser ?

@@ -98,6 +98,10 @@ Guide complet (NAS, tunnel Cloudflare, e-mails Resend, mises à jour, sauvegarde
 - [CONTRIBUTING.md](CONTRIBUTING.md) — contribuer
 - [SECURITY.md](SECURITY.md) — signaler une faille
 
+## Communauté
+
+Questions, idées de cryptos absurdes, captures de tes meilleurs trades : tout se passe dans les **[Discussions](https://github.com/Itaromi/CryptoMeme/discussions)**. Les bugs vont dans les [issues](https://github.com/Itaromi/CryptoMeme/issues).
+
 ## Licence
 
 [MIT](LICENSE). Toutes les cryptos, sociétés, banques et personnes du jeu sont fictives ou parodiques ; aucun argent réel n'est en jeu.
