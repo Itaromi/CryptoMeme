@@ -7,7 +7,11 @@ body:
     id: sujet
     attributes:
       label: Sujet
-      options: [Le jeu (règles, stratégie), Installation en local, Déploiement, Le code]
+      options:
+        - Le jeu (règles, stratégie)
+        - Installation en local
+        - Déploiement
+        - Le code
     validations:
       required: true
   - type: textarea

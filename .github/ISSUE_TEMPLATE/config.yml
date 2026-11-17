@@ -4,7 +4,7 @@ contact_links:
     url: https://github.com/Itaromi/CryptoMeme/discussions/categories/questions-aide
     about: Sur le jeu, l'installation ou le code, dans les Discussions.
   - name: Discuter d'une idée
-    url: https://github.com/Itaromi/CryptoMeme/discussions/categories/id%C3%A9es
+    url: https://github.com/Itaromi/CryptoMeme/discussions/categories/propositions
     about: Les idées se débattent d'abord dans les Discussions.
   - name: Signaler une faille de sécurité
     url: https://github.com/Itaromi/CryptoMeme/security/advisories/new
