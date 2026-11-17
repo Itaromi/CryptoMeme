@@ -10,6 +10,12 @@
     "test": "vitest run",
     "simulate": "tsx scripts/simulate.ts"
   },
-  "dependencies": { "decimal.js": "^10.5.0" },
-  "devDependencies": { "tsx": "^4.19.0", "vitest": "^3.1.0", "typescript": "^5.8.3" }
+  "dependencies": {
+    "decimal.js": "^10.5.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.12"
+  }
 }

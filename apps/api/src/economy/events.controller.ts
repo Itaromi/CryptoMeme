@@ -24,10 +24,10 @@ const typeSchema = z.object({
   noticeMinutes: z.number().int().min(0).max(10_080).optional(),
   durationMinutes: z.number().int().min(0).max(10_080).optional(),
   enabled: z.boolean().optional(),
-  params: z.record(z.any()).optional(),
+  params: z.record(z.string(), z.any()).optional(),
   reason,
 });
-const triggerSchema = z.object({ typeId: z.string().min(1), immediate: z.boolean().default(false), params: z.record(z.any()).default({}), reason });
+const triggerSchema = z.object({ typeId: z.string().min(1), immediate: z.boolean().default(false), params: z.record(z.string(), z.any()).default({}), reason });
 const bankSchema = z.object({
   monthlyFee: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
   openingFee: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),

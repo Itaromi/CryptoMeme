@@ -9,3 +9,10 @@ onlyBuiltDependencies:
   - "@nestjs/core"
   - esbuild
   - sharp
+overrides:
+  # Versions minimales sans vulnérabilité connue pour des dépendances transitives
+  postcss@<8.5.23: ^8.5.33
+  deepmerge-ts@<8.0.0: ^8.0.2
+  glob@>=9.0.0 <14.0.2: ^14.0.6
+  minimatch@>=7.0.0 <11.0.1: ^11.0.9
+  tinypool@<2.1.2: ^2.1.2
