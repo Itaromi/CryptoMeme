@@ -4,7 +4,7 @@ Merci de ton intérêt ! Idées de cryptos absurdes, équilibrage, bugs, nouvell
 
 ## Démarrer
 
-Prérequis : Node 22 (`.nvmrc`), pnpm 10, Docker.
+Prérequis : Node 26 (`.nvmrc`, 22 minimum), pnpm 10, Docker.
 
 ```bash
 pnpm install

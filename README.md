@@ -55,7 +55,7 @@ TypeScript de bout en bout, monorepo **pnpm + Turborepo**.
 
 ## Démarrer en local
 
-Prérequis : Node 22 (`.nvmrc`), pnpm 10, Docker.
+Prérequis : Node 26 (`.nvmrc`, 22 minimum), pnpm 10, Docker.
 
 ```bash
 pnpm install

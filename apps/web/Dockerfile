@@ -2,8 +2,9 @@
 # Image du site CryptoMeme (Next.js, sortie « standalone »). Contexte de build : racine du dépôt.
 #   docker build -f apps/web/Dockerfile -t cryptomeme-web .
 
-FROM node:22-bookworm-slim AS base
-RUN corepack enable && corepack prepare pnpm@10.19.0 --activate
+FROM node:26-bookworm-slim AS base
+# corepack n'est plus fourni à partir de Node 25 : pnpm est installé via npm
+RUN npm install -g pnpm@10.19.0 && npm cache clean --force
 WORKDIR /app
 
 FROM base AS deps
@@ -26,7 +27,7 @@ COPY apps/web apps/web
 RUN pnpm --filter @cryptomeme/shared build && pnpm --filter @cryptomeme/web build
 
 # ── Exécution : seulement le serveur autonome et les fichiers statiques
-FROM node:22-bookworm-slim AS runtime
+FROM node:26-bookworm-slim AS runtime
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 WORKDIR /app
 COPY --from=build --chown=node:node /app/apps/web/.next/standalone ./

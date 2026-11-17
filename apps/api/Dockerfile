@@ -2,11 +2,12 @@
 # Image de l'API CryptoMeme (NestJS + Prisma). Contexte de build : racine du dépôt.
 #   docker build -f apps/api/Dockerfile -t cryptomeme-api .
 
-FROM node:22-bookworm-slim AS base
+FROM node:26-bookworm-slim AS base
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
-RUN corepack enable && corepack prepare pnpm@10.19.0 --activate
+# corepack n'est plus fourni à partir de Node 25 : pnpm est installé via npm
+RUN npm install -g pnpm@10.19.0 && npm cache clean --force
 WORKDIR /app
 
 # ── Dépendances (couche mise en cache tant que les manifestes ne changent pas)
