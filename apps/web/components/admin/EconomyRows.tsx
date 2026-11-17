@@ -64,7 +64,7 @@ export function TypeRow({ type, disabled, run, banks }: { type: EventTypeRow; di
       <td className="space-x-3 text-right whitespace-nowrap">
         {changed && (
           <button
-            className="font-semibold underline disabled:opacity-40"
+            className="py-1 font-semibold underline disabled:opacity-40"
             disabled={disabled}
             onClick={() =>
               run({
@@ -82,7 +82,7 @@ export function TypeRow({ type, disabled, run, banks }: { type: EventTypeRow; di
           </button>
         )}
         <button
-          className="underline disabled:opacity-40"
+          className="py-1 underline disabled:opacity-40"
           disabled={disabled}
           onClick={() => run({ path: `/admin/economy/event-types/${type.id}`, method: 'PATCH', json: { enabled: !type.enabled } })}
         >
@@ -98,7 +98,7 @@ export function TypeRow({ type, disabled, run, banks }: { type: EventTypeRow; di
             ))}
           </select>
         )}
-        <button className="font-semibold underline disabled:opacity-40" disabled={disabled || (type.slug === 'bank-run' && !bankId)} onClick={() => trigger(false)}>
+        <button className="py-1 font-semibold underline disabled:opacity-40" disabled={disabled || (type.slug === 'bank-run' && !bankId)} onClick={() => trigger(false)}>
           {t('trigger')}
         </button>
         <button
@@ -152,7 +152,7 @@ export function BankRow({ b, disabled, run }: { b: AdminBank; disabled: boolean;
       <td className="space-x-3 text-right">
         {changed && (
           <button
-            className="font-semibold underline disabled:opacity-40"
+            className="py-1 font-semibold underline disabled:opacity-40"
             disabled={disabled}
             onClick={() =>
               run({
@@ -171,7 +171,7 @@ export function BankRow({ b, disabled, run }: { b: AdminBank; disabled: boolean;
           </button>
         )}
         {!b.isDefault && (
-          <button className="underline disabled:opacity-40" disabled={disabled} onClick={() => run({ path: `/admin/economy/banks/${b.id}`, method: 'PATCH', json: { available: !b.available } })}>
+          <button className="py-1 underline disabled:opacity-40" disabled={disabled} onClick={() => run({ path: `/admin/economy/banks/${b.id}`, method: 'PATCH', json: { available: !b.available } })}>
             {b.available ? t('close') : t('reopen')}
           </button>
         )}

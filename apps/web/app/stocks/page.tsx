@@ -7,7 +7,7 @@ import { tone, useFormat } from '@/lib/format';
 import { healthLevel, useMarketClock, useStocks, VERDICT_CLS } from '@/lib/stocks';
 import { LivePrice } from '@/components/LivePrice';
 import { Spark } from '@/components/Spark';
-import { SortTh } from '@/components/market/SortTh';
+import { SortSelect, SortTh } from '@/components/market/SortTh';
 import { Glyph } from '@/lib/icons';
 import { useTexts } from '@/lib/texts';
 
@@ -49,7 +49,7 @@ export default function StocksPage() {
       <div className="rise min-w-0">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
           <div>
-            <h1 className="display text-6xl font-extrabold">{t('page.title')}</h1>
+            <h1 className="display text-5xl font-extrabold sm:text-6xl">{t('page.title')}</h1>
             <p className="mt-2 max-w-xl text-ink-2">{t('page.intro')}</p>
           </div>
           <div className={`border-2 border-ink px-4 py-3 ${clock.open ? 'bg-acid' : 'bg-paper-2'}`} aria-live="polite">
@@ -62,19 +62,34 @@ export default function StocksPage() {
           </div>
         </div>
 
+        <div className="mb-4">
+          <SortSelect
+            label={t('page.sortLabel')}
+            sort={sort}
+            setSort={setSort}
+            options={[
+              { k: 'marketCap', label: t('page.columns.marketCap') },
+              { k: 'change24h', label: t('page.columns.change24h') },
+              { k: 'yield', label: t('page.columns.yield') },
+              { k: 'earnings', label: t('page.columns.earnings') },
+            ]}
+          />
+        </div>
+
+        {/* Mobile : société et cours (variation sous le cours) ; les autres colonnes apparaissent avec la place */}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] border-collapse text-left">
+          <table className="w-full border-collapse text-left">
             <thead>
               <tr className="border-y-2 border-ink text-xs uppercase tracking-wider text-ink-2">
                 <th className="py-2 pr-4 font-semibold">{t('page.columns.company')}</th>
-                <th className="py-2 pr-4 text-right font-semibold">{t('page.columns.price')}</th>
-                <SortTh label={t('page.columns.change24h')} k="change24h" sort={sort} setSort={setSort} />
-                <th className="py-2 pr-4 font-semibold">{t('page.columns.trend')}</th>
-                <SortTh label={t('page.columns.marketCap')} k="marketCap" sort={sort} setSort={setSort} />
-                <th className="py-2 pr-4 text-right font-semibold">{t('page.columns.pe')}</th>
-                <SortTh label={t('page.columns.yield')} k="yield" sort={sort} setSort={setSort} />
-                <th className="py-2 pr-4 font-semibold">{t('page.columns.health')}</th>
-                <SortTh label={t('page.columns.earnings')} k="earnings" sort={sort} setSort={setSort} />
+                <th className="py-2 text-right font-semibold sm:pr-4">{t('page.columns.price')}</th>
+                <SortTh label={t('page.columns.change24h')} k="change24h" sort={sort} setSort={setSort} className="hidden sm:table-cell" />
+                <th className="hidden py-2 pr-4 font-semibold 2xl:table-cell">{t('page.columns.trend')}</th>
+                <SortTh label={t('page.columns.marketCap')} k="marketCap" sort={sort} setSort={setSort} className="hidden md:table-cell" />
+                <th className="hidden py-2 pr-4 text-right font-semibold xl:table-cell">{t('page.columns.pe')}</th>
+                <SortTh label={t('page.columns.yield')} k="yield" sort={sort} setSort={setSort} className="hidden xl:table-cell" />
+                <th className="hidden py-2 pr-4 font-semibold md:table-cell">{t('page.columns.health')}</th>
+                <SortTh label={t('page.columns.earnings')} k="earnings" sort={sort} setSort={setSort} className="hidden md:table-cell" />
               </tr>
             </thead>
             <tbody>
@@ -92,9 +107,9 @@ export default function StocksPage() {
                 const h = healthLevel(c.health);
                 return (
                   <tr key={s.symbol} className={`group border-b border-line hover:bg-paper-2 ${off ? 'text-ink-3' : ''}`}>
-                    <td className="py-3 pr-4">
-                      <Link href={`/market/${s.symbol}`} className="flex items-center gap-3">
-                        <span className="grid size-9 place-items-center text-xl" style={{ background: `color-mix(in oklch, ${s.color} 30%, transparent)` }}>
+                    <td className="py-3 pr-2 sm:pr-4">
+                      <Link href={`/market/${s.symbol}`} className="flex items-center gap-2 sm:gap-3">
+                        <span className="hidden size-9 shrink-0 min-[360px]:grid place-items-center text-xl" style={{ background: `color-mix(in oklch, ${s.color} 30%, transparent)` }}>
                           <Glyph name={s.emoji} color={s.color} />
                         </span>
                         <span>
@@ -108,14 +123,17 @@ export default function StocksPage() {
                         </span>
                       </Link>
                     </td>
-                    <td className="py-3 pr-4 text-right font-semibold">{off ? '—' : <LivePrice value={s.price} className="px-1" />}</td>
-                    <td className={`num whitespace-nowrap py-3 pr-4 text-right font-semibold ${off ? '' : tone(s.change24h)}`}>{off ? '—' : f.pct(s.change24h)}</td>
-                    <td className="py-3 pr-4">{!off && <Spark data={s.spark} />}</td>
-                    <td className="num py-3 pr-4 text-right">{off ? '—' : f.compactMoney(s.marketCap)}</td>
-                    <td className="num py-3 pr-4 text-right">{c.pe && !off ? f.number(c.pe, oneDecimal) : '—'}</td>
-                    <td className="num py-3 pr-4 text-right">{off || !c.dividendYield ? '—' : f.number(c.dividendYield, { style: 'percent', ...oneDecimal })}</td>
-                    <td className={`py-3 pr-4 text-sm ${off ? '' : h.cls}`}>{off ? t(`status.${c.status}`) : t(`health.${h.level}`)}</td>
-                    <td className="num py-3 text-right text-sm">
+                    <td className="py-3 text-right font-semibold whitespace-nowrap sm:pr-4">
+                      {off ? '—' : <LivePrice value={s.price} className="px-1" />}
+                      {!off && <span className={`num block text-sm sm:hidden ${tone(s.change24h)}`}>{f.pct(s.change24h)}</span>}
+                    </td>
+                    <td className={`num hidden whitespace-nowrap py-3 pr-4 text-right font-semibold sm:table-cell ${off ? '' : tone(s.change24h)}`}>{off ? '—' : f.pct(s.change24h)}</td>
+                    <td className="hidden py-3 pr-4 2xl:table-cell">{!off && <Spark data={s.spark} />}</td>
+                    <td className="num hidden py-3 pr-4 text-right md:table-cell">{off ? '—' : f.compactMoney(s.marketCap)}</td>
+                    <td className="num hidden py-3 pr-4 text-right xl:table-cell">{c.pe && !off ? f.number(c.pe, oneDecimal) : '—'}</td>
+                    <td className="num hidden py-3 pr-4 text-right xl:table-cell">{off || !c.dividendYield ? '—' : f.number(c.dividendYield, { style: 'percent', ...oneDecimal })}</td>
+                    <td className={`hidden py-3 pr-4 text-sm md:table-cell ${off ? '' : h.cls}`}>{off ? t(`status.${c.status}`) : t(`health.${h.level}`)}</td>
+                    <td className="num hidden py-3 text-right text-sm md:table-cell">
                       {off ? (
                         <span className="text-xs">{t('page.relistSoon')}</span>
                       ) : (

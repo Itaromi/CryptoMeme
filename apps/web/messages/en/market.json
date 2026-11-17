@@ -2,6 +2,7 @@
   "list": {
     "title": "The market",
     "star": "Today's star:",
+    "sortLabel": "Sort by",
     "filtersLabel": "Category",
     "filters": {
       "ALL": "All",

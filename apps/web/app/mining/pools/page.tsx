@@ -22,18 +22,19 @@ export default function PoolsPage() {
         <h2 className="mb-1 text-sm font-bold uppercase tracking-widest">{t('pools.networksTitle')}</h2>
         <p className="mb-4 max-w-3xl text-ink-2">{t('pools.networksIntro')}</p>
         <div className="overflow-x-auto">
-          <table className="num w-full min-w-[760px] text-left">
+          {/* Mobile : monnaie (algo dessous) et rentabilité ; le détail apparaît avec la place */}
+          <table className="num w-full text-left lg:min-w-[760px]">
             <thead>
               <tr className="border-y-2 border-ink text-xs uppercase tracking-wider text-ink-2">
                 <th className="py-2 pr-4">{t('pools.cols.coin')}</th>
-                <th className="py-2 pr-4">{t('pools.cols.algo')}</th>
-                <th className="py-2 pr-4 text-right">{t('pools.cols.price')}</th>
-                <th className="py-2 pr-4 text-right">{t('pools.cols.networkHashrate')}</th>
-                <th className="py-2 pr-4 text-right">{t('pools.cols.players')}</th>
-                <th className="py-2 pr-4 text-right" title={t('pools.cols.profitabilityHint')}>
+                <th className="hidden py-2 pr-4 sm:table-cell">{t('pools.cols.algo')}</th>
+                <th className="hidden py-2 pr-4 text-right md:table-cell">{t('pools.cols.price')}</th>
+                <th className="hidden py-2 pr-4 text-right lg:table-cell">{t('pools.cols.networkHashrate')}</th>
+                <th className="hidden py-2 pr-4 text-right lg:table-cell">{t('pools.cols.players')}</th>
+                <th className="py-2 text-right sm:pr-4" title={t('pools.cols.profitabilityHint')}>
                   {t('pools.cols.profitability')}
                 </th>
-                <th className="py-2 text-right">{t('pools.cols.nextHalving')}</th>
+                <th className="hidden py-2 text-right md:table-cell">{t('pools.cols.nextHalving')}</th>
               </tr>
             </thead>
             <tbody>
@@ -43,15 +44,16 @@ export default function PoolsPage() {
                     <Link href={`/market/${n.symbol}`} className="font-semibold hover:underline">
                       <Glyph name={n.emoji} /> {n.name}
                     </Link>
+                    <span className="block text-sm text-ink-2 sm:hidden">{ALGO_LABEL[n.algo] ?? n.algo}</span>
                   </td>
-                  <td className="py-3 pr-4">{ALGO_LABEL[n.algo] ?? n.algo}</td>
-                  <td className="py-3 pr-4 text-right">{f.price(n.price)}</td>
-                  <td className="py-3 pr-4 text-right">{m.hash(n.networkHashrate)}</td>
-                  <td className="py-3 pr-4 text-right text-ink-2">{f.pct(n.playerHashrate / (n.networkHashrate || 1), false)}</td>
-                  <td className="py-3 pr-4 text-right font-semibold">
+                  <td className="hidden py-3 pr-4 sm:table-cell">{ALGO_LABEL[n.algo] ?? n.algo}</td>
+                  <td className="hidden py-3 pr-4 text-right md:table-cell">{f.price(n.price)}</td>
+                  <td className="hidden py-3 pr-4 text-right lg:table-cell">{m.hash(n.networkHashrate)}</td>
+                  <td className="hidden py-3 pr-4 text-right text-ink-2 lg:table-cell">{f.pct(n.playerHashrate / (n.networkHashrate || 1), false)}</td>
+                  <td className="py-3 text-right font-semibold whitespace-nowrap sm:pr-4">
                     {f.money(n.usdPerMhDay)} <span className="text-xs font-normal text-ink-2">{t('pools.perMhDay')}</span>
                   </td>
-                  <td className="py-3 text-right text-sm">{f.date(n.nextHalving, { day: 'numeric', month: 'short' })}</td>
+                  <td className="hidden py-3 text-right text-sm md:table-cell">{f.date(n.nextHalving, { day: 'numeric', month: 'short' })}</td>
                 </tr>
               ))}
             </tbody>

@@ -7,7 +7,7 @@ import { tone, useFormat } from '@/lib/format';
 import { LivePrice } from '@/components/LivePrice';
 import { Spark } from '@/components/Spark';
 import { EventFeed } from '@/components/EventFeed';
-import { SortTh } from '@/components/market/SortTh';
+import { SortSelect, SortTh } from '@/components/market/SortTh';
 import { regimeCls, useAssetLabels } from '@/components/market/labels';
 import { Glyph } from '@/lib/icons';
 
@@ -35,7 +35,7 @@ export default function MarketPage() {
       <div className="rise min-w-0">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="display text-6xl font-extrabold">{t('title')}</h1>
+            <h1 className="display text-5xl font-extrabold sm:text-6xl">{t('title')}</h1>
             {movers && (
               <p className="mt-2 text-ink-2">
                 {t('star')}{' '}
@@ -46,32 +46,43 @@ export default function MarketPage() {
               </p>
             )}
           </div>
-          <div className="flex gap-1 text-sm font-semibold" role="tablist" aria-label={t('filtersLabel')}>
+          <div className="-mx-4 flex gap-1 overflow-x-auto px-4 text-sm font-semibold [scrollbar-width:none] sm:mx-0 sm:px-0" role="tablist" aria-label={t('filtersLabel')}>
             {FILTERS.map((id) => (
               <button
                 key={id}
                 role="tab"
                 aria-selected={filter === id}
                 onClick={() => setFilter(id)}
-                className={`px-3 py-1.5 ${filter === id ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
+                className={`shrink-0 px-3 py-2.5 sm:py-1.5 ${filter === id ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
               >
                 {t(`filters.${id}`)}
               </button>
             ))}
           </div>
+          <SortSelect
+            label={t('sortLabel')}
+            sort={sort}
+            setSort={setSort}
+            options={[
+              { k: 'marketCap', label: t('columns.marketCap') },
+              { k: 'change24h', label: t('columns.change24h') },
+              { k: 'volume24h', label: t('columns.volume') },
+            ]}
+          />
         </div>
 
+        {/* Mobile : actif et prix (variation sous le prix) ; les autres colonnes apparaissent avec la place (actualités à droite dès lg) */}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-left">
+          <table className="w-full border-collapse text-left">
             <thead>
               <tr className="border-y-2 border-ink text-xs uppercase tracking-wider text-ink-2">
                 <th className="py-2 pr-4 font-semibold">{t('columns.asset')}</th>
-                <th className="py-2 pr-4 text-right font-semibold">{t('columns.price')}</th>
-                <SortTh label={t('columns.change24h')} k="change24h" sort={sort} setSort={setSort} />
-                <th className="py-2 pr-4 font-semibold">{t('columns.trend')}</th>
-                <SortTh label={t('columns.volume')} k="volume24h" sort={sort} setSort={setSort} />
-                <SortTh label={t('columns.marketCap')} k="marketCap" sort={sort} setSort={setSort} />
-                <th className="py-2 font-semibold">{t('columns.mood')}</th>
+                <th className="py-2 text-right font-semibold sm:pr-4">{t('columns.price')}</th>
+                <SortTh label={t('columns.change24h')} k="change24h" sort={sort} setSort={setSort} className="hidden sm:table-cell" />
+                <th className="hidden py-2 pr-4 font-semibold xl:table-cell">{t('columns.trend')}</th>
+                <SortTh label={t('columns.volume')} k="volume24h" sort={sort} setSort={setSort} className="hidden xl:table-cell" />
+                <SortTh label={t('columns.marketCap')} k="marketCap" sort={sort} setSort={setSort} className="hidden md:table-cell" />
+                <th className="hidden py-2 font-semibold xl:table-cell">{t('columns.mood')}</th>
               </tr>
             </thead>
             <tbody>
@@ -85,9 +96,9 @@ export default function MarketPage() {
                 ))}
               {rows.map((a) => (
                 <tr key={a.symbol} className="group border-b border-line hover:bg-paper-2">
-                  <td className="py-3 pr-4">
-                    <Link href={`/market/${a.symbol}`} className="flex items-center gap-3">
-                      <span className="grid size-9 place-items-center text-xl" style={{ background: `color-mix(in oklch, ${a.color} 30%, transparent)` }}>
+                  <td className="py-3 pr-2 sm:pr-4">
+                    <Link href={`/market/${a.symbol}`} className="flex items-center gap-2 sm:gap-3">
+                      <span className="hidden size-9 shrink-0 min-[360px]:grid place-items-center text-xl" style={{ background: `color-mix(in oklch, ${a.color} 30%, transparent)` }}>
                         <Glyph name={a.emoji} color={a.color} />
                       </span>
                       <span>
@@ -99,16 +110,17 @@ export default function MarketPage() {
                       </span>
                     </Link>
                   </td>
-                  <td className="py-3 pr-4 text-right font-semibold">
+                  <td className="py-3 text-right font-semibold whitespace-nowrap sm:pr-4">
                     <LivePrice value={a.price} className="px-1" />
+                    <span className={`num block text-sm sm:hidden ${tone(a.change24h)}`}>{f.pct(a.change24h)}</span>
                   </td>
-                  <td className={`num py-3 pr-4 text-right font-semibold ${tone(a.change24h)}`}>{f.pct(a.change24h)}</td>
-                  <td className="py-3 pr-4">
+                  <td className={`num hidden py-3 pr-4 text-right font-semibold sm:table-cell ${tone(a.change24h)}`}>{f.pct(a.change24h)}</td>
+                  <td className="hidden py-3 pr-4 xl:table-cell">
                     <Spark data={a.spark} />
                   </td>
-                  <td className="num py-3 pr-4 text-right text-ink-2">{f.compactMoney(a.volume24h)}</td>
-                  <td className="num py-3 pr-4 text-right">{f.compactMoney(a.marketCap)}</td>
-                  <td className="py-3 text-sm">
+                  <td className="num hidden py-3 pr-4 text-right text-ink-2 xl:table-cell">{f.compactMoney(a.volume24h)}</td>
+                  <td className="num hidden py-3 pr-4 text-right md:table-cell">{f.compactMoney(a.marketCap)}</td>
+                  <td className="hidden py-3 text-sm xl:table-cell">
                     <span className={regimeCls(a.regime) ? `font-semibold ${regimeCls(a.regime)}` : 'text-ink-2'}>{labels.regime(a.regime)}</span>
                   </td>
                 </tr>

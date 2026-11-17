@@ -82,49 +82,53 @@ export function AdminMining({ isAdmin }: { isAdmin: boolean }) {
 
       <section>
         <h3 className="mb-2 text-sm font-bold uppercase tracking-widest">{t('networks.title')}</h3>
-        <table className="num w-full text-left text-sm">
-          <thead>
-            <tr className="border-y-2 border-ink text-xs uppercase text-ink-2">
-              <th className="py-2">{t('networks.columns.coin')}</th>
-              <th>{t('networks.columns.price')}</th>
-              <th>{t('networks.columns.reward')}</th>
-              <th>{t('networks.columns.npc')}</th>
-              <th>{t('networks.columns.players')}</th>
-              <th>{t('networks.columns.halving')}</th>
-              <th>{t('networks.columns.mined')}</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {data.networks.map((n) => (
-              <NetworkRow key={n.symbol} n={n} disabled={disabled} save={save} />
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="num w-full text-left text-sm">
+            <thead>
+              <tr className="border-y-2 border-ink text-xs uppercase text-ink-2">
+                <th className="py-2">{t('networks.columns.coin')}</th>
+                <th>{t('networks.columns.price')}</th>
+                <th>{t('networks.columns.reward')}</th>
+                <th>{t('networks.columns.npc')}</th>
+                <th>{t('networks.columns.players')}</th>
+                <th>{t('networks.columns.halving')}</th>
+                <th>{t('networks.columns.mined')}</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {data.networks.map((n) => (
+                <NetworkRow key={n.symbol} n={n} disabled={disabled} save={save} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section>
         <h3 className="mb-2 text-sm font-bold uppercase tracking-widest">{t('pools.title')}</h3>
-        <table className="num w-full text-left text-sm">
-          <tbody>
-            {data.pools.map((p) => (
-              <tr key={p.id} className="border-b border-line">
-                <td className="py-2 font-semibold">{p.name}</td>
-                <td>
-                  {p.symbol} · {t(`pools.type.${p.type}`)}
-                </td>
-                <td>{t('pools.fee', { fee: f.number(p.feeBps / 10_000, { style: 'percent', maximumFractionDigits: 1 }) })}</td>
-                <td>{p.scamRisk ? t('pools.scamRisk', { risk: f.number(p.scamRisk, { style: 'percent', maximumFractionDigits: 0 }) }) : ''}</td>
-                <td>{t('pools.rigs', { count: p.rigs })}</td>
-                <td className="text-right">
-                  <button className="font-semibold underline disabled:opacity-40" disabled={disabled} onClick={() => save({ path: `pools/${p.id}`, json: { active: !p.active } })}>
-                    {p.active ? t('pools.disable') : t('pools.enable')}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="num w-full text-left text-sm">
+            <tbody>
+              {data.pools.map((p) => (
+                <tr key={p.id} className="border-b border-line">
+                  <td className="py-2 font-semibold">{p.name}</td>
+                  <td>
+                    {p.symbol} · {t(`pools.type.${p.type}`)}
+                  </td>
+                  <td>{t('pools.fee', { fee: f.number(p.feeBps / 10_000, { style: 'percent', maximumFractionDigits: 1 }) })}</td>
+                  <td>{p.scamRisk ? t('pools.scamRisk', { risk: f.number(p.scamRisk, { style: 'percent', maximumFractionDigits: 0 }) }) : ''}</td>
+                  <td>{t('pools.rigs', { count: p.rigs })}</td>
+                  <td className="text-right">
+                    <button className="py-1 font-semibold underline disabled:opacity-40" disabled={disabled} onClick={() => save({ path: `pools/${p.id}`, json: { active: !p.active } })}>
+                      {p.active ? t('pools.disable') : t('pools.enable')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );
@@ -178,7 +182,7 @@ function NetworkRow({ n, disabled, save }: { n: Network; disabled: boolean; save
       <td>{f.number(n.totalMined, { maximumFractionDigits: 2 })}</td>
       <td>
         <button
-          className="font-semibold underline disabled:opacity-40"
+          className="py-1 font-semibold underline disabled:opacity-40"
           disabled={disabled || !changed}
           onClick={() =>
             save({

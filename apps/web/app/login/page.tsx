@@ -25,9 +25,9 @@ export default function LoginPage() {
         <button className="btn w-full bg-acid" disabled={login.isPending}>
           {login.isPending ? t('login.pending') : t('login.submit')}
         </button>
-        <div className="flex justify-between text-sm">
-          <Link href="/forgot" className="underline">{t('login.forgot')}</Link>
-          <Link href="/register" className="font-semibold underline">{t('login.register')}</Link>
+        <div className="flex flex-wrap justify-between gap-2 text-sm">
+          <Link href="/forgot" className="py-1 underline">{t('login.forgot')}</Link>
+          <Link href="/register" className="py-1 font-semibold underline">{t('login.register')}</Link>
         </div>
       </form>
     </AuthShell>

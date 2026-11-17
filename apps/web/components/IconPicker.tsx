@@ -25,7 +25,7 @@ export function IconPicker({ value, onChange, color }: { value: string; onChange
     <div className="border-2 border-ink">
       <div className="flex flex-wrap gap-1 border-b-2 border-ink p-1 text-xs font-semibold" role="tablist">
         {GROUPS.map((g) => (
-          <button key={g} type="button" role="tab" aria-selected={group === g} onClick={() => setGroup(g)} className={`px-2 py-1 ${group === g ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}>
+          <button key={g} type="button" role="tab" aria-selected={group === g} onClick={() => setGroup(g)} className={`shrink-0 px-3 py-2 sm:px-2 sm:py-1 ${group === g ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}>
             {t(GROUP_KEY[g])}
           </button>
         ))}

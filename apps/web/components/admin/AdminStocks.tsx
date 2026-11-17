@@ -47,24 +47,26 @@ export function AdminStocks({ isAdmin }: { isAdmin: boolean }) {
       ) : (
         <p className="text-sm text-ink-2">{t('readOnly')}</p>
       )}
-      <table className="num w-full text-left text-sm">
-        <thead>
-          <tr className="border-y-2 border-ink text-xs uppercase text-ink-2">
-            <th className="py-2">{t('columns.company')}</th>
-            <th>{t('columns.status')}</th>
-            <th>{t('columns.price')}</th>
-            <th>{t('columns.eps')}</th>
-            <th>{t('columns.health')}</th>
-            <th>{t('columns.earnings')}</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {data?.stocks.map((s) => (
-            <Row key={s.symbol} s={s} disabled={!isAdmin || reason.length < 3} reason={reason} now={now} />
-          ))}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="num w-full text-left text-sm">
+          <thead>
+            <tr className="border-y-2 border-ink text-xs uppercase text-ink-2">
+              <th className="py-2">{t('columns.company')}</th>
+              <th>{t('columns.status')}</th>
+              <th>{t('columns.price')}</th>
+              <th>{t('columns.eps')}</th>
+              <th>{t('columns.health')}</th>
+              <th>{t('columns.earnings')}</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {data?.stocks.map((s) => (
+              <Row key={s.symbol} s={s} disabled={!isAdmin || reason.length < 3} reason={reason} now={now} />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -125,7 +127,7 @@ function Row({ s, disabled, reason, now }: { s: StockRow; disabled: boolean; rea
         {action === 'split' && (
           <input className="field inline-block w-14 py-0.5 text-xs" value={ratio} onChange={(e) => setRatio(e.target.value)} disabled={disabled} aria-label={t('splitRatio')} />
         )}
-        <button className={`font-semibold underline disabled:opacity-40 ${armed ? 'text-down' : ''}`} disabled={disabled || run.isPending} onClick={go}>
+        <button className={`py-1 font-semibold underline disabled:opacity-40 ${armed ? 'text-down' : ''}`} disabled={disabled || run.isPending} onClick={go}>
           {armed ? t('confirm') : t('execute')}
         </button>
         <div className="mt-1 max-w-xs text-right whitespace-normal">

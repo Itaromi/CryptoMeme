@@ -13,6 +13,7 @@ export function CatalogRow({ m, algo, cash, canBuy }: { m: Model; algo: string; 
   const texts = useTexts();
   const errorMessage = texts.error;
   const t = useTranslations('mining.catalog');
+  const tc = useTranslations('mining.shop.cols');
   const f = useFormat();
   const mf = useMiningFormat();
   const [n, setN] = useState(1);
@@ -29,8 +30,8 @@ export function CatalogRow({ m, algo, cash, canBuy }: { m: Model; algo: string; 
   });
 
   return (
-    <tr className="border-b border-line align-top hover:bg-paper-2">
-      <td className="py-2.5 pr-4">
+    <tr className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 border-b border-line py-3 align-top hover:bg-paper-2 lg:table-row lg:py-0">
+      <td className="col-span-2 lg:py-2.5 lg:pr-4">
         <span className="block font-semibold">
           {m.brand} {m.name}
         </span>
@@ -38,7 +39,7 @@ export function CatalogRow({ m, algo, cash, canBuy }: { m: Model; algo: string; 
           <span className="block text-xs italic text-ink-2">{m.descriptionKey ? texts.translate(m.descriptionKey, undefined, m.description) : m.description}</span>
         )}
       </td>
-      <td className="py-2.5 pr-4">
+      <td className="col-span-2 lg:py-2.5 lg:pr-4">
         {m.kind === 'PSU' && t('psu', { power: mf.watts(m.watts), efficiency: mf.pct(m.efficiency ?? 0) })}
         {m.kind === 'MOTHERBOARD' && t('motherboard', { socket: m.socket ?? '—', slots: m.gpuSlots ?? 0 })}
         {m.kind === 'COOLING' && t('cooling', { cooling: mf.watts(m.coolingW ?? 0) })}
@@ -58,9 +59,12 @@ export function CatalogRow({ m, algo, cash, canBuy }: { m: Model; algo: string; 
           </span>
         )}
       </td>
-      <td className="py-2.5 pr-4 text-right">{m.kind === 'PSU' || m.kind === 'RACK' ? '—' : mf.watts(m.watts)}</td>
-      <td className="py-2.5 pr-4 text-right font-semibold">{f.money(m.price)}</td>
-      <td className="py-2.5 text-right">
+      <td className="lg:py-2.5 lg:pr-4 lg:text-right">
+        {m.kind !== 'PSU' && m.kind !== 'RACK' && <span className="text-xs text-ink-2 lg:hidden">{tc('power')} </span>}
+        {m.kind === 'PSU' || m.kind === 'RACK' ? <span className="max-lg:hidden">—</span> : mf.watts(m.watts)}
+      </td>
+      <td className="text-right font-semibold lg:py-2.5 lg:pr-4">{f.money(m.price)}</td>
+      <td className="col-span-2 pt-1 lg:py-2.5 lg:text-right">
         {canBuy && (
           <span className="inline-flex items-center gap-2">
             <input
@@ -72,10 +76,10 @@ export function CatalogRow({ m, algo, cash, canBuy }: { m: Model; algo: string; 
                 setN(Math.max(1, Math.min(20, Number(e.target.value) || 1)));
                 buy.reset();
               }}
-              className="field w-16 py-1 text-center"
+              className="field w-16 py-2 text-center lg:py-1"
               aria-label={t('quantity')}
             />
-            <button className="btn bg-acid px-3 py-1 text-sm" disabled={buy.isPending || total > cash} onClick={() => buy.mutate()}>
+            <button className="btn bg-acid px-3 py-2 text-sm lg:py-1" disabled={buy.isPending || total > cash} onClick={() => buy.mutate()}>
               {total > cash ? t('tooExpensive') : n > 1 ? t('buyTotal', { total: f.money(total) }) : t('buy')}
             </button>
           </span>

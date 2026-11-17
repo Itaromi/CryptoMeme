@@ -108,7 +108,7 @@ export function PriceChart({ symbol, livePrice }: { symbol: string; livePrice?: 
             key={i.id}
             aria-pressed={interval.id === i.id}
             onClick={() => setInterval(i)}
-            className={`px-2.5 py-1 ${interval.id === i.id ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
+            className={`px-3 py-2 sm:px-2.5 sm:py-1 ${interval.id === i.id ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
           >
             {t(`intervals.${i.id}`)}
           </button>

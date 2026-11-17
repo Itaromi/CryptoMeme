@@ -23,6 +23,7 @@
   "masthead": {
     "liveTape": "Live prices",
     "netWorth": "Net worth",
+    "menu": "Menu",
     "logout": "Log out",
     "login": "Log in",
     "play": "Play",
@@ -60,5 +61,17 @@
     "empty": "Nothing here yet.",
     "error": "Something went wrong.",
     "loginRequired": "Log in to see this page."
+  },
+  "footer": {
+    "title": "A bug, an idea, a question?",
+    "intro": "CryptoMeme is open source: everything happens on <repo>GitHub</repo>. Report a problem, suggest an idea or come code with us.",
+    "links": {
+      "bug": "Report a bug",
+      "idea": "Suggest an idea",
+      "question": "Ask a question",
+      "contribute": "Contribute code",
+      "security": "Report a vulnerability (privately)"
+    },
+    "disclaimer": "CryptoMeme is a game: cryptos, stocks and dollars are 100% fictional."
   }
 }

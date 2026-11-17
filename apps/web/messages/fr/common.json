@@ -23,6 +23,7 @@
   "masthead": {
     "liveTape": "Cours en direct",
     "netWorth": "Patrimoine",
+    "menu": "Menu",
     "logout": "Déconnexion",
     "login": "Connexion",
     "play": "Jouer",
@@ -60,5 +61,17 @@
     "empty": "Rien pour l'instant.",
     "error": "Une erreur est survenue.",
     "loginRequired": "Connecte-toi pour voir cette page."
+  },
+  "footer": {
+    "title": "Un bug, une idée, une question ?",
+    "intro": "CryptoMeme est open source : tout se passe sur <repo>GitHub</repo>. Signale un problème, propose une idée ou viens coder avec nous.",
+    "links": {
+      "bug": "Signaler un bug",
+      "idea": "Proposer une idée",
+      "question": "Poser une question",
+      "contribute": "Contribuer au code",
+      "security": "Signaler une faille (en privé)"
+    },
+    "disclaimer": "CryptoMeme est un jeu : cryptos, actions et dollars sont 100 % fictifs."
   }
 }

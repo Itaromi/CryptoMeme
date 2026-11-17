@@ -1,5 +1,6 @@
 {
   "page": {
+    "sortLabel": "Sort by",
     "title": "The Stock Market",
     "intro": "(Almost) serious companies. Prices follow quarterly earnings, shareholders pocket dividends, and sometimes someone buys the whole thing. Or it all collapses.",
     "sessionOpen": "Market open",

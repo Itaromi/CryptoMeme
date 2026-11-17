@@ -46,23 +46,25 @@ export function Users({ isAdmin }: { isAdmin: boolean }) {
     <div>
       <input className="field mb-4 max-w-md" placeholder={t('search')} aria-label={t('search')} value={q} onChange={(e) => setQ(e.target.value)} />
       <p className="mb-2 text-sm text-ink-2">{t('total', { count: data?.total ?? 0 })}</p>
-      <table className="num w-full text-left text-sm">
-        <thead>
-          <tr className="border-y-2 border-ink text-xs uppercase tracking-wider text-ink-2">
-            <th className="py-2">{t('columns.player')}</th>
-            <th className="py-2">{t('columns.email')}</th>
-            <th className="py-2">{t('columns.role')}</th>
-            <th className="py-2 text-right">{t('columns.netWorth')}</th>
-            <th className="py-2 text-right">{t('columns.lastLogin')}</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {data?.items.map((u) => (
-            <UserLine key={u.id} u={u} open={open === u.id} toggle={() => setOpen(open === u.id ? null : u.id)} isAdmin={isAdmin} />
-          ))}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="num w-full text-left text-sm">
+          <thead>
+            <tr className="border-y-2 border-ink text-xs uppercase tracking-wider text-ink-2">
+              <th className="py-2">{t('columns.player')}</th>
+              <th className="py-2">{t('columns.email')}</th>
+              <th className="py-2">{t('columns.role')}</th>
+              <th className="py-2 text-right">{t('columns.netWorth')}</th>
+              <th className="py-2 text-right">{t('columns.lastLogin')}</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {data?.items.map((u) => (
+              <UserLine key={u.id} u={u} open={open === u.id} toggle={() => setOpen(open === u.id ? null : u.id)} isAdmin={isAdmin} />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -97,7 +99,7 @@ function UserLine({ u, open, toggle, isAdmin }: { u: UserRow; open: boolean; tog
         <td className="py-2 text-right">{u.netWorth ? f.money(u.netWorth) : '—'}</td>
         <td className="py-2 text-right text-ink-2">{u.lastLoginAt ? f.ago(u.lastLoginAt, now) : '—'}</td>
         <td className="py-2 text-right">
-          <button className="font-semibold underline" onClick={toggle}>
+          <button className="py-1 font-semibold underline" onClick={toggle}>
             {open ? tc('close') : t('manage')}
           </button>
         </td>
@@ -149,22 +151,24 @@ function UserLine({ u, open, toggle, isAdmin }: { u: UserRow; open: boolean; tog
               <div>
                 <p className="mb-1 text-xs font-bold uppercase tracking-widest">{t('ledger')}</p>
                 <div className="max-h-72 overflow-y-auto">
-                  <table className="num w-full text-xs">
-                    <tbody>
-                      {detail.data?.ledger.map((l) => (
-                        <tr key={l.id} className="border-b border-line">
-                          <td className="py-1 text-ink-2">{f.ago(l.createdAt, now)}</td>
-                          <td className="py-1">
-                            {l.kind}
-                            {l.assetId ? ` ${t('assetEntry')}` : ''}
-                          </td>
-                          <td className={`py-1 text-right ${Number(l.delta) >= 0 ? 'text-up' : 'text-down'}`}>{fmt8(l.delta)}</td>
-                          <td className="py-1 text-right">{fmt8(l.balanceAfter)}</td>
-                          <td className="py-1 pl-2 text-ink-2">{l.memo}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <div className="overflow-x-auto">
+                    <table className="num w-full text-xs">
+                      <tbody>
+                        {detail.data?.ledger.map((l) => (
+                          <tr key={l.id} className="border-b border-line">
+                            <td className="py-1 text-ink-2">{f.ago(l.createdAt, now)}</td>
+                            <td className="py-1">
+                              {l.kind}
+                              {l.assetId ? ` ${t('assetEntry')}` : ''}
+                            </td>
+                            <td className={`py-1 text-right ${Number(l.delta) >= 0 ? 'text-up' : 'text-down'}`}>{fmt8(l.delta)}</td>
+                            <td className="py-1 text-right">{fmt8(l.balanceAfter)}</td>
+                            <td className="py-1 pl-2 text-ink-2">{l.memo}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>

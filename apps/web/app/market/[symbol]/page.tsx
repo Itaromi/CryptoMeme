@@ -88,16 +88,16 @@ export default function AssetPage({ params }: { params: Promise<{ symbol: string
         ← {isStock ? t('backStocks') : t('backMarket')}
       </Link>
       <header className="mt-3 mb-8 flex flex-wrap items-end justify-between gap-6 border-b-2 border-ink pb-6">
-        <div className="flex items-end gap-5">
-          <span className="grid size-20 place-items-center text-5xl" style={{ background: `color-mix(in oklch, ${data.color} 35%, transparent)` }}>
+        <div className="flex min-w-0 items-end gap-3 sm:gap-5">
+          <span className="grid size-14 shrink-0 place-items-center text-4xl sm:size-20 sm:text-5xl" style={{ background: `color-mix(in oklch, ${data.color} 35%, transparent)` }}>
             <Glyph name={data.emoji} color={data.color} />
           </span>
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-semibold uppercase tracking-widest text-ink-2">
               {data.symbol} · {isStock ? (company ? texts.sector(company.sector) : t('stockFallback')) : labels.tier(data.tier)}
               {data.frozen && <span className="ml-2 bg-down px-1.5 text-paper">{t('frozenBadge')}</span>}
             </p>
-            <h1 className="display text-[clamp(2.5rem,6vw,5rem)] font-extrabold">{data.name}</h1>
+            <h1 className="display text-[clamp(2.25rem,6vw,5rem)] font-extrabold break-words">{data.name}</h1>
           </div>
         </div>
         <div className="text-right">

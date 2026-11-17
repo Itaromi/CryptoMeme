@@ -111,18 +111,19 @@ export default function PortfolioPage() {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="num w-full min-w-[720px] text-left">
+            {/* Mobile : actif (quantité dessous) et valeur (PnL latent dessous) ; le détail apparaît avec la place */}
+            <table className="num w-full text-left lg:min-w-[720px]">
               <thead>
                 <tr className="border-y-2 border-ink text-xs uppercase tracking-wider text-ink-2">
                   <th className="py-2 pr-4">{t('positions.columns.asset')}</th>
-                  <th className="py-2 pr-4 text-right">{t('positions.columns.quantity')}</th>
-                  <th className="py-2 pr-4 text-right">{t('positions.columns.avgCost')}</th>
-                  <th className="py-2 pr-4 text-right">{t('positions.columns.price')}</th>
-                  <th className="py-2 pr-4 text-right" title={t('positions.columns.liquidationHint')}>
+                  <th className="hidden py-2 pr-4 text-right md:table-cell">{t('positions.columns.quantity')}</th>
+                  <th className="hidden py-2 pr-4 text-right lg:table-cell">{t('positions.columns.avgCost')}</th>
+                  <th className="hidden py-2 pr-4 text-right lg:table-cell">{t('positions.columns.price')}</th>
+                  <th className="py-2 text-right sm:pr-4" title={t('positions.columns.liquidationHint')}>
                     {t('positions.columns.liquidationValue')}
                   </th>
-                  <th className="py-2 pr-4 text-right">{t('positions.columns.unrealizedPnl')}</th>
-                  <th className="py-2 text-right">{t('positions.columns.realizedPnl')}</th>
+                  <th className="hidden py-2 pr-4 text-right sm:table-cell">{t('positions.columns.unrealizedPnl')}</th>
+                  <th className="hidden py-2 text-right md:table-cell">{t('positions.columns.realizedPnl')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -134,15 +135,23 @@ export default function PortfolioPage() {
                         <Link href={`/market/${p.symbol}`} className="font-semibold hover:underline">
                           <Glyph name={p.emoji} color={p.color} /> {p.name}
                         </Link>
+                        <span className="block text-sm text-ink-2 md:hidden">
+                          {f.qty(p.quantity)} {p.symbol}
+                        </span>
                       </td>
-                      <td className="py-3 pr-4 text-right">{f.qty(p.quantity)}</td>
-                      <td className="py-3 pr-4 text-right">{f.price(p.avgCost)}</td>
-                      <td className="py-3 pr-4 text-right">{f.price(p.price)}</td>
-                      <td className="py-3 pr-4 text-right font-semibold">{f.money(p.liquidationValue)}</td>
-                      <td className={`py-3 pr-4 text-right font-semibold ${tone(u)}`}>
+                      <td className="hidden py-3 pr-4 text-right md:table-cell">{f.qty(p.quantity)}</td>
+                      <td className="hidden py-3 pr-4 text-right lg:table-cell">{f.price(p.avgCost)}</td>
+                      <td className="hidden py-3 pr-4 text-right lg:table-cell">{f.price(p.price)}</td>
+                      <td className="py-3 text-right font-semibold whitespace-nowrap sm:pr-4">
+                        {f.money(p.liquidationValue)}
+                        <span className={`block text-sm sm:hidden ${tone(u)}`}>
+                          {f.money(u)} ({f.pct(Number(p.costBasis) ? u / Number(p.costBasis) : 0)})
+                        </span>
+                      </td>
+                      <td className={`hidden py-3 pr-4 text-right font-semibold sm:table-cell ${tone(u)}`}>
                         {f.money(u)} <span className="text-xs">({f.pct(Number(p.costBasis) ? u / Number(p.costBasis) : 0)})</span>
                       </td>
-                      <td className={`py-3 text-right ${tone(Number(p.realizedPnl))}`}>{f.money(p.realizedPnl)}</td>
+                      <td className={`hidden py-3 text-right md:table-cell ${tone(Number(p.realizedPnl))}`}>{f.money(p.realizedPnl)}</td>
                     </tr>
                   );
                 })}
@@ -158,32 +167,37 @@ export default function PortfolioPage() {
           <p className="text-ink-2">{t('history.empty')}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="num w-full min-w-[720px] text-left text-sm">
+            {/* Mobile : ordre (date dessous) et montant (PnL dessous) ; le détail apparaît avec la place */}
+            <table className="num w-full text-left text-sm lg:min-w-[720px]">
               <thead>
                 <tr className="border-y-2 border-ink text-xs uppercase tracking-wider text-ink-2">
-                  <th className="py-2 pr-4">{t('history.columns.when')}</th>
+                  <th className="hidden py-2 pr-4 sm:table-cell">{t('history.columns.when')}</th>
                   <th className="py-2 pr-4">{t('history.columns.order')}</th>
-                  <th className="py-2 pr-4 text-right">{t('history.columns.quantity')}</th>
-                  <th className="py-2 pr-4 text-right">{t('history.columns.amount')}</th>
-                  <th className="py-2 pr-4 text-right">{t('history.columns.avgPrice')}</th>
-                  <th className="py-2 pr-4 text-right">{t('history.columns.fee')}</th>
-                  <th className="py-2 pr-4 text-right">{t('history.columns.impact')}</th>
-                  <th className="py-2 text-right">{t('history.columns.pnl')}</th>
+                  <th className="hidden py-2 pr-4 text-right md:table-cell">{t('history.columns.quantity')}</th>
+                  <th className="py-2 text-right sm:pr-4">{t('history.columns.amount')}</th>
+                  <th className="hidden py-2 pr-4 text-right lg:table-cell">{t('history.columns.avgPrice')}</th>
+                  <th className="hidden py-2 pr-4 text-right lg:table-cell">{t('history.columns.fee')}</th>
+                  <th className="hidden py-2 pr-4 text-right lg:table-cell">{t('history.columns.impact')}</th>
+                  <th className="hidden py-2 text-right sm:table-cell">{t('history.columns.pnl')}</th>
                 </tr>
               </thead>
               <tbody>
                 {trades.map((tr) => (
                   <tr key={tr.id} className="border-b border-line">
-                    <td className="py-2 pr-4 text-ink-2">{f.ago(tr.at, now)}</td>
+                    <td className="hidden py-2 pr-4 text-ink-2 sm:table-cell">{f.ago(tr.at, now)}</td>
                     <td className="py-2 pr-4">
                       <span className={`font-semibold ${tr.side === 'BUY' ? 'text-up' : 'text-down'}`}>{tc(`side.${tr.side}`)}</span> <Glyph name={tr.emoji} /> {tr.symbol}
+                      <span className="block text-xs text-ink-2 sm:hidden">{f.ago(tr.at, now)}</span>
                     </td>
-                    <td className="py-2 pr-4 text-right">{f.qty(tr.quantity)}</td>
-                    <td className="py-2 pr-4 text-right">{f.money(tr.cash)}</td>
-                    <td className="py-2 pr-4 text-right">{f.price(tr.price)}</td>
-                    <td className="py-2 pr-4 text-right text-ink-2">{f.money(tr.fee)}</td>
-                    <td className="py-2 pr-4 text-right text-ink-2">{f.pct(tr.slippageBps / 10_000, false)}</td>
-                    <td className={`py-2 text-right font-semibold ${tr.realizedPnl ? tone(Number(tr.realizedPnl)) : 'text-ink-3'}`}>
+                    <td className="hidden py-2 pr-4 text-right md:table-cell">{f.qty(tr.quantity)}</td>
+                    <td className="py-2 text-right whitespace-nowrap sm:pr-4">
+                      {f.money(tr.cash)}
+                      {tr.realizedPnl && <span className={`block text-xs font-semibold sm:hidden ${tone(Number(tr.realizedPnl))}`}>{f.money(tr.realizedPnl)}</span>}
+                    </td>
+                    <td className="hidden py-2 pr-4 text-right lg:table-cell">{f.price(tr.price)}</td>
+                    <td className="hidden py-2 pr-4 text-right text-ink-2 lg:table-cell">{f.money(tr.fee)}</td>
+                    <td className="hidden py-2 pr-4 text-right text-ink-2 lg:table-cell">{f.pct(tr.slippageBps / 10_000, false)}</td>
+                    <td className={`hidden py-2 text-right font-semibold sm:table-cell ${tr.realizedPnl ? tone(Number(tr.realizedPnl)) : 'text-ink-3'}`}>
                       {tr.realizedPnl ? f.money(tr.realizedPnl) : '—'}
                     </td>
                   </tr>
@@ -191,7 +205,7 @@ export default function PortfolioPage() {
               </tbody>
             </table>
             {history.hasNextPage && (
-              <button className="mt-4 font-semibold underline" disabled={history.isFetchingNextPage} onClick={() => void history.fetchNextPage()}>
+              <button className="mt-4 py-2 font-semibold underline" disabled={history.isFetchingNextPage} onClick={() => void history.fetchNextPage()}>
                 {tc('actions.loadMore')}
               </button>
             )}
