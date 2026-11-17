@@ -1,5 +1,6 @@
 {
   "page": {
+    "sortLabel": "Trier par",
     "title": "La Bourse",
     "intro": "Des sociétés (presque) sérieuses. Le cours suit les résultats trimestriels, les actionnaires touchent des dividendes, et parfois quelqu'un rachète tout. Ou tout s'effondre.",
     "sessionOpen": "Séance ouverte",

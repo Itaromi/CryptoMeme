@@ -109,7 +109,7 @@ function Shop() {
                 <button
                   key={s.id}
                   onClick={() => setSort(s.id)}
-                  className={`px-3 py-1.5 ${sort === s.id ? 'bg-ink text-paper' : 'border border-line hover:bg-paper-2'}`}
+                  className={`px-3 py-2 sm:py-1.5 ${sort === s.id ? 'bg-ink text-paper' : 'border border-line hover:bg-paper-2'}`}
                 >
                   {t(`sort.${s.label}`)}
                 </button>
@@ -117,9 +117,10 @@ function Shop() {
             </div>
           </div>
           <p className="mb-2 text-sm text-ink-2">{t('count', { count: data?.total ?? 0 })}</p>
-          <div className="overflow-x-auto">
-            <table className="num w-full min-w-[760px] text-left text-sm">
-              <thead>
+          {/* Mobile et tablette : chaque modèle est une fiche empilée ; tableau à partir de lg */}
+          <div className="lg:overflow-x-auto">
+            <table className="num block w-full text-left text-sm lg:table">
+              <thead className="hidden lg:table-header-group">
                 <tr className="border-y-2 border-ink text-xs uppercase tracking-wider text-ink-2">
                   <th className="py-2 pr-4">{t('cols.model')}</th>
                   <th className="py-2 pr-4">{mines ? t('cols.hashrate') : t('cols.specs')}</th>
@@ -128,7 +129,7 @@ function Shop() {
                   <th className="py-2 text-right" />
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="block border-t-2 border-ink lg:table-row-group lg:border-t-0">
                 {data?.items.map((model) => (
                   <CatalogRow key={model.id} m={model} algo={algo} cash={Number(farm?.cash ?? 0)} canBuy={!!me} />
                 ))}
@@ -138,12 +139,12 @@ function Shop() {
           {(page > 1 || hasMore) && (
             <div className="mt-4 flex gap-4">
               {page > 1 && (
-                <button className="font-semibold underline" onClick={() => setPage(page - 1)}>
+                <button className="py-2 font-semibold underline" onClick={() => setPage(page - 1)}>
                   {t('prev')}
                 </button>
               )}
               {hasMore && (
-                <button className="font-semibold underline" onClick={() => setPage(page + 1)}>
+                <button className="py-2 font-semibold underline" onClick={() => setPage(page + 1)}>
                   {t('next')}
                 </button>
               )}

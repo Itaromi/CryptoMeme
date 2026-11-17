@@ -35,7 +35,7 @@ export function Showcase({ data, isMe }: { data: Profile; isMe: boolean }) {
         <h2 className="text-sm font-bold uppercase tracking-widest">{t('title', { count: a.count, total: a.total })}</h2>
         {isMe && !editing && unlocked.length > 0 && (
           <button
-            className="text-sm font-semibold underline"
+            className="py-1 text-sm font-semibold underline"
             onClick={() => {
               setPick(a.featured.map((f) => f.slug));
               setEditing(true);

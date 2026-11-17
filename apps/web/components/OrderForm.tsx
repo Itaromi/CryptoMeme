@@ -133,7 +133,7 @@ export function OrderForm({ symbol, name }: { symbol: string; name: string }) {
         </label>
         <div className="grid grid-cols-4 gap-1 text-sm">
           {FRACTIONS.map((fr) => (
-            <button type="button" key={fr} onClick={() => setFraction(fr)} className="border border-ink py-1 hover:bg-paper-2" disabled={!available}>
+            <button type="button" key={fr} onClick={() => setFraction(fr)} className="border border-ink py-2 hover:bg-paper-2 sm:py-1" disabled={!available}>
               {fr === 1 ? t('max') : f.number(fr, { style: 'percent' })}
             </button>
           ))}
@@ -160,7 +160,7 @@ export function OrderForm({ symbol, name }: { symbol: string; name: string }) {
                 key={s}
                 aria-pressed={slip === s}
                 onClick={() => setSlip(s)}
-                className={`num flex-1 py-1 ${slip === s ? 'bg-ink text-paper' : 'border border-line hover:bg-paper-2'}`}
+                className={`num flex-1 py-2 sm:py-1 ${slip === s ? 'bg-ink text-paper' : 'border border-line hover:bg-paper-2'}`}
               >
                 {f.number(s / 10_000, { style: 'percent', maximumFractionDigits: 1 })}
               </button>

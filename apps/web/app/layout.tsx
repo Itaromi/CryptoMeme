@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { Providers } from './providers';
 import { Masthead } from '@/components/Masthead';
 import { EventBanner } from '@/components/EventBanner';
+import { SiteFooter } from '@/components/SiteFooter';
 import './globals.css';
 
 const bricolage = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-bricolage', display: 'swap' });
@@ -25,6 +26,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Masthead />
             <EventBanner />
             <main className="w-full px-4 pb-24 sm:px-8 2xl:px-12">{children}</main>
+            <SiteFooter />
           </Providers>
         </NextIntlClientProvider>
       </body>

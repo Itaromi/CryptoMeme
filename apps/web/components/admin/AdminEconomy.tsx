@@ -62,44 +62,48 @@ export function AdminEconomy({ isAdmin }: { isAdmin: boolean }) {
 
       <section>
         <h3 className="mb-2 text-sm font-bold uppercase tracking-widest">{t('types.title')}</h3>
-        <table className="num w-full text-left text-sm">
-          <thead>
-            <tr className="border-y-2 border-ink text-xs uppercase text-ink-2">
-              <th className="py-2">{t('types.columns.event')}</th>
-              <th>{t('types.columns.rate')}</th>
-              <th>{t('types.columns.cooldown')}</th>
-              <th>{t('types.columns.notice')}</th>
-              <th>{t('types.columns.fired')}</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {types?.map((type) => (
-              <TypeRow key={type.id} type={type} disabled={disabled} run={run} banks={banks ?? []} />
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="num w-full text-left text-sm">
+            <thead>
+              <tr className="border-y-2 border-ink text-xs uppercase text-ink-2">
+                <th className="py-2">{t('types.columns.event')}</th>
+                <th>{t('types.columns.rate')}</th>
+                <th>{t('types.columns.cooldown')}</th>
+                <th>{t('types.columns.notice')}</th>
+                <th>{t('types.columns.fired')}</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {types?.map((type) => (
+                <TypeRow key={type.id} type={type} disabled={disabled} run={run} banks={banks ?? []} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section>
         <h3 className="mb-2 text-sm font-bold uppercase tracking-widest">{t('banks.title')}</h3>
-        <table className="num w-full text-left text-sm">
-          <thead>
-            <tr className="border-y-2 border-ink text-xs uppercase text-ink-2">
-              <th className="py-2">{t('banks.columns.bank')}</th>
-              <th>{t('banks.columns.fee')}</th>
-              <th>{t('banks.columns.trading')}</th>
-              <th>{t('banks.columns.interest')}</th>
-              <th>{t('banks.columns.failRisk')}</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {banks?.map((b) => (
-              <BankRow key={b.id} b={b} disabled={disabled} run={run} />
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="num w-full text-left text-sm">
+            <thead>
+              <tr className="border-y-2 border-ink text-xs uppercase text-ink-2">
+                <th className="py-2">{t('banks.columns.bank')}</th>
+                <th>{t('banks.columns.fee')}</th>
+                <th>{t('banks.columns.trading')}</th>
+                <th>{t('banks.columns.interest')}</th>
+                <th>{t('banks.columns.failRisk')}</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {banks?.map((b) => (
+                <BankRow key={b.id} b={b} disabled={disabled} run={run} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

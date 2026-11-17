@@ -47,7 +47,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
               ))}
             </h1>
             <Bio bio={data.bio} editable={isMe} username={data.username} />
-            {isMe && <Link href="/shop" className="mt-2 inline-block text-sm font-semibold underline">{t('customize')}</Link>}
+            {isMe && <Link href="/shop" className="mt-2 inline-block py-1 text-sm font-semibold underline">{t('customize')}</Link>}
           </div>
           {s && (
             <div className="text-right">

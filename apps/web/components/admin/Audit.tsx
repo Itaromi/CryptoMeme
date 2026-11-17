@@ -24,21 +24,23 @@ export function Audit() {
   const { data } = useQuery({ queryKey: queryKeys.admin.audit, queryFn: () => api<AuditRow[]>('/admin/audit') });
   if (!data?.length) return <p className="text-ink-2">{t('empty')}</p>;
   return (
-    <table className="w-full text-left text-sm">
-      <tbody>
-        {data.map((a) => (
-          <tr key={a.id} className="border-b border-line align-top">
-            <td className="py-2 pr-4 text-ink-2">{f.ago(a.createdAt, now)}</td>
-            <td className="py-2 pr-4 font-semibold">@{a.actor.username}</td>
-            <td className="py-2 pr-4">{a.action}</td>
-            <td className="py-2 pr-4 text-ink-2">
-              {a.targetType} {a.targetId.slice(0, 10)}
-            </td>
-            <td className="py-2 pr-4">{a.reason}</td>
-            <td className="num py-2 text-xs text-ink-3">{a.payload ? JSON.stringify(a.payload) : ''}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[560px] text-left text-sm">
+        <tbody>
+          {data.map((a) => (
+            <tr key={a.id} className="border-b border-line align-top">
+              <td className="py-2 pr-4 text-ink-2">{f.ago(a.createdAt, now)}</td>
+              <td className="py-2 pr-4 font-semibold">@{a.actor.username}</td>
+              <td className="py-2 pr-4">{a.action}</td>
+              <td className="py-2 pr-4 text-ink-2">
+                {a.targetType} {a.targetId.slice(0, 10)}
+              </td>
+              <td className="py-2 pr-4">{a.reason}</td>
+              <td className="num py-2 text-xs text-ink-3">{a.payload ? JSON.stringify(a.payload) : ''}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

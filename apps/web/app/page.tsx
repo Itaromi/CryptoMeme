@@ -47,18 +47,18 @@ export default function Home() {
       </section>
 
       <section className="grid gap-12 lg:grid-cols-[1fr_1fr]">
-        <div>
+        <div className="min-w-0">
           <h2 className="mb-3 border-b-2 border-ink pb-1 text-sm font-bold uppercase tracking-widest">{t('top10.title')}</h2>
           {!board?.entries.length ? (
             <p className="text-ink-2">{t('top10.empty')}</p>
           ) : (
             <ol className="num">
               {board.entries.slice(0, 10).map((e) => (
-                <li key={e.username} className="flex items-baseline gap-4 border-b border-line py-2">
-                  <span className={`w-10 font-bold ${e.rank === 1 ? 'display text-3xl' : 'text-lg'}`}>#{e.rank}</span>
-                  <Link href={`/u/${e.username}`} className="flex-1 font-semibold hover:underline">@{e.username}</Link>
-                  <span className="font-semibold">{f.money(e.netWorth)}</span>
-                  <span className={`w-24 text-right text-sm ${tone(e.performance)}`}>{f.pct(e.performance)}</span>
+                <li key={e.username} className="flex items-baseline gap-3 border-b border-line py-2 sm:gap-4">
+                  <span className={`w-10 shrink-0 font-bold ${e.rank === 1 ? 'display text-3xl' : 'text-lg'}`}>#{e.rank}</span>
+                  <Link href={`/u/${e.username}`} className="min-w-0 flex-1 truncate font-semibold hover:underline">@{e.username}</Link>
+                  <span className="font-semibold whitespace-nowrap">{f.money(e.netWorth)}</span>
+                  <span className={`hidden w-24 text-right text-sm min-[400px]:inline ${tone(e.performance)}`}>{f.pct(e.performance)}</span>
                 </li>
               ))}
             </ol>
@@ -76,7 +76,7 @@ function Mover({ asset, label, bg }: { asset: AssetRow; label: string; bg: strin
   return (
     <Link href={`/market/${asset.symbol}`} className={`block border-2 border-ink ${bg} p-5 hover:bg-paper-2`}>
       <p className="text-xs font-bold uppercase tracking-widest">{label}</p>
-      <p className="display mt-2 text-4xl font-bold">
+      <p className="display mt-2 text-3xl font-bold break-words sm:text-4xl">
         <Glyph name={asset.emoji} color={asset.color} /> {asset.name}
       </p>
       <p className="num mt-1 text-lg">

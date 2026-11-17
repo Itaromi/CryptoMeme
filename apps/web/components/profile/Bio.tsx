@@ -38,7 +38,7 @@ export function Bio({ bio, editable, username }: { bio: string | null; editable:
     <p className="mt-3 max-w-xl text-lg text-ink-2">
       {bio || (editable ? t('empty') : '')}
       {editable && (
-        <button className="ml-2 text-sm font-semibold text-ink underline" onClick={() => setEditing(true)}>
+        <button className="ml-2 py-1 text-sm font-semibold text-ink underline" onClick={() => setEditing(true)}>
           {t('edit')}
         </button>
       )}
