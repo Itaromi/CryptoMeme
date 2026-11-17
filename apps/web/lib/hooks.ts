@@ -1,9 +1,10 @@
 'use client';
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { io, Socket } from 'socket.io-client';
+import { io, type Socket } from 'socket.io-client';
 import { WS_EVENTS, type MarketTick } from '@cryptomeme/shared';
 import { api, ApiError } from './api';
+import { queryKeys } from './queryKeys';
 
 // ─── Types de réponse ───────────────────────────────────────────────
 export interface Me {
@@ -38,6 +39,9 @@ export interface Portfolio {
   bank: { name: string; tradingFeeBps: number; color: string; interestMonthly: number };
   cash: string;
   holdingsValue: string;
+  /** Valeur de revente du matériel et des locaux de minage */
+  hardwareValue: string;
+  /** Cash + positions + matériel : même calcul que le classement */
   netWorth: string;
   positions: Array<{
     symbol: string;
@@ -66,7 +70,7 @@ export function getSocket() {
 
 export function useMe() {
   return useQuery({
-    queryKey: ['me'],
+    queryKey: queryKeys.me,
     queryFn: async () => {
       try {
         return await api<Me>('/auth/me');
@@ -82,13 +86,13 @@ export function useMe() {
 /** Liste des actifs, tenue à jour par le flux WebSocket. */
 export function useAssets() {
   const qc = useQueryClient();
-  const query = useQuery({ queryKey: ['assets'], queryFn: () => api<AssetRow[]>('/market/assets'), staleTime: 30_000 });
+  const query = useQuery({ queryKey: queryKeys.assets, queryFn: () => api<AssetRow[]>('/market/assets'), staleTime: 30_000 });
 
   useEffect(() => {
     const s = getSocket();
     const onTick = (ticks: MarketTick[]) => {
       const bySym = new Map(ticks.map((t) => [t.symbol, t]));
-      qc.setQueryData<AssetRow[]>(['assets'], (old) =>
+      qc.setQueryData<AssetRow[]>(queryKeys.assets, (old) =>
         old?.map((a) => {
           const t = bySym.get(a.symbol);
           return t ? { ...a, price: t.price, change24h: t.change24h, volume24h: Number(t.volume24h), regime: t.regime } : a;
@@ -105,5 +109,5 @@ export function useAssets() {
 }
 
 export function usePortfolio(enabled = true) {
-  return useQuery({ queryKey: ['portfolio'], queryFn: () => api<Portfolio>('/portfolio'), enabled, refetchInterval: 10_000 });
+  return useQuery({ queryKey: queryKeys.portfolio, queryFn: () => api<Portfolio>('/portfolio'), enabled, refetchInterval: 10_000 });
 }

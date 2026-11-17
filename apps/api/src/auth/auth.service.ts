@@ -108,6 +108,20 @@ export class AuthService {
     return t.userId;
   }
 
+  /** Profil du joueur connecté. */
+  me(userId: string) {
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { id: true, email: true, username: true, role: true, emailVerifiedAt: true, bio: true, createdAt: true },
+    });
+  }
+
+  /** Renvoie l'e-mail de vérification si l'adresse n'est pas encore confirmée. */
+  async resendVerification(userId: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { id: true, email: true, emailVerifiedAt: true } });
+    if (!user.emailVerifiedAt) await this.sendVerification(user.id, user.email);
+  }
+
   async sendVerification(userId: string, email: string) {
     const raw = await this.createUserToken(userId, 'EMAIL_VERIFY', 48 * 3600 * 1000);
     const url = `${this.config.get('WEB_URL')}/verify?token=${raw}`;

@@ -1,0 +1,83 @@
+{
+  "notFound": "Ce joueur n'existe pas.",
+  "joined": "Joueur depuis le {date}",
+  "role": {
+    "ADMIN": "Admin",
+    "MODERATOR": "Modo"
+  },
+  "customize": "Personnaliser mon profil →",
+  "rankOf": "sur {players, plural, one {# joueur} other {# joueurs}} · saison {season}",
+  "notPlaying": "Pas encore entré sur le marché cette saison.",
+  "netWorth": "Patrimoine",
+  "portfolio": "Portefeuille",
+  "bio": {
+    "label": "Bio",
+    "ok": "OK",
+    "empty": "Aucune bio. Raconte ta légende.",
+    "edit": "Modifier"
+  },
+  "showcase": {
+    "title": "Vitrine · {count}/{total} succès",
+    "choose": "Choisir",
+    "pickHint": "Jusqu’à {max} succès ({count}/{max}).",
+    "empty": "Aucun succès pour l’instant.",
+    "emptyMine": "Aucun succès pour l’instant. <link>Voir la liste</link>"
+  },
+  "advanced": {
+    "title": "Statistiques avancées",
+    "realizedPnl": "PnL réalisé",
+    "winRate": "Taux de réussite",
+    "winRateHint": "Ventes clôturées en gain",
+    "bestTrade": "Meilleur trade",
+    "worstTrade": "Pire trade",
+    "trades": "Ordres passés",
+    "volume": "Volume échangé",
+    "fees": "Frais payés",
+    "peak": "Record de patrimoine",
+    "drawdown": "Drawdown max",
+    "drawdownHint": "Pire chute depuis un sommet",
+    "sharpe": "Ratio de Sharpe",
+    "sharpeHint": "Rendement / risque, annualisé",
+    "favorite": "Crypto préférée"
+  },
+  "exposure": {
+    "title": "Exposition",
+    "crypto": "Cryptos",
+    "stocks": "Actions",
+    "mining": "Matériel",
+    "cash": "Cash"
+  },
+  "flows": {
+    "title": "Flux de la saison",
+    "taxes": "Taxes payées",
+    "dividends": "Dividendes reçus",
+    "bank": "Banque (intérêts − frais)",
+    "events": "Événements & assurance",
+    "shop": "Dépensé en boutique"
+  },
+  "heatmap": {
+    "title": "Quand trade-t-il ?",
+    "label": "Ordres par jour et par heure",
+    "empty": "Aucun ordre pour l’instant.",
+    "cell": "{day} {hour} h : {count, plural, one {# ordre} other {# ordres}}",
+    "days": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mer",
+      "thu": "Jeu",
+      "fri": "Ven",
+      "sat": "Sam",
+      "sun": "Dim"
+    }
+  },
+  "mining": {
+    "title": "Minage",
+    "rigs": "Rigs",
+    "minedValue": "Valeur minée (prix actuel)",
+    "electricity": "Facture d’électricité",
+    "hardware": "Valeur du matériel",
+    "yield": "Rendement de l’électricité",
+    "yieldHint": "Valeur minée pour 1 $ d’électricité",
+    "yieldValue": "{ratio} $ / $"
+  }
+}

@@ -1,7 +1,10 @@
 'use client';
-import { useState } from 'react';
+import type { QueryKey } from '@tanstack/react-query';
 
-export function AuthShell({ title, kicker, children }: { title: string; kicker: string; children: React.ReactNode }) {
+/** Préfixe vide : toutes les requêtes. À invalider quand l'utilisateur connecté change (connexion, inscription). */
+export const ALL_QUERIES: QueryKey = [];
+
+export function AuthShell({ title, kicker, children }: { title: React.ReactNode; kicker: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="rise grid gap-10 pt-6 md:grid-cols-[1.1fr_1fr] md:gap-16">
       <div>
@@ -13,11 +16,12 @@ export function AuthShell({ title, kicker, children }: { title: string; kicker: 
   );
 }
 
+/** Champ de formulaire d'authentification, avec son erreur éventuelle (message du schéma partagé, affiché tel quel). */
 export function Field({
   label,
   error,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }) {
+}: React.InputHTMLAttributes<HTMLInputElement> & { label: React.ReactNode; error?: string }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-semibold">{label}</span>
@@ -27,20 +31,7 @@ export function Field({
   );
 }
 
-/** Petit helper pour gérer soumission + erreur serveur. */
-export function useSubmit<T>(fn: (v: T) => Promise<unknown>) {
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const submit = async (v: T) => {
-    setPending(true);
-    setError(null);
-    try {
-      await fn(v);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setPending(false);
-    }
-  };
-  return { submit, pending, error };
+/** Erreur renvoyée par l'API, sous le formulaire. */
+export function FormError({ message }: { message: string | null }) {
+  return message ? <p className="text-sm text-down">{message}</p> : null;
 }

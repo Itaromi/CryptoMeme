@@ -1,0 +1,5 @@
+{
+  "title": "Notifications",
+  "label": "Notifications{unread, plural, =0 {} other { (# unread)}}",
+  "empty": "Nothing yet. The calm before the storm."
+}

@@ -10,14 +10,16 @@ import {
   type ISeriesApi,
   type UTCTimestamp,
 } from 'lightweight-charts';
+import { useLocale, useTranslations } from 'next-intl';
 import type { Candle } from '@cryptomeme/shared';
 import { api } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 
 const INTERVALS = [
-  { id: '1m', label: '1 min', ms: 60_000 },
-  { id: '5m', label: '5 min', ms: 300_000 },
-  { id: '1h', label: '1 h', ms: 3_600_000 },
-  { id: '1d', label: '1 j', ms: 86_400_000 },
+  { id: '1m', ms: 60_000 },
+  { id: '5m', ms: 300_000 },
+  { id: '1h', ms: 3_600_000 },
+  { id: '1d', ms: 86_400_000 },
 ] as const;
 
 // lightweight-charts dessine sur canvas : couleurs en hex
@@ -26,6 +28,8 @@ const DOWN = '#c8393a';
 const INK = '#2a2820';
 
 export function PriceChart({ symbol, livePrice }: { symbol: string; livePrice?: string }) {
+  const t = useTranslations('market.chart');
+  const locale = useLocale();
   const [interval, setInterval] = useState<(typeof INTERVALS)[number]>(INTERVALS[0]);
   const el = useRef<HTMLDivElement>(null);
   const chart = useRef<IChartApi | null>(null);
@@ -34,7 +38,7 @@ export function PriceChart({ symbol, livePrice }: { symbol: string; livePrice?: 
   const last = useRef<{ time: number; open: number; high: number; low: number; close: number } | null>(null);
 
   const { data } = useQuery({
-    queryKey: ['candles', symbol, interval.id],
+    queryKey: queryKeys.candles(symbol, interval.id),
     queryFn: () => api<Candle[]>(`/market/assets/${symbol}/candles?interval=${interval.id}&limit=400`),
     refetchInterval: 60_000,
   });
@@ -48,7 +52,6 @@ export function PriceChart({ symbol, livePrice }: { symbol: string; livePrice?: 
       rightPriceScale: { borderColor: INK },
       timeScale: { borderColor: INK, timeVisible: true, secondsVisible: false },
       crosshair: { vertLine: { color: INK, labelBackgroundColor: INK }, horzLine: { color: INK, labelBackgroundColor: INK } },
-      localization: { locale: 'fr-FR' },
     });
     candles.current = c.addSeries(CandlestickSeries, {
       upColor: UP,
@@ -64,6 +67,11 @@ export function PriceChart({ symbol, livePrice }: { symbol: string; livePrice?: 
     chart.current = c;
     return () => c.remove();
   }, []);
+
+  // Dates et nombres des axes dans la langue du site
+  useEffect(() => {
+    chart.current?.applyOptions({ localization: { locale } });
+  }, [locale]);
 
   useEffect(() => {
     if (!data || !candles.current || !volume.current) return;
@@ -94,14 +102,15 @@ export function PriceChart({ symbol, livePrice }: { symbol: string; livePrice?: 
 
   return (
     <div>
-      <div className="mb-2 flex gap-1 text-xs font-semibold">
+      <div className="mb-2 flex gap-1 text-xs font-semibold" role="group" aria-label={t('intervalsLabel')}>
         {INTERVALS.map((i) => (
           <button
             key={i.id}
+            aria-pressed={interval.id === i.id}
             onClick={() => setInterval(i)}
             className={`px-2.5 py-1 ${interval.id === i.id ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
           >
-            {i.label}
+            {t(`intervals.${i.id}`)}
           </button>
         ))}
       </div>

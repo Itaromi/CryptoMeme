@@ -1,25 +1,30 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAssets, useMe, usePortfolio } from '@/lib/hooks';
-import { money, pct, price } from '@/lib/format';
+import { useFormat } from '@/lib/format';
+import { useApiMutation } from '@/lib/mutation';
+import { LocaleSwitcher } from './LocaleSwitcher';
 import { NotificationBell } from './NotificationBell';
 
 function TickerTape() {
+  const t = useTranslations('common.masthead');
+  const f = useFormat();
   const { data } = useAssets();
   if (!data?.length) return <div className="h-9 border-b-2 border-ink bg-ink" />;
   const items = [...data, ...data]; // doublé pour une boucle continue
   return (
-    <div className="overflow-hidden border-b-2 border-ink bg-ink text-paper" aria-label="Cours en direct">
+    <div className="overflow-hidden border-b-2 border-ink bg-ink text-paper" aria-label={t('liveTape')}>
       <div className="tape flex w-max gap-8 py-2 text-sm">
         {items.map((a, i) => (
           <Link key={`${a.symbol}-${i}`} href={`/market/${a.symbol}`} className="num flex items-center gap-2 whitespace-nowrap hover:text-acid">
             <span className="font-semibold">{a.symbol}</span>
-            <span>{price(a.price)}</span>
+            <span>{f.price(a.price)}</span>
             <span className={a.change24h >= 0 ? 'text-[oklch(0.8_0.15_150)]' : 'text-[oklch(0.75_0.17_27)]'}>
-              {a.change24h >= 0 ? '▲' : '▼'} {pct(a.change24h, false)}
+              {a.change24h >= 0 ? '▲' : '▼'} {f.pct(a.change24h, false)}
             </span>
           </Link>
         ))}
@@ -28,19 +33,11 @@ function TickerTape() {
   );
 }
 
-const NAV = [
-  { href: '/market', label: 'Cryptos' },
-  { href: '/stocks', label: 'Bourse' },
-  { href: '/portfolio', label: 'Portefeuille' },
-  { href: '/mining', label: 'Minage' },
-  { href: '/banks', label: 'Banques' },
-  { href: '/events', label: 'Actu' },
-  { href: '/leaderboard', label: 'Classement' },
-  { href: '/shop', label: 'Boutique' },
-  { href: '/create', label: 'Créer' },
-];
+const NAV = ['market', 'stocks', 'portfolio', 'mining', 'banks', 'events', 'leaderboard', 'shop', 'create'] as const;
 
 export function Masthead() {
+  const t = useTranslations('common');
+  const f = useFormat();
   const { data: me } = useMe();
   const { data: pf } = usePortfolio(!!me);
   const path = usePathname();
@@ -51,11 +48,13 @@ export function Masthead() {
   const section = sym && assets?.find((a) => a.symbol === sym)?.kind === 'STOCK' ? '/stocks' : path;
   const qc = useQueryClient();
 
-  async function logout() {
-    await api('/auth/logout', { method: 'POST' });
-    qc.clear();
-    router.push('/');
-  }
+  const logout = useApiMutation({
+    mutationFn: () => api('/auth/logout', { method: 'POST' }),
+    onSuccess: () => {
+      qc.clear();
+      router.push('/');
+    },
+  });
 
   return (
     <header className="mb-8">
@@ -66,45 +65,45 @@ export function Masthead() {
           Crypto<span className="bg-acid px-1">Meme</span>
         </Link>
         <nav className="order-3 col-span-2 -mx-1 flex items-center gap-1 overflow-x-auto text-sm font-semibold whitespace-nowrap xl:order-2 xl:col-span-1 xl:justify-center">
-          {NAV.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              className={`px-3 py-1.5 ${section.startsWith(n.href) ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
-            >
-              {n.label}
-            </Link>
-          ))}
+          {NAV.map((key) => {
+            const href = `/${key}`;
+            return (
+              <Link key={key} href={href} className={`px-3 py-1.5 ${section.startsWith(href) ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}>
+                {t(`nav.${key}`)}
+              </Link>
+            );
+          })}
           {me && (me.role === 'ADMIN' || me.role === 'MODERATOR') && (
             <Link href="/admin" className={`px-3 py-1.5 ${path.startsWith('/admin') ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}>
-              Admin
+              {t('nav.admin')}
             </Link>
           )}
         </nav>
         <div className="order-2 flex items-center justify-end gap-4 text-sm xl:order-3">
+          <LocaleSwitcher />
           {me ? (
             <>
               {pf && (
                 <div className="num border-r border-line pr-4 text-right leading-tight">
-                  <div className="text-xs text-ink-2">Patrimoine</div>
-                  <div className="font-semibold">{money(pf.netWorth)}</div>
+                  <div className="text-xs text-ink-2">{t('masthead.netWorth')}</div>
+                  <div className="font-semibold">{f.money(pf.netWorth)}</div>
                 </div>
               )}
               <NotificationBell />
               <Link href={`/u/${me.username}`} className="font-semibold underline decoration-2 underline-offset-4 hover:bg-acid">
                 @{me.username}
               </Link>
-              <button onClick={logout} className="text-ink-2 hover:text-ink" title="Se déconnecter">
-                Déconnexion
+              <button onClick={() => logout.mutate()} disabled={logout.isPending} className="text-ink-2 hover:text-ink">
+                {t('masthead.logout')}
               </button>
             </>
           ) : (
             <>
               <Link href="/login" className="font-semibold hover:underline">
-                Connexion
+                {t('masthead.login')}
               </Link>
               <Link href="/register" className="btn bg-acid py-1.5 text-sm">
-                Jouer
+                {t('masthead.play')}
               </Link>
             </>
           )}
@@ -116,12 +115,18 @@ export function Masthead() {
 }
 
 function VerifyBanner() {
+  const t = useTranslations('common.masthead');
+  const resend = useApiMutation({ mutationFn: () => api('/auth/resend-verification', { method: 'POST' }) });
   return (
     <div className="border-b-2 border-ink bg-paper-2 px-4 py-2 text-center text-sm sm:px-8">
-      Confirme ton email pour sécuriser ton compte.{' '}
-      <button className="font-semibold underline" onClick={() => api('/auth/resend-verification', { method: 'POST' }).then(() => alert('Email renvoyé.'))}>
-        Renvoyer le lien
-      </button>
+      {t('verifyPrompt')}{' '}
+      {resend.isSuccess ? (
+        <span className="font-semibold">{t('verifySent')}</span>
+      ) : (
+        <button className="font-semibold underline" disabled={resend.isPending} onClick={() => resend.mutate()}>
+          {t('verifyResend')}
+        </button>
+      )}
     </div>
   );
 }

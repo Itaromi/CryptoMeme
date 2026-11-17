@@ -1,0 +1,106 @@
+{
+  "title": "Crée ton empire",
+  "intro": "Lance ta crypto, introduis ton entreprise en Bourse ou monte ton pool de minage. Ça coûte cher, un modérateur valide le nom, et les règles empêchent de se servir dans la caisse :",
+  "rules": {
+    "locked": "<b>Liquidité verrouillée à vie</b> dans le pool : pas de rug pull possible par le créateur.",
+    "share": "<b>Ta part : {share}</b> de l’offre, versée petit à petit sur {days} jours.",
+    "royalties": "<b>Royalties : {share} des frais</b> payés par les autres joueurs qui tradent ton actif.",
+    "refund": "<b>Refus = remboursement</b> intégral des frais et du dépôt. {max} créations max par type."
+  },
+  "tabs": {
+    "CRYPTO": {
+      "label": "Une crypto",
+      "pitch": "Ton propre mème, coté face aux autres. Si ça prend, ta part prend de la valeur et tu touches des royalties sur chaque trade."
+    },
+    "COMPANY": {
+      "label": "Une entreprise",
+      "pitch": "Introduis ta boîte en Bourse : résultats trimestriels, dividendes que tu fixes, OPA… et faillite si ça tourne mal."
+    },
+    "POOL": {
+      "label": "Un pool de minage",
+      "pitch": "Les mineurs te rejoignent, tu prélèves ta commission sur chaque récompense. Trop gourmand, et ils vont ailleurs."
+    }
+  },
+  "loginCta": "<link>Connecte-toi</link> pour créer.",
+  "iconGroups": {
+    "finance": "Finance",
+    "memes": "Mèmes",
+    "animals": "Animaux",
+    "food": "Bouffe",
+    "industry": "Industrie",
+    "faces": "Têtes"
+  },
+  "form": {
+    "preview": {
+      "pool": "Pool {type} · {network}",
+      "asset": "{symbol} · {kind}",
+      "symbol": "SYMB",
+      "crypto": "Crypto",
+      "name": "Ton nom ici"
+    },
+    "name": "Nom",
+    "symbol": "Symbole",
+    "logo": "Logo",
+    "color": "Couleur",
+    "description": "Description",
+    "descriptionPlaceholder": "Le pitch. Fais rêver (ou rire) les investisseurs.",
+    "ipoPrice": "Prix d’introduction ($)",
+    "startPrice": "Prix de départ ($)",
+    "deposit": "Liquidité déposée ($, {min} – {max})",
+    "sector": "Secteur",
+    "sectorOption": "{sector} (PER {pe})",
+    "payout": "Dividende : {pct} du bénéfice",
+    "payoutHint": "Plus tu distribues, moins tu réinvestis : croissance attendue plus faible.",
+    "network": "Réseau",
+    "poolType": "Type",
+    "poolTypes": {
+      "PPS": "PPS (revenu stable)",
+      "PPLNS": "PPLNS (selon la chance)",
+      "SOLO": "Solo (tout ou rien)"
+    },
+    "commission": "Commission : {pct}",
+    "summary": {
+      "fee": "Frais de création (perdus)",
+      "liquidity": "Liquidité (verrouillée dans le pool)",
+      "supply": "Offre en circulation",
+      "myShare": "Ta part ({share}, sur {days} j)",
+      "units": "{amount} unités",
+      "total": "Total débité",
+      "cash": "Cash disponible : {cash}"
+    },
+    "submit": "Envoyer en modération",
+    "sent": "Demande envoyée ! Un modérateur va vérifier le nom. Frais et dépôt sont séquestrés en attendant.",
+    "errors": {
+      "tooShort": "{min} caractères minimum",
+      "tooLong": "{max} caractères maximum",
+      "tooSmall": "Minimum : {min}",
+      "tooBig": "Maximum : {max}",
+      "symbol": "2 à 8 lettres ou chiffres",
+      "invalid": "Valeur invalide"
+    }
+  },
+  "mine": {
+    "title": "Mes créations",
+    "empty": "Rien pour l’instant. Les plus grands empires ont commencé par un mème.",
+    "pool": "Pool {type} · {symbol}",
+    "poolShort": "Pool",
+    "status": {
+      "PENDING": "En modération",
+      "APPROVED": "En ligne",
+      "REJECTED": "Refusée"
+    },
+    "rejected": "Motif : {reason}. Remboursé.",
+    "escrow": "{amount} séquestrés en attendant la décision.",
+    "price": "Cours",
+    "holders": "Détenteurs",
+    "royalties": "Royalties",
+    "vested": "Ta part versée",
+    "vestEnd": "fin {when}",
+    "rigs": "Rigs connectées",
+    "earned": "Commission touchée",
+    "earnedValue": "Valeur",
+    "payout": "Dividende : {pct}",
+    "commission": "Commission : {pct}",
+    "saved": "Enregistré."
+  }
+}

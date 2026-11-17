@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { EventType, GameEvent, Prisma } from '@prisma/client';
-import { MarketState, mathRng, poissonHit } from '@cryptomeme/engine';
+import { AssetTier, EventType, GameEvent, Prisma } from '@prisma/client';
+import { z } from 'zod';
+import { MarketState, mathRng, pick, poissonHit, shuffle } from '@cryptomeme/engine';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeasonsService } from '../seasons/seasons.service';
 import { LeaseService } from '../common/lease.service';
@@ -9,20 +10,37 @@ import { MarketGateway } from '../market/market.gateway';
 import { PlayersService } from '../players/players.service';
 import { D, money } from '../common/decimal';
 import { applyAsset, applyCash } from './ledger';
+import { stateJson, stateOf } from '../market/asset-state';
 import { NotificationInput, NotificationsService } from './notifications';
 import { ModifiersService } from './modifiers.service';
 
-type Params = Record<string, any>;
+/** Paramètres d'un événement (colonne JSON, éditable en admin) : lus via num / str / les schémas ci-dessous. */
+type Params = Record<string, unknown>;
 type Result = { affected: number; total: number; detail?: string };
 const ref = (e: GameEvent) => ({ type: 'GameEvent', id: e.id });
-const pick = <T>(arr: T[]): T | undefined => arr[Math.floor(mathRng() * arr.length)];
 const between = (a: number, b: number) => a + mathRng() * (b - a);
+
+/** Paramètre numérique (valeur par défaut si absent, erreur explicite sinon). */
+function num(p: Params, key: string, fallback?: number): number {
+  const v = p[key];
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (fallback !== undefined) return fallback;
+  throw new Error(`Paramètre « ${key} » manquant ou invalide`);
+}
+const str = (p: Params, key: string): string | undefined => {
+  const v = p[key];
+  return typeof v === 'string' ? v : undefined;
+};
+const bracketsSchema = z.array(z.tuple([z.number(), z.number()])).min(1);
+const tiersSchema = z.array(z.enum(AssetTier)).optional();
 
 /** Remplit « {clé} » avec les paramètres de l'événement. */
 export function fill(template: string, p: Params) {
-  return template.replace(/\{(\w+)\}/g, (_, k) => {
+  return template.replace(/\{(\w+)\}/g, (_, k: string) => {
     const v = k === 'mult' ? (p.elecMultiplier ?? p.hardwareMultiplier ?? p.failureMultiplier) : k === 'ambient' ? p.ambientDelta : p[k];
-    return v === undefined ? `{${k}}` : typeof v === 'number' ? v.toLocaleString('fr-FR') : String(v);
+    if (v === undefined) return `{${k}}`;
+    if (typeof v === 'number') return v.toLocaleString('fr-FR');
+    return typeof v === 'string' || typeof v === 'boolean' ? String(v) : JSON.stringify(v);
   });
 }
 
@@ -63,7 +81,7 @@ export class EventsService {
 
       // 3. Hasard : au plus un nouvel événement par minute
       const types = await this.prisma.eventType.findMany({ where: { enabled: true, ratePerDay: { gt: 0 } } });
-      for (const t of types.sort(() => mathRng() - 0.5)) {
+      for (const t of shuffle(mathRng, types)) {
         if (!poissonHit(mathRng, t.ratePerDay, minutes / 1440)) continue;
         if (await this.onCooldown(t)) continue;
         await this.schedule(t);
@@ -97,7 +115,14 @@ export class EventsService {
 
   private changed() {
     this.modifiers.invalidate();
-    this.gateway.server?.emit('events:changed');
+    this.gateway.broadcastEventsChanged();
+  }
+
+  /** Annule un événement programmé ou en cours (ses effets globaux cessent immédiatement). */
+  async cancel(id: string) {
+    const r = await this.prisma.gameEvent.updateMany({ where: { id, status: { in: ['SCHEDULED', 'ACTIVE'] } }, data: { status: 'CANCELLED', endsAt: new Date() } });
+    if (r.count) this.changed();
+    return r.count > 0;
   }
 
   // ─── Programmation ────────────────────────────────────────────────
@@ -112,7 +137,7 @@ export class EventsService {
         typeId: t.id,
         title: fill(t.name, params),
         description: fill(t.description, params),
-        params,
+        params: params as Prisma.InputJsonObject,
         startsAt,
         triggeredBy: opts.triggeredBy,
       },
@@ -125,11 +150,12 @@ export class EventsService {
 
   private async chooseTarget(slug: string, p: Params): Promise<boolean> {
     if (['airdrop', 'exceptional-dividend', 'elon-tweet', 'rug-pull'].includes(slug) && !p.assetId) {
-      const where: Prisma.AssetWhereInput = { frozen: false, ...(p.tiers ? { tier: { in: p.tiers } } : {}) };
+      const tiers = tiersSchema.parse(p.tiers);
+      const where: Prisma.AssetWhereInput = { frozen: false, ...(tiers ? { tier: { in: tiers } } : {}) };
       // Airdrops, tweets et rug pulls, c'est un truc de crypto
       if (slug !== 'exceptional-dividend') where.kind = 'CRYPTO';
       if (slug === 'exceptional-dividend') where.holdings = { some: { quantity: { gt: 0 } } };
-      const a = pick(await this.prisma.asset.findMany({ where, select: { id: true, symbol: true } }));
+      const a = pick(mathRng, await this.prisma.asset.findMany({ where, select: { id: true, symbol: true } }));
       if (!a) return false;
       p.assetId = a.id;
       p.symbol = a.symbol;
@@ -137,7 +163,7 @@ export class EventsService {
     if (slug === 'bank-hack' && !p.bankId) {
       const season = await this.seasons.active();
       const used = await this.prisma.wallet.groupBy({ by: ['bankId'], where: { seasonId: season.id }, _count: true });
-      const b = pick(used);
+      const b = pick(mathRng, used);
       if (!b) return false;
       const bank = await this.prisma.bank.findUniqueOrThrow({ where: { id: b.bankId } });
       p.bankId = bank.id;
@@ -165,7 +191,7 @@ export class EventsService {
       data: { status: duration > 0 ? 'ACTIVE' : 'DONE', endsAt: duration > 0 ? new Date(Date.now() + duration * 60_000) : new Date(), result },
     });
     this.changed();
-    void this.players.recompute();
+    this.players.requestRecompute();
   }
 
   // ─── Cibles ───────────────────────────────────────────────────────
@@ -200,9 +226,9 @@ export class EventsService {
       await this.prisma.$transaction(async (tx) => {
         await tx.$queryRaw`SELECT id FROM "Asset" WHERE id = ${id} FOR UPDATE`;
         const a = await tx.asset.findUniqueOrThrow({ where: { id } });
-        const s = a.state as unknown as MarketState;
+        const s = stateOf(a);
         const next = { ...s, logFair: s.logFair + logMove, logAnchor: s.logAnchor + logMove * 0.6, regime };
-        await tx.asset.update({ where: { id }, data: { state: next as object } });
+        await tx.asset.update({ where: { id }, data: { state: stateJson(next) } });
         await tx.marketEvent.create({ data: { assetId: id, type: 'EVENT', detail } });
       });
     }
@@ -212,14 +238,15 @@ export class EventsService {
   // ─── Effets ───────────────────────────────────────────────────────
   private readonly handlers: Record<string, (e: GameEvent, p: Params) => Promise<Result>> = {
     'flat-tax': async (e, p) => {
-      const since = new Date(Date.now() - (p.windowHours ?? 24) * 3_600_000);
+      const since = new Date(Date.now() - num(p, 'windowHours', 24) * 3_600_000);
+      const rate = num(p, 'rate');
       const gains = await this.prisma.trade.groupBy({ by: ['walletId'], where: { createdAt: { gte: since }, realizedPnl: { not: null }, walletId: { not: null } }, _sum: { realizedPnl: true } });
-      const ws = await this.wallets({ id: { in: gains.map((g) => g.walletId!) } });
+      const ws = await this.wallets({ id: { in: gains.flatMap((g) => (g.walletId ? [g.walletId] : [])) } });
       return this.cashEach(
         e,
         ws.map((w) => {
           const g = Number(gains.find((x) => x.walletId === w.id)?._sum.realizedPnl ?? 0);
-          return { walletId: w.id, userId: w.user.id, delta: -Math.max(0, g) * (p.rate / 100) * (1 - w.bank.taxShield), body: `Flat tax sur tes plus-values : −{amount}.` };
+          return { walletId: w.id, userId: w.user.id, delta: -Math.max(0, g) * (rate / 100) * (1 - w.bank.taxShield), body: `Flat tax sur tes plus-values : −{amount}.` };
         }),
         'TAX',
       );
@@ -227,7 +254,7 @@ export class EventsService {
 
     'wealth-tax': async (e, p) => {
       await this.players.recompute();
-      const brackets: [number, number][] = p.brackets;
+      const brackets = bracketsSchema.parse(p.brackets);
       const ws = await this.wallets({ netWorth: { gt: brackets[0][0] } });
       return this.cashEach(
         e,
@@ -245,57 +272,63 @@ export class EventsService {
     },
 
     'tax-audit': async (e, p) => {
+      const chance = num(p, 'chance');
+      const rate = num(p, 'rate');
       const ws = await this.wallets({ bank: { taxShield: { gt: 0 } } });
       return this.cashEach(
         e,
-        ws.filter(() => mathRng() < p.chance).map((w) => ({ walletId: w.id, userId: w.user.id, delta: -Number(w.cash) * (p.rate / 100), body: `Contrôle fiscal chez ${w.bank.name} : amende de {amount}.` })),
+        ws.filter(() => mathRng() < chance).map((w) => ({ walletId: w.id, userId: w.user.id, delta: -Number(w.cash) * (rate / 100), body: `Contrôle fiscal chez ${w.bank.name} : amende de {amount}.` })),
         'TAX',
       );
     },
 
     'tax-refund': async (e, p) => {
-      const since = new Date(Date.now() - (p.windowDays ?? 7) * 86_400_000);
+      const since = new Date(Date.now() - num(p, 'windowDays', 7) * 86_400_000);
+      const rate = num(p, 'rate');
       const paid = await this.prisma.ledgerEntry.groupBy({ by: ['walletId'], where: { kind: 'TAX', createdAt: { gte: since } }, _sum: { delta: true } });
       const ws = await this.wallets({ id: { in: paid.map((x) => x.walletId) } });
       return this.cashEach(
         e,
-        ws.map((w) => ({ walletId: w.id, userId: w.user.id, delta: -Number(paid.find((x) => x.walletId === w.id)?._sum.delta ?? 0) * (p.rate / 100), body: 'Le fisc te rembourse {amount}. Ne t’habitue pas.' })),
+        ws.map((w) => ({ walletId: w.id, userId: w.user.id, delta: -Number(paid.find((x) => x.walletId === w.id)?._sum.delta ?? 0) * (rate / 100), body: 'Le fisc te rembourse {amount}. Ne t’habitue pas.' })),
       );
     },
 
     'bank-hack': async (e, p) => {
-      const ws = await this.wallets({ bankId: p.bankId });
+      const [min, max] = [num(p, 'min'), num(p, 'max')];
+      const ws = await this.wallets({ bankId: str(p, 'bankId') });
       return this.cashEach(
         e,
         ws.map((w) => {
-          const pct = between(p.min, p.max) / 100;
+          const pct = between(min, max) / 100;
           const covered = w.bank.hackShield > 0 ? ` (${Math.round(w.bank.hackShield * 100)} % couverts par ta banque)` : '';
-          return { walletId: w.id, userId: w.user.id, delta: -Number(w.cash) * pct * (1 - w.bank.hackShield), body: `Piratage de ${p.bank} : tu perds {amount}${covered}.` };
+          return { walletId: w.id, userId: w.user.id, delta: -Number(w.cash) * pct * (1 - w.bank.hackShield), body: `Piratage de ${str(p, 'bank')} : tu perds {amount}${covered}.` };
         }),
       );
     },
 
     'bank-run': async (e, p) => {
-      const ws = await this.wallets({ bankId: p.bankId });
+      const rate = num(p, 'rate');
+      const ws = await this.wallets({ bankId: str(p, 'bankId') });
       const free = await this.prisma.bank.findFirstOrThrow({ where: { isDefault: true } });
       const guarantee = Number(ws[0]?.bank.depositGuarantee ?? Infinity);
       const res = await this.cashEach(
         e,
-        ws.map((w) => ({ walletId: w.id, userId: w.user.id, delta: -Math.max(0, Number(w.cash) - guarantee) * (p.rate / 100), body: `${p.bank} a fait faillite : tu perds {amount} au-delà de la garantie des dépôts.` })),
+        ws.map((w) => ({ walletId: w.id, userId: w.user.id, delta: -Math.max(0, Number(w.cash) - guarantee) * (rate / 100), body: `${str(p, 'bank')} a fait faillite : tu perds {amount} au-delà de la garantie des dépôts.` })),
       );
       await this.prisma.wallet.updateMany({ where: { id: { in: ws.map((w) => w.id) } }, data: { bankId: free.id, bankSince: new Date(0), bankAccrued: 0 } });
       return { ...res, affected: ws.length, detail: `${ws.length} clients transférés à ${free.name}` };
     },
 
     'wallet-hack': async (e, p) => {
+      const rate = num(p, 'rate');
       const ws = await this.wallets({ holdings: { some: { quantity: { gt: 0 } } } });
-      const victims = ws.sort(() => mathRng() - 0.5).slice(0, p.count);
+      const victims = shuffle(mathRng, ws).slice(0, num(p, 'count'));
       const notes: NotificationInput[] = [];
       let total = 0;
       for (const w of victims) {
-        const h = pick(await this.prisma.holding.findMany({ where: { walletId: w.id, quantity: { gt: 0 } }, include: { asset: true } }));
+        const h = pick(mathRng, await this.prisma.holding.findMany({ where: { walletId: w.id, quantity: { gt: 0 } }, include: { asset: true } }));
         if (!h) continue;
-        const qty = D(h.quantity).mul((p.rate / 100) * (1 - w.bank.hackShield));
+        const qty = D(h.quantity).mul((rate / 100) * (1 - w.bank.hackShield));
         const applied = await this.prisma.$transaction((tx) => applyAsset(tx, w.id, h.assetId, qty.neg(), 'EVENT', e.title, ref(e)));
         const usd = Number(applied.abs()) * Number(h.asset.price);
         total -= usd;
@@ -306,37 +339,47 @@ export class EventsService {
     },
 
     airdrop: async (e, p) => {
-      const asset = await this.prisma.asset.findUniqueOrThrow({ where: { id: p.assetId } });
-      const qty = D(p.usd).div(D(asset.price)).toDecimalPlaces(8);
+      const usd = num(p, 'usd');
+      const asset = await this.prisma.asset.findUniqueOrThrow({ where: { id: str(p, 'assetId') } });
+      const qty = D(usd).div(D(asset.price)).toDecimalPlaces(8);
       const ws = await this.wallets();
       for (const w of ws) await this.prisma.$transaction((tx) => applyAsset(tx, w.id, asset.id, qty, 'EVENT', e.title, ref(e)));
-      await this.notify.push(ws.map((w) => ({ userId: w.user.id, type: 'EVENT', title: e.title, body: `Tu reçois ${qty.toFixed(4)} ${asset.symbol} gratuitement.`, amount: p.usd, link: `/market/${asset.symbol}` })));
-      return { affected: ws.length, total: p.usd * ws.length };
+      await this.notify.push(ws.map((w) => ({ userId: w.user.id, type: 'EVENT', title: e.title, body: `Tu reçois ${qty.toFixed(4)} ${asset.symbol} gratuitement.`, amount: usd, link: `/market/${asset.symbol}` })));
+      return { affected: ws.length, total: usd * ws.length };
     },
 
     inheritance: async (e, p) => {
-      const ws = (await this.wallets()).sort(() => mathRng() - 0.5).slice(0, p.count);
-      return this.cashEach(e, ws.map((w) => ({ walletId: w.id, userId: w.user.id, delta: between(p.min, p.max), body: "Un oncle d'Amérique que tu n'as jamais vu te lègue {amount}." })));
+      const [min, max] = [num(p, 'min'), num(p, 'max')];
+      const ws = shuffle(mathRng, await this.wallets()).slice(0, num(p, 'count'));
+      return this.cashEach(e, ws.map((w) => ({ walletId: w.id, userId: w.user.id, delta: between(min, max), body: "Un oncle d'Amérique que tu n'as jamais vu te lègue {amount}." })));
     },
 
     'exceptional-dividend': async (e, p) => {
-      const asset = await this.prisma.asset.findUniqueOrThrow({ where: { id: p.assetId } });
+      const rate = num(p, 'rate');
+      const asset = await this.prisma.asset.findUniqueOrThrow({ where: { id: str(p, 'assetId') } });
       const holders = await this.prisma.holding.findMany({ where: { assetId: asset.id, quantity: { gt: 0 } } });
       const ws = await this.wallets({ id: { in: holders.map((h) => h.walletId) } });
       return this.cashEach(
         e,
         ws.map((w) => {
           const q = Number(holders.find((h) => h.walletId === w.id)?.quantity ?? 0);
-          return { walletId: w.id, userId: w.user.id, delta: q * Number(asset.price) * (p.rate / 100), body: `Dividende exceptionnel sur ${asset.symbol} : +{amount}.` };
+          return { walletId: w.id, userId: w.user.id, delta: q * Number(asset.price) * (rate / 100), body: `Dividende exceptionnel sur ${asset.symbol} : +{amount}.` };
         }),
       );
     },
 
-    'bull-run': async (e, p) => ({ affected: await this.nudgeMarket('ALL', Math.log(1 + p.pct / 100), 'HYPE', e.title), total: 0 }),
-    crash: async (e, p) => ({ affected: await this.nudgeMarket('ALL', Math.log(1 - p.pct / 100), 'PANIC', e.title), total: 0 }),
-    'elon-tweet': async (e, p) => ({ affected: await this.nudgeMarket([p.assetId], Math.log(1 + p.pct / 100), 'HYPE', e.title), total: 0 }),
-    'rug-pull': async (e, p) => ({ affected: await this.nudgeMarket([p.assetId], Math.log(1 - p.pct / 100), 'PANIC', e.title), total: 0 }),
+    'bull-run': async (e, p) => ({ affected: await this.nudgeMarket('ALL', Math.log(1 + num(p, 'pct') / 100), 'HYPE', e.title), total: 0 }),
+    crash: async (e, p) => ({ affected: await this.nudgeMarket('ALL', Math.log(1 - num(p, 'pct') / 100), 'PANIC', e.title), total: 0 }),
+    'elon-tweet': async (e, p) => ({ affected: await this.nudgeMarket(this.targetAsset(p), Math.log(1 + num(p, 'pct') / 100), 'HYPE', e.title), total: 0 }),
+    'rug-pull': async (e, p) => ({ affected: await this.nudgeMarket(this.targetAsset(p), Math.log(1 - num(p, 'pct') / 100), 'PANIC', e.title), total: 0 }),
   };
+
+  /** Actif ciblé par l'événement (choisi à la programmation). */
+  private targetAsset(p: Params): string[] {
+    const id = str(p, 'assetId');
+    if (!id) throw new Error('Paramètre « assetId » manquant');
+    return [id];
+  }
 
   // ─── Lecture ──────────────────────────────────────────────────────
   async feed() {

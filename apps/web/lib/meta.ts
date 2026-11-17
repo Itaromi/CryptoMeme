@@ -1,6 +1,7 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
+import { queryKeys } from './queryKeys';
 
 export interface Look {
   avatar: string;
@@ -64,30 +65,43 @@ export interface PublicAchievement {
   unlockedAt: string;
 }
 
-export const useShop = () => useQuery({ queryKey: ['shop'], queryFn: () => api<ShopResponse>('/shop') });
+export const useShop = () => useQuery({ queryKey: queryKeys.shop, queryFn: () => api<ShopResponse>('/shop') });
 export const useAchievements = () =>
-  useQuery({ queryKey: ['achievements'], queryFn: () => api<{ season: number; players: number; items: AchievementView[] }>('/achievements') });
+  useQuery({ queryKey: queryKeys.achievements, queryFn: () => api<{ season: number; players: number; items: AchievementView[] }>('/achievements') });
 
-export const KIND_LABEL: Record<CosmeticKind, string> = {
-  FRAME: 'Cadres',
-  BANNER: 'Bannières',
-  TITLE: 'Titres',
-  BADGE: 'Badges',
-  NAME_EFFECT: 'Effets de pseudo',
+// ─── Classement ─────────────────────────────────────────────────────
+export const LEADERBOARD_CATEGORIES = ['general', 'day', 'week', 'trader', 'miner', 'best-trade', 'worst-trade'] as const;
+export type LeaderboardCategory = (typeof LEADERBOARD_CATEGORIES)[number];
+
+export interface LeaderboardView {
+  season: { number: number; name: string; status: string; startsAt: string; endsAt: string | null };
+  category: LeaderboardCategory;
+  unit: 'money' | 'pct';
+  entries: Array<{ rank: number; username: string; look?: Look; netWorth: string; performance: number; value: number }>;
+}
+
+/** Classement d'une saison (`null` : saison en cours) et d'une catégorie ; partagé par l'accueil et la page Classement. */
+export const useLeaderboard = (season: number | null, category: LeaderboardCategory) =>
+  useQuery({
+    queryKey: queryKeys.leaderboard.list(season, category),
+    queryFn: () => api<LeaderboardView>(`/leaderboard?category=${category}${season ? `&season=${season}` : ''}`),
+    refetchInterval: 30_000,
+  });
+
+/** Couleur des étiquettes de rareté (libellés : messages `shop.rarity.*`). */
+export const RARITY_CLS: Record<Rarity, string> = {
+  COMMON: 'bg-paper-3 text-ink',
+  RARE: 'bg-up-bg text-up',
+  EPIC: 'bg-acid text-acid-ink',
+  LEGENDARY: 'bg-ink text-paper',
 };
 
-export const RARITY: Record<Rarity, { label: string; cls: string }> = {
-  COMMON: { label: 'Commun', cls: 'bg-paper-3 text-ink' },
-  RARE: { label: 'Rare', cls: 'bg-up-bg text-up' },
-  EPIC: { label: 'Épique', cls: 'bg-acid text-acid-ink' },
-  LEGENDARY: { label: 'Légendaire', cls: 'bg-ink text-paper' },
-};
-
-export const TIER: Record<Tier, { label: string; cls: string }> = {
-  BRONZE: { label: 'Bronze', cls: 'bg-[oklch(0.86_0.06_55)]' },
-  SILVER: { label: 'Argent', cls: 'bg-paper-3' },
-  GOLD: { label: 'Or', cls: 'bg-[oklch(0.88_0.12_90)]' },
-  LEGENDARY: { label: 'Légendaire', cls: 'bg-ink text-paper' },
+/** Couleur des paliers de succès (libellés : messages `achievements.tier.*`). */
+export const TIER_CLS: Record<Tier, string> = {
+  BRONZE: 'bg-[oklch(0.86_0.06_55)]',
+  SILVER: 'bg-paper-3',
+  GOLD: 'bg-[oklch(0.88_0.12_90)]',
+  LEGENDARY: 'bg-ink text-paper',
 };
 
 /** Apparence d'un objet appliqué à une apparence de base (aperçu en boutique). */

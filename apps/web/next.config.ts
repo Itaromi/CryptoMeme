@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
 import path from 'node:path';
 
 const API = process.env.API_URL ?? 'http://localhost:4000';
@@ -40,11 +41,9 @@ const config: NextConfig = {
   transpilePackages: ['@cryptomeme/shared'],
   // Même origine pour l'API → les cookies httpOnly fonctionnent sans CORS.
   // En production, le reverse proxy (Caddy) envoie /api et /socket.io directement à l'API.
-  async rewrites() {
-    return [{ source: '/api/:path*', destination: `${API}/api/:path*` }];
-  },
-  async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }];
-  },
+  rewrites: () => Promise.resolve([{ source: '/api/:path*', destination: `${API}/api/:path*` }]),
+  headers: () => Promise.resolve([{ source: '/:path*', headers: securityHeaders }]),
 };
-export default config;
+
+// Traductions : configuration lue dans i18n/request.ts
+export default createNextIntlPlugin('./i18n/request.ts')(config);

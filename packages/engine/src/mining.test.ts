@@ -1,5 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { ComponentSpec, computeRig, poolPayout, stepNpcHashrate, wearPerMinute } from './mining';
+import {
+  type ComponentSpec,
+  coinsPerMinute,
+  computeRig,
+  effectiveFee,
+  facilityResale,
+  FEDERATION_DISCOUNT_BPS,
+  FEDERATION_MIN_POOLS,
+  federationCounts,
+  hardwarePrice,
+  itemResale,
+  poolOwnerCut,
+  poolPayout,
+  REPAIR_RATIO,
+  repairCost,
+  stepNpcHashrate,
+  wearPerMinute,
+} from './mining';
 import { createRng } from './random';
 
 const part = (p: Partial<ComponentSpec> & Pick<ComponentSpec, 'kind'>): ComponentSpec => ({
@@ -87,5 +104,54 @@ describe('pools', () => {
     let npc = 1000;
     for (let i = 0; i < 3000; i++) npc = stepNpcHashrate(npc, 1000, 4, 1);
     expect(npc).toBeCloseTo(2000, -1);
+  });
+});
+
+describe('économie du minage', () => {
+  const pool = (id: string, federation: string | null, feeBps = 200) => ({ id, federation, feeBps });
+
+  it('compte les pools distincts par fédération', () => {
+    const counts = federationCounts([
+      { pool: pool('a', 'F') },
+      { pool: pool('a', 'F') },
+      { pool: pool('b', 'F') },
+      { pool: pool('c', null) },
+      { pool: null },
+    ]);
+    expect(counts.get('F')).toBe(2);
+    expect(counts.size).toBe(1);
+  });
+
+  it('la remise de fédération s’applique à partir de 3 pools distincts', () => {
+    const p = pool('a', 'F', 250);
+    expect(effectiveFee(p, new Map([['F', FEDERATION_MIN_POOLS - 1]]))).toBe(250);
+    expect(effectiveFee(p, new Map([['F', FEDERATION_MIN_POOLS]]))).toBe(250 - FEDERATION_DISCOUNT_BPS);
+    expect(effectiveFee(pool('x', null, 250), new Map([['F', 10]]))).toBe(250);
+  });
+
+  it('la commission du propriétaire reconstitue exactement la retenue du pool', () => {
+    // brut 100 pièces, 2 % de frais → 98 versées au mineur, 2 au propriétaire
+    expect(poolOwnerCut(98, 200)).toBeCloseTo(2);
+    expect(poolOwnerCut(0, 200)).toBe(0);
+    expect(poolOwnerCut(50, 0)).toBe(0);
+    expect(poolOwnerCut(50, -100)).toBe(0); // bonus (pool louche) : rien à reverser
+    expect(poolOwnerCut(50, 10_000)).toBe(0);
+  });
+
+  it('gain par minute proportionnel à la part du réseau', () => {
+    const net = { blockReward: 10, npcHashrate: 900, playerHashrate: 100 };
+    expect(coinsPerMinute(100, net)).toBeCloseTo(1);
+    expect(coinsPerMinute(1000, net, true)).toBeCloseTo(5);
+    expect(coinsPerMinute(1, { blockReward: 10, npcHashrate: 0, playerHashrate: 0 })).toBe(0);
+  });
+
+  it('prix, revente et réparation du matériel au centime', () => {
+    expect(hardwarePrice(199.99, 1.5)).toBe(299.98); // 299.985 → centime inférieur
+    expect(itemResale(1000, 0.5, 'OK', 1)).toBe(300);
+    expect(itemResale(1000, 0.5, 'OK', 2)).toBe(600);
+    expect(itemResale(1000, 0, 'BROKEN', 1)).toBe(100);
+    expect(itemResale(1000, 0, 'DESTROYED', 3)).toBe(0);
+    expect(repairCost(1000)).toBe(1000 * REPAIR_RATIO);
+    expect(facilityResale(15_000)).toBe(7_500);
   });
 });

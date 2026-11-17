@@ -1,0 +1,17 @@
+{
+  "title": "Succès",
+  "intro": "Certains se débloquent en gagnant, d’autres en perdant de façon spectaculaire. Les meilleurs offrent un cosmétique introuvable en boutique. Ils restent acquis d’une saison à l’autre.",
+  "unlocked": "{count, plural, one {débloqué} other {débloqués}}",
+  "unlockedOn": "Débloqué le {date}",
+  "notYet": "Pas encore",
+  "rarity": "{share} des joueurs",
+  "nobody": "Personne pour l’instant",
+  "reward": "récompense en boutique",
+  "signupCta": "<link>Crée un compte</link> pour commencer ta collection.",
+  "tier": {
+    "BRONZE": "Bronze",
+    "SILVER": "Argent",
+    "GOLD": "Or",
+    "LEGENDARY": "Légendaire"
+  }
+}

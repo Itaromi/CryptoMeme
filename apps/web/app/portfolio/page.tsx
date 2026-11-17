@@ -1,10 +1,13 @@
 'use client';
 import Link from 'next/link';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { useNow, useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useMe, usePortfolio } from '@/lib/hooks';
-import { ago, money, pct, price, qty, tone } from '@/lib/format';
+import { queryKeys } from '@/lib/queryKeys';
+import { tone, useFormat } from '@/lib/format';
 import { Glyph } from '@/lib/icons';
+import { Stat } from '@/components/ui/Stat';
 
 interface TradeRow {
   id: string;
@@ -21,10 +24,14 @@ interface TradeRow {
 }
 
 export default function PortfolioPage() {
+  const t = useTranslations('portfolio');
+  const tc = useTranslations('common');
+  const f = useFormat();
+  const now = useNow({ updateInterval: 30_000 });
   const { data: me, isLoading: meLoading } = useMe();
   const { data: pf } = usePortfolio(!!me);
   const history = useInfiniteQuery({
-    queryKey: ['history'],
+    queryKey: queryKeys.history,
     queryFn: ({ pageParam }) => api<{ items: TradeRow[]; nextCursor: string | null }>(`/portfolio/trades${pageParam ? `?cursor=${pageParam}` : ''}`),
     initialPageParam: '',
     getNextPageParam: (last) => last.nextCursor ?? undefined,
@@ -35,7 +42,13 @@ export default function PortfolioPage() {
   if (!me)
     return (
       <p className="display text-4xl">
-        <Link href="/login" className="underline">Connecte-toi</Link> pour voir ton portefeuille.
+        {t.rich('loginPrompt', {
+          link: (c) => (
+            <Link href="/login" className="underline">
+              {c}
+            </Link>
+          ),
+        })}
       </p>
     );
   if (!pf) return <div className="h-96 animate-pulse bg-paper-2" />;
@@ -43,81 +56,73 @@ export default function PortfolioPage() {
   const perf = Number(pf.netWorth) / Number(pf.season.startingCash) - 1;
   const total = Number(pf.netWorth) || 1;
   const trades = history.data?.pages.flatMap((p) => p.items) ?? [];
+  const share = (v: string) => f.number(Number(v) / total, { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
   return (
     <div className="rise space-y-14">
       <section className="grid gap-8 border-b-2 border-ink pb-10 md:grid-cols-[1.4fr_1fr]">
         <div>
           <p className="text-sm font-semibold uppercase tracking-widest text-ink-2">{pf.season.name}</p>
-          <p className="display num mt-2 text-[clamp(3rem,8vw,7rem)] font-extrabold">{money(pf.netWorth)}</p>
-          <p className={`num text-xl font-semibold ${tone(perf)}`}>
-            {pct(perf)} depuis le début de saison
-          </p>
+          <p className="display num mt-2 text-[clamp(3rem,8vw,7rem)] font-extrabold">{f.money(pf.netWorth)}</p>
+          <p className={`num text-xl font-semibold ${tone(perf)}`}>{t('sinceStart', { perf: f.pct(perf) })}</p>
         </div>
-        <dl className="num grid grid-cols-2 content-end gap-6 text-lg">
-          <div>
-            <dt className="text-xs uppercase tracking-wider text-ink-2">Cash</dt>
-            <dd className="font-semibold">{money(pf.cash)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wider text-ink-2">Positions</dt>
-            <dd className="font-semibold">{money(pf.holdingsValue)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wider text-ink-2">Banque</dt>
-            <dd className="font-semibold">
-              <Link href="/banks" className="underline decoration-2 underline-offset-4 hover:bg-acid" style={{ textDecorationColor: pf.bank.color }}>
-                {pf.bank.name}
-              </Link>
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wider text-ink-2">Frais de trading</dt>
-            <dd className="font-semibold">{(pf.bank.tradingFeeBps / 100).toFixed(2)} %</dd>
-          </div>
+        <dl className="num grid grid-cols-2 content-end gap-6 sm:grid-cols-3">
+          <Stat label={t('stats.cash')}>{f.money(pf.cash)}</Stat>
+          <Stat label={t('stats.positions')}>{f.money(pf.holdingsValue)}</Stat>
+          <Stat label={t('stats.hardware')}>{f.money(pf.hardwareValue)}</Stat>
+          <Stat label={t('stats.bank')}>
+            <Link href="/banks" className="underline decoration-2 underline-offset-4 hover:bg-acid" style={{ textDecorationColor: pf.bank.color }}>
+              {pf.bank.name}
+            </Link>
+          </Stat>
+          <Stat label={t('stats.tradingFee')}>{f.pct(pf.bank.tradingFeeBps / 10_000, false)}</Stat>
         </dl>
       </section>
 
       {/* Barre de répartition */}
       <section>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-widest">Répartition</h2>
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-widest">{t('allocation.title')}</h2>
         <div className="flex h-8 w-full overflow-hidden border-2 border-ink">
           {pf.positions.map((p) => (
-            <div key={p.symbol} title={`${p.symbol} ${money(p.liquidationValue)}`} style={{ width: `${(Number(p.liquidationValue) / total) * 100}%`, background: p.color }} />
+            <div key={p.symbol} title={`${p.symbol} ${f.money(p.liquidationValue)}`} style={{ width: `${(Number(p.liquidationValue) / total) * 100}%`, background: p.color }} />
           ))}
-          <div title={`Cash ${money(pf.cash)}`} className="bg-paper-3" style={{ width: `${(Number(pf.cash) / total) * 100}%` }} />
+          <div title={`${t('allocation.cash')} ${f.money(pf.cash)}`} className="bg-paper-3" style={{ width: `${(Number(pf.cash) / total) * 100}%` }} />
         </div>
         <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
           {pf.positions.map((p) => (
             <span key={p.symbol} className="num flex items-center gap-1.5">
-              <span className="size-2.5" style={{ background: p.color }} /> {p.symbol} {((Number(p.liquidationValue) / total) * 100).toFixed(1)} %
+              <span className="size-2.5" style={{ background: p.color }} /> {p.symbol} {share(p.liquidationValue)}
             </span>
           ))}
           <span className="num flex items-center gap-1.5">
-            <span className="size-2.5 bg-paper-3" /> Cash {((Number(pf.cash) / total) * 100).toFixed(1)} %
+            <span className="size-2.5 bg-paper-3" /> {t('allocation.cash')} {share(pf.cash)}
           </span>
         </div>
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-widest">Positions</h2>
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-widest">{t('positions.title')}</h2>
         {pf.positions.length === 0 ? (
           <p className="text-lg">
-            Tout est en cash. Ça ne fera pas de toi un millionnaire.{' '}
-            <Link href="/market" className="font-semibold underline">Choisir une première crypto →</Link>
+            {t('positions.empty')}{' '}
+            <Link href="/market" className="font-semibold underline">
+              {t('positions.emptyCta')}
+            </Link>
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="num w-full min-w-[720px] text-left">
               <thead>
                 <tr className="border-y-2 border-ink text-xs uppercase tracking-wider text-ink-2">
-                  <th className="py-2 pr-4">Actif</th>
-                  <th className="py-2 pr-4 text-right">Quantité</th>
-                  <th className="py-2 pr-4 text-right">PRU</th>
-                  <th className="py-2 pr-4 text-right">Prix</th>
-                  <th className="py-2 pr-4 text-right" title="Ce que tu toucherais en vendant tout maintenant (slippage inclus)">Valeur de revente</th>
-                  <th className="py-2 pr-4 text-right">PnL latent</th>
-                  <th className="py-2 text-right">PnL réalisé</th>
+                  <th className="py-2 pr-4">{t('positions.columns.asset')}</th>
+                  <th className="py-2 pr-4 text-right">{t('positions.columns.quantity')}</th>
+                  <th className="py-2 pr-4 text-right">{t('positions.columns.avgCost')}</th>
+                  <th className="py-2 pr-4 text-right">{t('positions.columns.price')}</th>
+                  <th className="py-2 pr-4 text-right" title={t('positions.columns.liquidationHint')}>
+                    {t('positions.columns.liquidationValue')}
+                  </th>
+                  <th className="py-2 pr-4 text-right">{t('positions.columns.unrealizedPnl')}</th>
+                  <th className="py-2 text-right">{t('positions.columns.realizedPnl')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -130,14 +135,14 @@ export default function PortfolioPage() {
                           <Glyph name={p.emoji} color={p.color} /> {p.name}
                         </Link>
                       </td>
-                      <td className="py-3 pr-4 text-right">{qty(p.quantity)}</td>
-                      <td className="py-3 pr-4 text-right">{price(p.avgCost)}</td>
-                      <td className="py-3 pr-4 text-right">{price(p.price)}</td>
-                      <td className="py-3 pr-4 text-right font-semibold">{money(p.liquidationValue)}</td>
+                      <td className="py-3 pr-4 text-right">{f.qty(p.quantity)}</td>
+                      <td className="py-3 pr-4 text-right">{f.price(p.avgCost)}</td>
+                      <td className="py-3 pr-4 text-right">{f.price(p.price)}</td>
+                      <td className="py-3 pr-4 text-right font-semibold">{f.money(p.liquidationValue)}</td>
                       <td className={`py-3 pr-4 text-right font-semibold ${tone(u)}`}>
-                        {money(u)} <span className="text-xs">({pct(Number(p.costBasis) ? u / Number(p.costBasis) : 0)})</span>
+                        {f.money(u)} <span className="text-xs">({f.pct(Number(p.costBasis) ? u / Number(p.costBasis) : 0)})</span>
                       </td>
-                      <td className={`py-3 text-right ${tone(Number(p.realizedPnl))}`}>{money(p.realizedPnl)}</td>
+                      <td className={`py-3 text-right ${tone(Number(p.realizedPnl))}`}>{f.money(p.realizedPnl)}</td>
                     </tr>
                   );
                 })}
@@ -148,46 +153,46 @@ export default function PortfolioPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-widest">Historique des ordres</h2>
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-widest">{t('history.title')}</h2>
         {trades.length === 0 ? (
-          <p className="text-ink-2">Aucun ordre cette saison.</p>
+          <p className="text-ink-2">{t('history.empty')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="num w-full min-w-[720px] text-left text-sm">
               <thead>
                 <tr className="border-y-2 border-ink text-xs uppercase tracking-wider text-ink-2">
-                  <th className="py-2 pr-4">Quand</th>
-                  <th className="py-2 pr-4">Ordre</th>
-                  <th className="py-2 pr-4 text-right">Quantité</th>
-                  <th className="py-2 pr-4 text-right">Montant</th>
-                  <th className="py-2 pr-4 text-right">Prix moyen</th>
-                  <th className="py-2 pr-4 text-right">Frais</th>
-                  <th className="py-2 pr-4 text-right">Impact</th>
-                  <th className="py-2 text-right">PnL</th>
+                  <th className="py-2 pr-4">{t('history.columns.when')}</th>
+                  <th className="py-2 pr-4">{t('history.columns.order')}</th>
+                  <th className="py-2 pr-4 text-right">{t('history.columns.quantity')}</th>
+                  <th className="py-2 pr-4 text-right">{t('history.columns.amount')}</th>
+                  <th className="py-2 pr-4 text-right">{t('history.columns.avgPrice')}</th>
+                  <th className="py-2 pr-4 text-right">{t('history.columns.fee')}</th>
+                  <th className="py-2 pr-4 text-right">{t('history.columns.impact')}</th>
+                  <th className="py-2 text-right">{t('history.columns.pnl')}</th>
                 </tr>
               </thead>
               <tbody>
-                {trades.map((t) => (
-                  <tr key={t.id} className="border-b border-line">
-                    <td className="py-2 pr-4 text-ink-2">{ago(t.at)}</td>
+                {trades.map((tr) => (
+                  <tr key={tr.id} className="border-b border-line">
+                    <td className="py-2 pr-4 text-ink-2">{f.ago(tr.at, now)}</td>
                     <td className="py-2 pr-4">
-                      <span className={`font-semibold ${t.side === 'BUY' ? 'text-up' : 'text-down'}`}>{t.side === 'BUY' ? 'Achat' : 'Vente'}</span> <Glyph name={t.emoji} /> {t.symbol}
+                      <span className={`font-semibold ${tr.side === 'BUY' ? 'text-up' : 'text-down'}`}>{tc(`side.${tr.side}`)}</span> <Glyph name={tr.emoji} /> {tr.symbol}
                     </td>
-                    <td className="py-2 pr-4 text-right">{qty(t.quantity)}</td>
-                    <td className="py-2 pr-4 text-right">{money(t.cash)}</td>
-                    <td className="py-2 pr-4 text-right">{price(t.price)}</td>
-                    <td className="py-2 pr-4 text-right text-ink-2">{money(t.fee)}</td>
-                    <td className="py-2 pr-4 text-right text-ink-2">{(t.slippageBps / 100).toFixed(2)} %</td>
-                    <td className={`py-2 text-right font-semibold ${t.realizedPnl ? tone(Number(t.realizedPnl)) : 'text-ink-3'}`}>
-                      {t.realizedPnl ? money(t.realizedPnl) : '—'}
+                    <td className="py-2 pr-4 text-right">{f.qty(tr.quantity)}</td>
+                    <td className="py-2 pr-4 text-right">{f.money(tr.cash)}</td>
+                    <td className="py-2 pr-4 text-right">{f.price(tr.price)}</td>
+                    <td className="py-2 pr-4 text-right text-ink-2">{f.money(tr.fee)}</td>
+                    <td className="py-2 pr-4 text-right text-ink-2">{f.pct(tr.slippageBps / 10_000, false)}</td>
+                    <td className={`py-2 text-right font-semibold ${tr.realizedPnl ? tone(Number(tr.realizedPnl)) : 'text-ink-3'}`}>
+                      {tr.realizedPnl ? f.money(tr.realizedPnl) : '—'}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {history.hasNextPage && (
-              <button className="mt-4 font-semibold underline" onClick={() => history.fetchNextPage()}>
-                Voir plus
+              <button className="mt-4 font-semibold underline" disabled={history.isFetchingNextPage} onClick={() => void history.fetchNextPage()}>
+                {tc('actions.loadMore')}
               </button>
             )}
           </div>

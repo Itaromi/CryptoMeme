@@ -1,14 +1,16 @@
 'use client';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
+import { Check, Lock } from '@phosphor-icons/react';
 import { api } from '@/lib/api';
 import { useMe, usePortfolio } from '@/lib/hooks';
-import { money } from '@/lib/format';
-import { CosmeticKind, Equipped, KIND_LABEL, Look, RARITY, ShopItem, useShop, withItem } from '@/lib/meta';
+import { useFormat } from '@/lib/format';
+import { type CosmeticKind, type Equipped, type Look, RARITY_CLS, type ShopItem, useShop, withItem } from '@/lib/meta';
+import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { queryKeys } from '@/lib/queryKeys';
 import { Avatar, Name } from '@/components/PlayerTag';
 import { Glyph } from '@/lib/icons';
-import { Check, Lock } from '@phosphor-icons/react';
 
 const KINDS: CosmeticKind[] = ['FRAME', 'BANNER', 'TITLE', 'BADGE', 'NAME_EFFECT'];
 const SLOT: Record<Exclude<CosmeticKind, 'BADGE'>, 'frame' | 'banner' | 'title' | 'nameEffect'> = {
@@ -18,15 +20,22 @@ const SLOT: Record<Exclude<CosmeticKind, 'BADGE'>, 'frame' | 'banner' | 'title' 
   NAME_EFFECT: 'nameEffect',
 };
 
+/** Changement d'apparence ; `slug` : objet concerné, pour afficher l'erreur sous sa vignette. */
+interface EquipVars {
+  json: Partial<Equipped>;
+  slug?: string;
+}
+
 export default function ShopPage() {
+  const t = useTranslations('shop');
+  const tc = useTranslations('common.actions');
+  const f = useFormat();
   const { data } = useShop();
   const { data: me } = useMe();
   const { data: pf } = usePortfolio(!!me);
-  const qc = useQueryClient();
   const [kind, setKind] = useState<CosmeticKind>('FRAME');
   const [preview, setPreview] = useState<ShopItem | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
-  const [msg, setMsg] = useState<{ slug: string; ok: boolean; text: string } | null>(null);
 
   const bySlug = useMemo(() => new Map((data?.items ?? []).map((i) => [i.slug, i])), [data]);
   const eq = data?.equipped;
@@ -34,71 +43,66 @@ export default function ShopPage() {
   const shown = preview ? withItem(look, preview) : look;
   const items = (data?.items ?? []).filter((i) => i.kind === kind);
   const cash = Number(pf?.cash ?? 0);
+  const you = me?.username ?? t('you');
 
-  const refresh = () => qc.invalidateQueries({ queryKey: ['shop'] });
-
-  async function buy(i: ShopItem) {
-    setMsg(null);
-    try {
-      await api('/shop/buy', { method: 'POST', json: { slug: i.slug } });
-      setConfirm(null);
-      setMsg({ slug: i.slug, ok: true, text: 'À toi. Pense à l’équiper.' });
-      refresh();
-      qc.invalidateQueries({ queryKey: ['portfolio'] });
-    } catch (e) {
-      setMsg({ slug: i.slug, ok: false, text: (e as Error).message });
-    }
-  }
-
-  async function equip(json: Partial<Equipped>, slug?: string) {
-    try {
-      await api('/me/look', { method: 'PATCH', json });
-      refresh();
-      qc.invalidateQueries({ queryKey: ['profile'] });
-    } catch (e) {
-      if (slug) setMsg({ slug, ok: false, text: (e as Error).message });
-    }
-  }
+  // Un achat se paie en cash : patrimoine, classement et profil changent aussi
+  const buy = useApiMutation({
+    mutationFn: (i: ShopItem) => api('/shop/buy', { method: 'POST', json: { slug: i.slug } }),
+    invalidate: [queryKeys.shop, queryKeys.portfolio, queryKeys.leaderboard.all, queryKeys.profile.all],
+    onSuccess: () => setConfirm(null),
+  });
+  // L'apparence s'affiche aussi sur le profil et dans le classement
+  const equip = useApiMutation({
+    mutationFn: ({ json }: EquipVars) => api('/me/look', { method: 'PATCH', json }),
+    invalidate: [queryKeys.shop, queryKeys.profile.all, queryKeys.leaderboard.all],
+  });
 
   const isEquipped = (i: ShopItem) => (i.kind === 'BADGE' ? !!eq?.badges.includes(i.slug) : eq?.[SLOT[i.kind]] === i.slug);
   function toggle(i: ShopItem) {
     if (i.kind === 'BADGE') {
       const cur = eq?.badges ?? [];
       const next = cur.includes(i.slug) ? cur.filter((b) => b !== i.slug) : [...cur, i.slug].slice(-3);
-      return equip({ badges: next }, i.slug);
+      return equip.mutate({ json: { badges: next }, slug: i.slug });
     }
-    return equip({ [SLOT[i.kind]]: isEquipped(i) ? null : i.slug }, i.slug);
+    return equip.mutate({ json: { [SLOT[i.kind]]: isEquipped(i) ? null : i.slug }, slug: i.slug });
+  }
+
+  /** Retour de la dernière action sur cet objet (achat réussi, ou erreur d'achat / d'équipement). */
+  function feedback(i: ShopItem): { ok: boolean; text: string } | null {
+    if (equip.isError && equip.variables?.slug === i.slug) return { ok: false, text: errorMessage(equip.error) };
+    if (buy.variables?.slug !== i.slug) return null;
+    if (buy.isSuccess) return { ok: true, text: t('bought') };
+    if (buy.isError) return { ok: false, text: errorMessage(buy.error) };
+    return null;
   }
 
   return (
     <div className="rise grid gap-12 lg:grid-cols-[340px_1fr]">
       {/* Carte de visite : aperçu en direct de ce que tu survoles */}
       <aside className="lg:sticky lg:top-6 lg:self-start">
-        <h1 className="display mb-2 text-6xl font-extrabold">La boutique</h1>
-        <p className="mb-6 text-ink-2">
-          Payée avec le cash de ta saison : chaque achat fait baisser ton patrimoine. Mais les cosmétiques, eux, restent d’une saison à l’autre.
-        </p>
+        <h1 className="display mb-2 text-6xl font-extrabold">{t('title')}</h1>
+        <p className="mb-6 text-ink-2">{t('intro')}</p>
         <div className="border-2 border-ink">
           <div className={`banner h-24 ${shown.banner ? `banner-${shown.banner}` : ''}`} />
           <div className="-mt-10 px-5 pb-5">
             <Avatar look={shown} size="lg" />
             <p className="display mt-3 text-3xl font-bold">
-              <Name username={me?.username ?? 'toi'} look={shown} />
+              <Name username={you} look={shown} />
               <span className="ml-2 inline-flex gap-1 align-middle text-xl">{shown.badges.map((b) => <Glyph key={b.name} name={b.icon} />)}</span>
             </p>
-            <p className="text-sm uppercase tracking-widest text-ink-2">{shown.title ?? 'Sans titre'}</p>
+            <p className="text-sm uppercase tracking-widest text-ink-2">{shown.title ?? t('noTitle')}</p>
           </div>
         </div>
-        <p className="mt-2 text-xs text-ink-3">{preview ? `Aperçu : ${preview.name}` : 'Survole un objet pour l’essayer.'}</p>
+        <p className="mt-2 text-xs text-ink-3">{preview ? t('previewing', { name: preview.name }) : t('hoverHint')}</p>
 
         {me && data && (
           <div className="mt-8">
-            <h2 className="mb-2 text-sm font-bold uppercase tracking-widest">Avatar (gratuit)</h2>
+            <h2 className="mb-2 text-sm font-bold uppercase tracking-widest">{t('avatars')}</h2>
             <div className="flex flex-wrap gap-1">
               {data.avatars.map((a) => (
                 <button
                   key={a}
-                  onClick={() => equip({ avatar: a })}
+                  onClick={() => equip.mutate({ json: { avatar: a } })}
                   aria-pressed={eq?.avatar === a}
                   className={`grid size-10 place-items-center text-xl ${eq?.avatar === a ? 'bg-ink' : 'hover:bg-paper-2'}`}
                 >
@@ -106,13 +110,11 @@ export default function ShopPage() {
                 </button>
               ))}
             </div>
-            <Link href="/achievements" className="mt-6 inline-block font-semibold underline">Voir les succès et leurs récompenses →</Link>
+            <Link href="/achievements" className="mt-6 inline-block font-semibold underline">{t('achievementsLink')}</Link>
           </div>
         )}
         {!me && (
-          <p className="mt-6">
-            <Link href="/login" className="font-semibold underline">Connecte-toi</Link> pour acheter et personnaliser ton profil.
-          </p>
+          <p className="mt-6">{t.rich('loginCta', { link: (c) => <Link href="/login" className="font-semibold underline">{c}</Link> })}</p>
         )}
       </aside>
 
@@ -120,45 +122,50 @@ export default function ShopPage() {
         <div className="mb-6 flex flex-wrap gap-1 text-sm font-semibold" role="tablist">
           {KINDS.map((k) => (
             <button key={k} role="tab" aria-selected={kind === k} onClick={() => setKind(k)} className={`px-3 py-1.5 ${kind === k ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}>
-              {KIND_LABEL[k]}
+              {t(`kinds.${k}`)}
             </button>
           ))}
         </div>
-        {kind === 'BADGE' && <p className="mb-4 text-sm text-ink-2">Jusqu’à 3 badges affichés à côté de ton pseudo.</p>}
+        {kind === 'BADGE' && <p className="mb-4 text-sm text-ink-2">{t('badgeHint')}</p>}
 
         <ul className="grid gap-x-8 gap-y-10 sm:grid-cols-2 2xl:grid-cols-3">
           {items.map((i) => {
             const equipped = isEquipped(i);
-            const locked = !i.owned && !i.price;
             const tooPoor = !!i.price && cash < Number(i.price);
+            const msg = feedback(i);
             return (
               <li key={i.slug} className="flex flex-col" onMouseEnter={() => setPreview(i)} onMouseLeave={() => setPreview(null)} onFocus={() => setPreview(i)}>
-                <Preview item={i} base={look} username={me?.username ?? 'toi'} />
+                <Preview item={i} base={look} username={you} />
                 <div className="mt-3 flex items-baseline justify-between gap-2">
                   <h3 className="text-lg font-bold">{i.name}</h3>
-                  <span className={`px-1.5 text-xs font-bold uppercase tracking-wider ${RARITY[i.rarity].cls}`}>{RARITY[i.rarity].label}</span>
+                  <span className={`px-1.5 text-xs font-bold uppercase tracking-wider ${RARITY_CLS[i.rarity]}`}>{t(`rarity.${i.rarity}`)}</span>
                 </div>
                 <p className="flex-1 text-sm text-ink-2">{i.description}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   {i.owned ? (
-                    <button className={`btn py-1.5 text-sm ${equipped ? 'bg-ink text-paper' : 'bg-paper'}`} onClick={() => toggle(i)}>
-                      {equipped ? <><Check weight="bold" /> Équipé</> : 'Équiper'}
+                    <button className={`btn py-1.5 text-sm ${equipped ? 'bg-ink text-paper' : 'bg-paper'}`} disabled={equip.isPending} onClick={() => toggle(i)}>
+                      {equipped ? <><Check weight="bold" /> {t('equipped')}</> : t('equip')}
                     </button>
-                  ) : locked ? (
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold"><Lock weight="bold" /> Succès : {i.unlockedBy ?? 'secret'}</span>
+                  ) : !i.price ? (
+                    // ni possédé ni en vente : se débloque par un succès
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
+                      <Lock weight="bold" /> {t('unlockedBy', { achievement: i.unlockedBy ?? t('secret') })}
+                    </span>
                   ) : confirm === i.slug ? (
                     <>
-                      <button className="btn bg-acid py-1.5 text-sm" onClick={() => buy(i)}>Payer {money(i.price!)}</button>
-                      <button className="text-sm underline" onClick={() => setConfirm(null)}>Annuler</button>
+                      <button className="btn bg-acid py-1.5 text-sm" disabled={buy.isPending} onClick={() => buy.mutate(i)}>
+                        {t('pay', { price: f.money(i.price) })}
+                      </button>
+                      <button className="text-sm underline" onClick={() => setConfirm(null)}>{tc('cancel')}</button>
                     </>
                   ) : (
                     <button className="btn bg-paper py-1.5 text-sm" disabled={!me || tooPoor} onClick={() => setConfirm(i.slug)}>
-                      <span className="num">{money(i.price!)}</span>
+                      <span className="num">{f.money(i.price)}</span>
                     </button>
                   )}
-                  {tooPoor && !i.owned && !locked && me && <span className="text-xs text-down">Cash insuffisant</span>}
+                  {tooPoor && !i.owned && me && <span className="text-xs text-down">{t('tooPoor')}</span>}
                 </div>
-                {msg?.slug === i.slug && <p className={`mt-2 text-sm font-semibold ${msg.ok ? 'text-up' : 'text-down'}`}>{msg.text}</p>}
+                {msg && <p className={`mt-2 text-sm font-semibold ${msg.ok ? 'text-up' : 'text-down'}`}>{msg.text}</p>}
               </li>
             );
           })}
@@ -185,6 +192,7 @@ function lookOf(eq: Equipped | null | undefined, bySlug: Map<string, ShopItem>):
 
 /** Vignette d'aperçu, adaptée au type d'objet. */
 function Preview({ item, base, username }: { item: ShopItem; base: Look; username: string }) {
+  const t = useTranslations('shop');
   const look = withItem({ ...base, badges: [] }, item);
   const box = 'grid h-32 place-items-center border-2 border-ink';
   switch (item.kind) {
@@ -193,7 +201,7 @@ function Preview({ item, base, username }: { item: ShopItem; base: Look; usernam
     case 'BANNER':
       return <div className={`h-32 border-2 border-ink banner banner-${item.data.style}`} />;
     case 'TITLE':
-      return <div className={`${box} bg-paper-2`}><span className="display px-4 text-center text-3xl font-bold">« {item.data.text} »</span></div>;
+      return <div className={`${box} bg-paper-2`}><span className="display px-4 text-center text-3xl font-bold">{t('quotedTitle', { text: item.data.text ?? '' })}</span></div>;
     case 'BADGE':
       return <div className={`${box} bg-paper`}><span className="text-6xl"><Glyph name={item.data.icon} /></span></div>;
     case 'NAME_EFFECT':

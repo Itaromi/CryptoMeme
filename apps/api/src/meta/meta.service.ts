@@ -1,25 +1,28 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { Cosmetic, CosmeticKind, Prisma } from '@prisma/client';
+import { z } from 'zod';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeasonsService } from '../seasons/seasons.service';
 import { LeaseService } from '../common/lease.service';
 import { D, money } from '../common/decimal';
-import { applyCash } from '../economy/ledger';
+import { applyCash, lockWallets } from '../economy/ledger';
 import { NotificationInput, NotificationsService } from '../economy/notifications';
-
-export { AVATARS } from './catalog';
+import { WalletStatsService } from '../players/wallet-stats.service';
 import { AVATARS } from './catalog';
 
-export interface EquipInput {
-  avatar?: string;
-  frame?: string | null;
-  banner?: string | null;
-  title?: string | null;
-  nameEffect?: string | null;
-  badges?: string[];
-  showcase?: string[];
-}
+const slug = z.string().min(1).max(60);
+export const buyCosmeticSchema = z.object({ slug });
+export const equipSchema = z.object({
+  avatar: z.string().max(16).optional(),
+  frame: slug.nullable().optional(),
+  banner: slug.nullable().optional(),
+  title: slug.nullable().optional(),
+  nameEffect: slug.nullable().optional(),
+  badges: z.array(slug).max(3).optional(),
+  showcase: z.array(slug).max(4).optional(),
+});
+export type EquipInput = z.infer<typeof equipSchema>;
 
 const SLOT: Record<'frame' | 'banner' | 'title' | 'nameEffect', CosmeticKind> = { frame: 'FRAME', banner: 'BANNER', title: 'TITLE', nameEffect: 'NAME_EFFECT' };
 
@@ -46,6 +49,7 @@ export class MetaService {
     private readonly seasons: SeasonsService,
     private readonly lease: LeaseService,
     private readonly notify: NotificationsService,
+    private readonly stats: WalletStatsService,
   ) {}
 
   // ─── Apparence ────────────────────────────────────────────────────
@@ -114,16 +118,15 @@ export class MetaService {
     if (!c || !c.available) throw new NotFoundException('Objet introuvable');
     if (!c.price) throw new BadRequestException('Cet objet ne s’achète pas : il se mérite (succès).');
     const { id: walletId } = await this.seasons.wallet(userId);
+    const price = D(c.price);
     await this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM "Wallet" WHERE id = ${walletId} FOR UPDATE`;
+      await lockWallets(tx, [walletId]);
       if (await tx.userCosmetic.findUnique({ where: { userId_cosmeticId: { userId, cosmeticId: c.id } } })) throw new ConflictException('Tu possèdes déjà cet objet');
-      const w = await tx.wallet.findUniqueOrThrow({ where: { id: walletId }, select: { cash: true } });
-      if (D(w.cash).lt(D(c.price))) throw new BadRequestException('Cash insuffisant');
-      await applyCash(tx, walletId, D(c.price).neg(), 'SHOP', `Boutique : ${c.name}`, { type: 'Cosmetic', id: c.id });
+      await applyCash(tx, walletId, price.neg(), 'SHOP', `Boutique : ${c.name}`, { type: 'Cosmetic', id: c.id }, { strict: true });
       await tx.userCosmetic.create({ data: { userId, cosmeticId: c.id, source: 'SHOP' } });
     });
     await this.check([userId]);
-    return { ok: true, price: money(D(c.price)) };
+    return { ok: true, price: money(price) };
   }
 
   async equip(userId: string, body: EquipInput) {
@@ -238,19 +241,17 @@ export class MetaService {
     const ids = wallets.map((w) => w.id);
     const inW = { walletId: { in: ids } };
 
-    const [tradeAgg, pnlAgg, ledger, rigs, fires, holdings, cosmetics, minedRows, ranked] = await Promise.all([
-      this.prisma.trade.groupBy({ by: ['walletId'], where: inW, _count: true, _sum: { cash: true } }),
-      this.prisma.trade.groupBy({ by: ['walletId'], where: { ...inW, realizedPnl: { not: null } }, _sum: { realizedPnl: true }, _max: { realizedPnl: true }, _min: { realizedPnl: true } }),
+    const [tradeStats, ledger, rigs, fires, holdings, cosmetics, minedValue, ranked] = await Promise.all([
+      this.stats.tradeStats(ids),
       this.prisma.ledgerEntry.groupBy({ by: ['walletId', 'kind'], where: { ...inW, assetId: null, kind: { in: ['DIVIDEND', 'TAX', 'TAKEOVER'] } }, _sum: { delta: true } }),
       this.prisma.rig.groupBy({ by: ['walletId'], where: inW, _count: true }),
       this.prisma.miningLog.groupBy({ by: ['walletId'], where: { ...inW, type: 'FIRE' }, _count: true }),
       this.prisma.holding.findMany({ where: { ...inW, quantity: { gt: 0 } }, select: { walletId: true, quantity: true, costBasis: true, asset: { select: { kind: true, price: true } } } }),
       this.prisma.userCosmetic.groupBy({ by: ['userId'], where: { userId: { in: wallets.map((w) => w.userId) } }, _count: true }),
-      this.prisma.ledgerEntry.groupBy({ by: ['walletId', 'assetId'], where: { ...inW, kind: 'MINING_REWARD' }, _sum: { delta: true } }),
+      this.stats.minedValue(ids),
       this.prisma.wallet.findMany({ where: { seasonId: season.id, user: { bannedAt: null, role: 'PLAYER' } }, orderBy: { netWorth: 'desc' }, select: { id: true } }),
     ]);
     const bankruptHolders = await this.prisma.ledgerEntry.groupBy({ by: ['walletId'], where: { ...inW, kind: 'BANKRUPTCY' }, _count: true });
-    const prices = new Map((await this.prisma.asset.findMany({ select: { id: true, price: true } })).map((a) => [a.id, Number(a.price)]));
 
     // Rug pulls survenus depuis le dernier passage : les détenteurs actuels étaient là
     const since = this.lastRugCheck;
@@ -266,23 +267,22 @@ export class MetaService {
     const pairs: Array<[string, string]> = [];
     for (const w of wallets) {
       const add = (slug: string, cond: boolean) => cond && pairs.push([w.userId, slug]);
-      const t = tradeAgg.find((x) => x.walletId === w.id);
-      const p = pnlAgg.find((x) => x.walletId === w.id);
-      const nTrades = t?._count ?? 0;
+      const t = tradeStats.get(w.id);
+      const nTrades = t?.trades ?? 0;
       const nw = Number(w.netWorth);
       const peak = Math.max(Number(w.peakNetWorth), nw);
       const hs = holdings.filter((h) => h.walletId === w.id);
       const loss = (h: (typeof hs)[number]) => Number(h.costBasis) > 0 && (Number(h.quantity) * Number(h.asset.price)) / Number(h.costBasis);
-      const mined = minedRows.filter((m) => m.walletId === w.id).reduce((s, m) => s + Number(m._sum.delta ?? 0) * (prices.get(m.assetId!) ?? 0), 0);
+      const mined = minedValue.get(w.id) ?? 0;
       const nRigs = rigs.find((r) => r.walletId === w.id)?._count ?? 0;
       const nFires = fires.find((f) => f.walletId === w.id)?._count ?? 0;
 
       add('first-trade', nTrades >= 1);
       add('hyperactive', nTrades >= 100);
-      add('big-volume', Number(t?._sum.cash ?? 0) >= 1_000_000);
-      add('profit-10k', Number(p?._sum.realizedPnl ?? 0) >= 10_000);
-      add('big-win', Number(p?._max.realizedPnl ?? 0) >= 5_000);
-      add('big-loss', Number(p?._min.realizedPnl ?? 0) <= -5_000);
+      add('big-volume', (t?.volume ?? 0) >= 1_000_000);
+      add('profit-10k', (t?.realizedPnl ?? 0) >= 10_000);
+      add('big-win', (t?.bestTrade ?? 0) >= 5_000);
+      add('big-loss', (t?.worstTrade ?? 0) <= -5_000);
       add('diamond-hands', hs.some((h) => { const r = loss(h); return r !== false && r <= 0.1; }));
       add('diamond-hands-title', hs.some((h) => { const r = loss(h); return r !== false && r <= 0.05 && Number(h.costBasis) >= 1_000; }));
       add('rug-survivor', rugHolders.has(w.id));

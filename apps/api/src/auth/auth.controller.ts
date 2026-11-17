@@ -8,8 +8,7 @@ import { LoginInput, RegisterInput, loginSchema, registerSchema } from '@cryptom
 import { AuthService, REFRESH_TTL_MS } from './auth.service';
 import { ZodPipe } from '../common/zod.pipe';
 import { AuthUser, CurrentUser, Public } from '../common/auth.decorators';
-import { ACCESS_COOKIE, REFRESH_COOKIE } from '../common/auth.guard';
-import { PrismaService } from '../prisma/prisma.service';
+import { ACCESS_COOKIE, readCookie, REFRESH_COOKIE } from '../common/auth.guard';
 
 const tokenSchema = z.object({ token: z.string().min(10) });
 const forgotSchema = z.object({ email: z.string().email() });
@@ -19,7 +18,6 @@ const resetSchema = z.object({ token: z.string().min(10), password: registerSche
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
-    private readonly prisma: PrismaService,
     private readonly config: ConfigService,
   ) {}
 
@@ -54,7 +52,7 @@ export class AuthController {
   @HttpCode(200)
   @Post('refresh')
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    this.setCookies(res, await this.auth.refresh(req.cookies?.[REFRESH_COOKIE], this.meta(req)));
+    this.setCookies(res, await this.auth.refresh(readCookie(req, REFRESH_COOKIE), this.meta(req)));
     return { ok: true };
   }
 
@@ -62,24 +60,21 @@ export class AuthController {
   @HttpCode(200)
   @Post('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    await this.auth.logout(req.cookies?.[REFRESH_COOKIE]);
+    await this.auth.logout(readCookie(req, REFRESH_COOKIE));
     res.clearCookie(ACCESS_COOKIE, { path: '/' });
     res.clearCookie(REFRESH_COOKIE, { path: '/api/auth' });
     return { ok: true };
   }
 
   @Get('me')
-  async me(@CurrentUser() u: AuthUser) {
-    return this.prisma.user.findUniqueOrThrow({
-      where: { id: u.id },
-      select: { id: true, email: true, username: true, role: true, emailVerifiedAt: true, bio: true, createdAt: true },
-    });
+  me(@CurrentUser() u: AuthUser) {
+    return this.auth.me(u.id);
   }
 
   @Public()
   @HttpCode(200)
   @Post('verify-email')
-  async verify(@Body(new ZodPipe(tokenSchema)) body: { token: string }) {
+  async verify(@Body(new ZodPipe(tokenSchema)) body: z.infer<typeof tokenSchema>) {
     await this.auth.verifyEmail(body.token);
     return { ok: true };
   }
@@ -88,8 +83,7 @@ export class AuthController {
   @HttpCode(200)
   @Post('resend-verification')
   async resend(@CurrentUser() u: AuthUser) {
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: u.id } });
-    if (!user.emailVerifiedAt) await this.auth.sendVerification(user.id, user.email);
+    await this.auth.resendVerification(u.id);
     return { ok: true };
   }
 
@@ -97,7 +91,7 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 300_000 } })
   @HttpCode(200)
   @Post('forgot-password')
-  async forgot(@Body(new ZodPipe(forgotSchema)) body: { email: string }) {
+  async forgot(@Body(new ZodPipe(forgotSchema)) body: z.infer<typeof forgotSchema>) {
     await this.auth.forgotPassword(body.email);
     return { ok: true };
   }
@@ -106,7 +100,7 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 300_000 } })
   @HttpCode(200)
   @Post('reset-password')
-  async reset(@Body(new ZodPipe(resetSchema)) body: { token: string; password: string }) {
+  async reset(@Body(new ZodPipe(resetSchema)) body: z.infer<typeof resetSchema>) {
     await this.auth.resetPassword(body.token, body.password);
     return { ok: true };
   }

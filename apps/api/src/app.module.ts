@@ -21,21 +21,33 @@ import { TradingService } from './trading/trading.service';
 import { PlayersController } from './players/players.controller';
 import { PlayersService } from './players/players.service';
 import { AdminController } from './admin/admin.controller';
+import { AdminService } from './admin/admin.service';
+import { AdminMiningService } from './admin/admin-mining.service';
+import { AuditModule } from './common/audit.service';
 import { MiningController } from './mining/mining.controller';
 import { MiningService } from './mining/mining.service';
 import { MiningTickService } from './mining/mining.tick';
 import { AdminMiningController } from './admin/admin-mining.controller';
 import { ModifiersModule } from './economy/modifiers.service';
-import { NotificationsController, NotificationsService } from './economy/notifications';
-import { BanksController, BanksService } from './economy/banks.service';
+import { NotificationsService } from './economy/notifications';
+import { NotificationsController } from './economy/notifications.controller';
+import { BanksService } from './economy/banks.service';
+import { BanksController } from './economy/banks.controller';
+import { NetWorthService } from './economy/net-worth.service';
+import { WalletStatsService } from './players/wallet-stats.service';
 import { EventsService } from './economy/events.service';
 import { StocksService } from './stocks/stocks.service';
 import { MetaService } from './meta/meta.service';
 import { MetaController } from './meta/meta.controller';
 import { CreationsService } from './creations/creations.service';
-import { AdminCreationsController, CreationsController } from './creations/creations.controller';
-import { AdminStocksController, StocksController } from './stocks/stocks.controller';
-import { AdminEconomyController, EventsController } from './economy/events.controller';
+import { CreationsController } from './creations/creations.controller';
+import { AdminCreationsController } from './creations/admin-creations.controller';
+import { StocksController } from './stocks/stocks.controller';
+import { AdminStocksController } from './stocks/admin-stocks.controller';
+import { AdminStocksService } from './stocks/admin-stocks.service';
+import { EventsController } from './economy/events.controller';
+import { AdminEconomyController } from './economy/admin-economy.controller';
+import { AdminEconomyService } from './economy/admin-economy.service';
 
 @Module({
   imports: [
@@ -54,10 +66,28 @@ import { AdminEconomyController, EventsController } from './economy/events.contr
     PrismaModule,
     SeasonsModule,
     LeaseModule,
+    AuditModule,
     ModifiersModule,
     AuthModule,
   ],
-  controllers: [HealthController, MarketController, TradingController, PlayersController, AdminController, MiningController, AdminMiningController, NotificationsController, BanksController, EventsController, AdminEconomyController, StocksController, AdminStocksController, MetaController, CreationsController, AdminCreationsController],
+  controllers: [
+    HealthController,
+    MarketController,
+    TradingController,
+    PlayersController,
+    AdminController,
+    MiningController,
+    AdminMiningController,
+    NotificationsController,
+    BanksController,
+    EventsController,
+    AdminEconomyController,
+    StocksController,
+    AdminStocksController,
+    MetaController,
+    CreationsController,
+    AdminCreationsController,
+  ],
   providers: [
     MarketService,
     MarketGateway,
@@ -72,6 +102,12 @@ import { AdminEconomyController, EventsController } from './economy/events.contr
     StocksService,
     MetaService,
     CreationsService,
+    NetWorthService,
+    WalletStatsService,
+    AdminService,
+    AdminMiningService,
+    AdminEconomyService,
+    AdminStocksService,
     { provide: APP_GUARD, useClass: RealIpThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
   ],

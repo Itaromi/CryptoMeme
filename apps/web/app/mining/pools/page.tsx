@@ -1,48 +1,55 @@
 'use client';
 import Link from 'next/link';
-import { money, price } from '@/lib/format';
-import { ALGO_LABEL, hash, POOL_TYPE, usePools } from '@/lib/mining';
+import { useTranslations } from 'next-intl';
+import { useFormat } from '@/lib/format';
+import { ALGO_LABEL, POOL_TYPES, useMiningFormat, usePools } from '@/lib/mining';
 import { MiningNav } from '@/components/mining/MiningNav';
 import { Glyph } from '@/lib/icons';
 
 export default function PoolsPage() {
+  const t = useTranslations('mining');
+  const f = useFormat();
+  const m = useMiningFormat();
   const { data } = usePools();
   return (
     <div className="rise">
-      <h1 className="display mb-6 text-6xl font-extrabold">Pools & réseaux</h1>
+      <h1 className="display mb-6 text-6xl font-extrabold">{t('pools.title')}</h1>
       <MiningNav />
 
       <section className="mb-14">
-        <h2 className="mb-1 text-sm font-bold uppercase tracking-widest">Réseaux minables</h2>
-        <p className="mb-4 max-w-3xl text-ink-2">
-          Chaque coin a un algorithme et une émission fixe par minute, partagée entre tous les mineurs (joueurs et PNJ). Plus il y a de hashrate sur un
-          réseau, moins chacun gagne : cherche le réseau sous-miné. Les PNJ arrivent quand le prix monte et partent quand il baisse.
-        </p>
+        <h2 className="mb-1 text-sm font-bold uppercase tracking-widest">{t('pools.networksTitle')}</h2>
+        <p className="mb-4 max-w-3xl text-ink-2">{t('pools.networksIntro')}</p>
         <div className="overflow-x-auto">
           <table className="num w-full min-w-[760px] text-left">
             <thead>
               <tr className="border-y-2 border-ink text-xs uppercase tracking-wider text-ink-2">
-                <th className="py-2 pr-4">Coin</th>
-                <th className="py-2 pr-4">Algo</th>
-                <th className="py-2 pr-4 text-right">Prix</th>
-                <th className="py-2 pr-4 text-right">Hashrate réseau</th>
-                <th className="py-2 pr-4 text-right">dont joueurs</th>
-                <th className="py-2 pr-4 text-right" title="Revenu brut pour 1 MH/s pendant 24 h, avant frais de pool">Rentabilité</th>
-                <th className="py-2 text-right">Prochain halving</th>
+                <th className="py-2 pr-4">{t('pools.cols.coin')}</th>
+                <th className="py-2 pr-4">{t('pools.cols.algo')}</th>
+                <th className="py-2 pr-4 text-right">{t('pools.cols.price')}</th>
+                <th className="py-2 pr-4 text-right">{t('pools.cols.networkHashrate')}</th>
+                <th className="py-2 pr-4 text-right">{t('pools.cols.players')}</th>
+                <th className="py-2 pr-4 text-right" title={t('pools.cols.profitabilityHint')}>
+                  {t('pools.cols.profitability')}
+                </th>
+                <th className="py-2 text-right">{t('pools.cols.nextHalving')}</th>
               </tr>
             </thead>
             <tbody>
               {data?.networks.map((n) => (
                 <tr key={n.symbol} className="border-b border-line">
                   <td className="py-3 pr-4">
-                    <Link href={`/market/${n.symbol}`} className="font-semibold hover:underline"><Glyph name={n.emoji} /> {n.name}</Link>
+                    <Link href={`/market/${n.symbol}`} className="font-semibold hover:underline">
+                      <Glyph name={n.emoji} /> {n.name}
+                    </Link>
                   </td>
-                  <td className="py-3 pr-4">{ALGO_LABEL[n.algo]}</td>
-                  <td className="py-3 pr-4 text-right">{price(n.price)}</td>
-                  <td className="py-3 pr-4 text-right">{hash(n.networkHashrate)}</td>
-                  <td className="py-3 pr-4 text-right text-ink-2">{((n.playerHashrate / (n.networkHashrate || 1)) * 100).toFixed(2)} %</td>
-                  <td className="py-3 pr-4 text-right font-semibold">{money(n.usdPerMhDay)} <span className="text-xs font-normal text-ink-2">/ MH/s / j</span></td>
-                  <td className="py-3 text-right text-sm">{new Date(n.nextHalving).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</td>
+                  <td className="py-3 pr-4">{ALGO_LABEL[n.algo] ?? n.algo}</td>
+                  <td className="py-3 pr-4 text-right">{f.price(n.price)}</td>
+                  <td className="py-3 pr-4 text-right">{m.hash(n.networkHashrate)}</td>
+                  <td className="py-3 pr-4 text-right text-ink-2">{f.pct(n.playerHashrate / (n.networkHashrate || 1), false)}</td>
+                  <td className="py-3 pr-4 text-right font-semibold">
+                    {f.money(n.usdPerMhDay)} <span className="text-xs font-normal text-ink-2">{t('pools.perMhDay')}</span>
+                  </td>
+                  <td className="py-3 text-right text-sm">{f.date(n.nextHalving, { day: 'numeric', month: 'short' })}</td>
                 </tr>
               ))}
             </tbody>
@@ -52,41 +59,59 @@ export default function PoolsPage() {
 
       <section className="grid gap-12 lg:grid-cols-[1fr_320px]">
         <div>
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-widest">Pools</h2>
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-widest">{t('pools.poolsTitle')}</h2>
           <div className="grid gap-x-10 gap-y-6 md:grid-cols-2">
             {data?.pools.map((p) => (
               <article key={p.id} className={`border-t-2 pt-3 ${p.type === 'SHADY' ? 'border-down' : 'border-ink'}`}>
                 <div className="flex items-baseline justify-between gap-3">
                   <h3 className="text-xl font-bold">{p.name}</h3>
-                  <span className="text-sm"><Glyph name={p.emoji} /> {p.symbol}</span>
+                  <span className="text-sm">
+                    <Glyph name={p.emoji} /> {p.symbol}
+                  </span>
                 </div>
                 <p className="mt-1 text-sm text-ink-2">{p.description}</p>
                 <dl className="num mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
-                  <div><dt className="inline text-ink-2">Type </dt><dd className="inline font-semibold">{POOL_TYPE[p.type].label}</dd></div>
-                  <div>
-                    <dt className="inline text-ink-2">Frais </dt>
-                    <dd className={`inline font-semibold ${p.feeBps < 0 ? 'text-up' : ''}`}>{p.feeBps < 0 ? `+${(-p.feeBps / 100).toFixed(1)} % bonus` : `${(p.feeBps / 100).toFixed(1)} %`}</dd>
-                  </div>
-                  {p.federation && <div><dt className="inline text-ink-2">Fédération </dt><dd className="inline font-semibold">{p.federation}</dd></div>}
-                  {p.owner && <div><dt className="inline text-ink-2">Créé par </dt><dd className="inline font-semibold"><a href={`/u/${p.owner}`} className="underline">@{p.owner}</a></dd></div>}
-                  <div><dt className="inline text-ink-2">Rigs </dt><dd className="inline font-semibold">{p.miners}</dd></div>
-                  {p.scamRisk > 0 && <div className="text-down"><dt className="inline">Risque de fuite </dt><dd className="inline font-semibold">{(p.scamRisk * 100).toFixed(0)} %/j</dd></div>}
+                  <Fact label={t('pools.type')}>{m.poolType(p.type)}</Fact>
+                  <Fact label={t('pools.fee')} className={p.feeBps < 0 ? 'text-up' : ''}>
+                    {p.feeBps < 0 ? t('pools.feeBonus', { value: m.pct(-p.feeBps / 10_000, 1) }) : m.pct(p.feeBps / 10_000, 1)}
+                  </Fact>
+                  {p.federation && <Fact label={t('pools.federation')}>{p.federation}</Fact>}
+                  {p.owner && (
+                    <Fact label={t('pools.createdBy')}>
+                      <Link href={`/u/${p.owner}`} className="underline">
+                        @{p.owner}
+                      </Link>
+                    </Fact>
+                  )}
+                  <Fact label={t('pools.rigs')}>{p.miners}</Fact>
+                  {p.scamRisk > 0 && (
+                    <Fact label={t('pools.scamRisk')} className="text-down" labelClassName="text-down">
+                      {t('perDay', { value: m.pct(p.scamRisk) })}
+                    </Fact>
+                  )}
                 </dl>
               </article>
             ))}
           </div>
         </div>
         <aside className="space-y-6 text-sm">
-          <h2 className="border-b-2 border-ink pb-1 text-sm font-bold uppercase tracking-widest">Comment choisir</h2>
-          {Object.entries(POOL_TYPE).map(([k, v]) => (
-            <p key={k}><strong>{v.label}</strong> : {v.help}</p>
+          <h2 className="border-b-2 border-ink pb-1 text-sm font-bold uppercase tracking-widest">{t('pools.howTitle')}</h2>
+          {POOL_TYPES.map((k) => (
+            <p key={k}>{t.rich('pools.howItem', { label: m.poolType(k), help: m.poolTypeHelp(k), b: (c) => <strong>{c}</strong> })}</p>
           ))}
-          <p>
-            <strong>Fédérations</strong> : branche des rigs sur 3 pools différents d’une même fédération et tous ses pools te prennent 1 % de frais en
-            moins. Diversifier rapporte.
-          </p>
+          <p>{t.rich('pools.howFederations', { b: (c) => <strong>{c}</strong> })}</p>
         </aside>
       </section>
+    </div>
+  );
+}
+
+/** Caractéristique d'un pool sur une ligne : « Frais 1,5 % ». */
+function Fact({ label, className = '', labelClassName = 'text-ink-2', children }: { label: string; className?: string; labelClassName?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <dt className={`inline ${labelClassName}`}>{label} </dt>
+      <dd className={`inline font-semibold ${className}`}>{children}</dd>
     </div>
   );
 }

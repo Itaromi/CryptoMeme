@@ -16,15 +16,15 @@
   "dependencies": {
     "@cryptomeme/engine": "workspace:*",
     "@cryptomeme/shared": "workspace:*",
-    "@nestjs/common": "^11.1.0",
-    "@nestjs/config": "^4.0.0",
-    "@nestjs/core": "^11.1.0",
-    "@nestjs/jwt": "^11.0.0",
-    "@nestjs/platform-express": "^11.1.0",
-    "@nestjs/platform-socket.io": "^11.1.0",
-    "@nestjs/schedule": "^6.0.0",
-    "@nestjs/throttler": "^6.4.0",
-    "@nestjs/websockets": "^11.1.0",
+    "@nestjs/common": "^12.5.1",
+    "@nestjs/config": "^12.1.1",
+    "@nestjs/core": "^12.5.1",
+    "@nestjs/jwt": "^12.0.5",
+    "@nestjs/platform-express": "^12.5.1",
+    "@nestjs/platform-socket.io": "^12.5.1",
+    "@nestjs/schedule": "^12.0.4",
+    "@nestjs/throttler": "^6.8.0",
+    "@nestjs/websockets": "^12.5.1",
     "@prisma/client": "^6.16.0",
     "argon2": "^0.43.0",
     "cookie-parser": "^1.4.7",
@@ -38,11 +38,11 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@nestjs/cli": "^11.0.0",
+    "@nestjs/cli": "^12.0.13",
     "@types/cookie-parser": "^1.4.8",
     "@types/express": "^5.0.0",
     "@types/node": "^22.15.0",
     "@types/nodemailer": "^8.0.2",
-    "typescript": "^5.8.3"
+    "typescript": "^6.0.3"
   }
 }

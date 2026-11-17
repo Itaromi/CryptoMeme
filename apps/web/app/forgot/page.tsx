@@ -1,26 +1,25 @@
 'use client';
-import { useState } from 'react';
-import { AuthShell, Field, useSubmit } from '@/components/AuthShell';
+import { useTranslations } from 'next-intl';
+import { AuthShell, Field, FormError } from '@/components/AuthShell';
 import { api } from '@/lib/api';
+import { errorMessage, useApiMutation } from '@/lib/mutation';
 
 export default function ForgotPage() {
-  const [sent, setSent] = useState(false);
-  const { submit, pending, error } = useSubmit(async (f: FormData) => {
-    await api('/auth/forgot-password', { method: 'POST', json: { email: f.get('email') } });
-    setSent(true);
+  const t = useTranslations('auth.forgot');
+  const tf = useTranslations('auth.fields');
+  const forgot = useApiMutation({
+    mutationFn: (f: FormData) => api('/auth/forgot-password', { method: 'POST', json: { email: f.get('email') } }),
   });
   return (
-    <AuthShell kicker="Mot de passe oublié" title="Ça arrive aux meilleurs.">
-      {sent ? (
-        <p className="text-lg">
-          Si un compte existe pour cet email, un lien de réinitialisation vient d'être envoyé. Il est valable 1 heure.
-        </p>
+    <AuthShell kicker={t('kicker')} title={t('title')}>
+      {forgot.isSuccess ? (
+        <p className="text-lg">{t('sent')}</p>
       ) : (
-        <form action={submit} className="space-y-4">
-          <Field label="Email" name="email" type="email" required />
-          {error && <p className="text-sm text-down">{error}</p>}
-          <button className="btn w-full bg-acid" disabled={pending}>
-            Envoyer le lien
+        <form action={(f) => forgot.mutate(f)} className="space-y-4">
+          <Field label={tf('email')} name="email" type="email" required />
+          <FormError message={forgot.error && errorMessage(forgot.error)} />
+          <button className="btn w-full bg-acid" disabled={forgot.isPending}>
+            {t('submit')}
           </button>
         </form>
       )}

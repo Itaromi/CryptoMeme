@@ -1,0 +1,106 @@
+{
+  "title": "Build your empire",
+  "intro": "Launch your own crypto, take your company public or run your own mining pool. It's pricey, a moderator checks the name, and the rules stop anyone from raiding the till:",
+  "rules": {
+    "locked": "<b>Liquidity locked forever</b> in the pool: the creator can't rug pull.",
+    "share": "<b>Your cut: {share}</b> of the supply, paid out bit by bit over {days} days.",
+    "royalties": "<b>Royalties: {share} of the fees</b> paid by other players trading your asset.",
+    "refund": "<b>Rejected = refunded</b> in full, fees and deposit. Max {max} creations per type."
+  },
+  "tabs": {
+    "CRYPTO": {
+      "label": "A crypto",
+      "pitch": "Your very own meme, listed against everyone else's. If it catches on, your cut gains value and you earn royalties on every trade."
+    },
+    "COMPANY": {
+      "label": "A company",
+      "pitch": "Take your business public: quarterly earnings, dividends you set, takeovers… and bankruptcy if it all goes south."
+    },
+    "POOL": {
+      "label": "A mining pool",
+      "pitch": "Miners join you, you skim your fee off every reward. Get too greedy and they'll go elsewhere."
+    }
+  },
+  "loginCta": "<link>Log in</link> to create.",
+  "iconGroups": {
+    "finance": "Finance",
+    "memes": "Memes",
+    "animals": "Animals",
+    "food": "Grub",
+    "industry": "Industry",
+    "faces": "Faces"
+  },
+  "form": {
+    "preview": {
+      "pool": "{type} pool · {network}",
+      "asset": "{symbol} · {kind}",
+      "symbol": "TICKR",
+      "crypto": "Crypto",
+      "name": "Your name here"
+    },
+    "name": "Name",
+    "symbol": "Ticker",
+    "logo": "Logo",
+    "color": "Color",
+    "description": "Description",
+    "descriptionPlaceholder": "The pitch. Make investors dream (or laugh).",
+    "ipoPrice": "IPO price ($)",
+    "startPrice": "Starting price ($)",
+    "deposit": "Liquidity deposit ({min} – {max})",
+    "sector": "Sector",
+    "sectorOption": "{sector} (P/E {pe})",
+    "payout": "Dividend: {pct} of profits",
+    "payoutHint": "The more you pay out, the less you reinvest: lower expected growth.",
+    "network": "Network",
+    "poolType": "Type",
+    "poolTypes": {
+      "PPS": "PPS (steady income)",
+      "PPLNS": "PPLNS (luck-based)",
+      "SOLO": "Solo (all or nothing)"
+    },
+    "commission": "Fee: {pct}",
+    "summary": {
+      "fee": "Creation fee (gone for good)",
+      "liquidity": "Liquidity (locked in the pool)",
+      "supply": "Circulating supply",
+      "myShare": "Your cut ({share}, over {days} days)",
+      "units": "{amount} units",
+      "total": "Total charged",
+      "cash": "Available cash: {cash}"
+    },
+    "submit": "Send for review",
+    "sent": "Request sent! A moderator will check the name. Fee and deposit are held in escrow until then.",
+    "errors": {
+      "tooShort": "At least {min} characters",
+      "tooLong": "At most {max} characters",
+      "tooSmall": "Minimum: {min}",
+      "tooBig": "Maximum: {max}",
+      "symbol": "2 to 8 letters or digits",
+      "invalid": "Invalid value"
+    }
+  },
+  "mine": {
+    "title": "My creations",
+    "empty": "Nothing yet. The greatest empires all started with a meme.",
+    "pool": "{type} pool · {symbol}",
+    "poolShort": "Pool",
+    "status": {
+      "PENDING": "Under review",
+      "APPROVED": "Live",
+      "REJECTED": "Rejected"
+    },
+    "rejected": "Reason: {reason}. Refunded.",
+    "escrow": "{amount} held in escrow pending the decision.",
+    "price": "Price",
+    "holders": "Holders",
+    "royalties": "Royalties",
+    "vested": "Your cut paid out",
+    "vestEnd": "ends {when}",
+    "rigs": "Connected rigs",
+    "earned": "Fees earned",
+    "earnedValue": "Value",
+    "payout": "Dividend: {pct}",
+    "commission": "Fee: {pct}",
+    "saved": "Saved."
+  }
+}

@@ -24,15 +24,31 @@ Le jeu tourne sur http://localhost:3000, les e-mails de dev arrivent sur http://
 ## Avant d'ouvrir une PR
 
 ```bash
+pnpm lint
 pnpm typecheck
 pnpm --filter @cryptomeme/engine test
 ```
 
+La CI lance les mêmes commandes. `pnpm lint:fix` corrige automatiquement ce qui peut l'être.
+
 - Une PR = un sujet. Explique le *pourquoi* dans la description.
 - Toute variation de cash ou d'actif **doit** passer par le grand livre (`applyCash` / `applyAsset`) dans une transaction : c'est la règle d'or de l'économie du jeu (voir [docs/SPEC.md](docs/SPEC.md)).
 - Une modification du schéma Prisma vient avec sa migration (`prisma migrate dev --name …`).
-- Les textes du jeu sont en français, sur un ton « mème » mais lisible.
+- Le site est bilingue : aucun texte en dur dans les composants. Chaque texte va dans `apps/web/messages/fr/<partie>.json` **et** `apps/web/messages/en/<partie>.json` (mêmes clés), et s'affiche avec `useTranslations`. Le ton reste « mème » mais lisible, dans les deux langues. Une clé manquante en anglais fait échouer le typecheck.
+- Côté site, les montants, prix et dates passent par `useFormat()` (`apps/web/lib/format.ts`), les clés de requêtes par `queryKeys` et les actions par `useApiMutation`.
 - Les icônes viennent de [Phosphor](https://phosphoricons.com) ; ajoute-les à `ICON_GROUPS` dans `packages/shared`.
+
+## Labels
+
+Les issues et les PR sont triées avec trois familles de labels :
+
+| Famille | Exemples | Sert à |
+|---|---|---|
+| `type:` | `type: bug`, `type: idée`, `type: équilibrage`, `type: refacto`, `type: docs` | La nature du travail |
+| `zone:` | `zone: marché`, `zone: minage`, `zone: bourse`, `zone: traduction`… | La partie du jeu concernée |
+| `statut:` | `statut: à trier`, `statut: besoin d'infos`, `statut: confirmé`, `statut: en cours`, `statut: bloqué` | Où en est le sujet |
+
+Pour une première contribution, cherche les issues [`good first issue`](https://github.com/Itaromi/CryptoMeme/labels/good%20first%20issue). Avant de te lancer sur une issue `statut: confirmé`, laisse un commentaire pour qu'on la passe en `statut: en cours`.
 
 ## Utiliser l'IA
 

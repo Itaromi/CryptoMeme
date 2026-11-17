@@ -1,9 +1,11 @@
 'use client';
 import { useEffect, useRef } from 'react';
+import { useLocale } from 'next-intl';
 import { AreaSeries, ColorType, createChart, type UTCTimestamp } from 'lightweight-charts';
 
 export function NetWorthChart({ data }: { data: Array<{ t: number; v: number }> }) {
   const el = useRef<HTMLDivElement>(null);
+  const locale = useLocale();
   useEffect(() => {
     if (!el.current) return;
     const chart = createChart(el.current, {
@@ -14,7 +16,7 @@ export function NetWorthChart({ data }: { data: Array<{ t: number; v: number }> 
       timeScale: { borderColor: '#2a2820', timeVisible: true },
       handleScroll: false,
       handleScale: false,
-      localization: { locale: 'fr-FR' },
+      localization: { locale },
     });
     const s = chart.addSeries(AreaSeries, {
       lineColor: '#2a2820',
@@ -29,6 +31,6 @@ export function NetWorthChart({ data }: { data: Array<{ t: number; v: number }> 
     s.setData([...seen.entries()].sort((a, b) => a[0] - b[0]).map(([time, value]) => ({ time: time as UTCTimestamp, value })));
     chart.timeScale().fitContent();
     return () => chart.remove();
-  }, [data]);
+  }, [data, locale]);
   return <div ref={el} className="h-64 w-full" />;
 }

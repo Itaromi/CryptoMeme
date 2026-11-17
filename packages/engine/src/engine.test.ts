@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import Decimal from 'decimal.js';
 import {
-  Pool,
+  type Pool,
   buyWithCash,
   sellForCash,
   spotPrice,
@@ -9,7 +9,7 @@ import {
   cashToReachPrice,
 } from './amm';
 import { DEFAULT_PARAMS, initialState, stepMarket } from './market';
-import { createRng } from './random';
+import { createRng, pick, shuffle } from './random';
 
 const pool = (): Pool => ({ base: new Decimal(1_000_000), quote: new Decimal(100_000), feeBps: 30 });
 
@@ -90,5 +90,21 @@ describe('marché PNJ', () => {
     const after = spotPrice(p).toNumber();
     expect(after).toBeLessThan(pumped);
     expect(after).toBeGreaterThan(0.1); // l'effet troupeau en garde une partie
+  });
+});
+
+describe('hasard', () => {
+  it('pick renvoie un élément de la liste, undefined si vide', () => {
+    const rng = createRng(7);
+    const xs = ['a', 'b', 'c'];
+    for (let i = 0; i < 50; i++) expect(xs).toContain(pick(rng, xs));
+    expect(pick(rng, [])).toBeUndefined();
+  });
+
+  it('shuffle garde les mêmes éléments sans modifier l’original', () => {
+    const xs = [1, 2, 3, 4, 5, 6];
+    const out = shuffle(createRng(3), xs);
+    expect([...out].sort()).toEqual(xs);
+    expect(xs).toEqual([1, 2, 3, 4, 5, 6]);
   });
 });

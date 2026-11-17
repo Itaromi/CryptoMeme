@@ -6,7 +6,7 @@
 
 Jeu de trading multijoueur de cryptos et d'actions **100 % fictives** : marché vivant, traders PNJ, rug pulls, minage, Bourse, événements absurdes et classement par saison.
 
-*A multiplayer trading game with fake meme coins and parody stocks, built in French.*
+*A multiplayer trading game with fake meme coins and parody stocks. Play it in French or English.*
 
 [![CI](https://github.com/Itaromi/CryptoMeme/actions/workflows/ci.yml/badge.svg)](https://github.com/Itaromi/CryptoMeme/actions/workflows/ci.yml)
 [![Images Docker](https://github.com/Itaromi/CryptoMeme/actions/workflows/docker.yml/badge.svg)](https://github.com/Itaromi/CryptoMeme/actions/workflows/docker.yml)
@@ -43,14 +43,14 @@ Chaque joueur démarre la saison avec 10 000 $ fictifs. À la fin, une seule per
 
 ## Stack
 
-TypeScript de bout en bout, monorepo **pnpm + Turborepo**.
+TypeScript 6 de bout en bout, monorepo **pnpm + Turborepo**, ESLint (règles typées) sur tout le code.
 
 | Dossier | Rôle |
 |---|---|
 | [`packages/engine`](packages/engine) | Moteur économique pur et testé (AMM, prix PNJ, minage, actions) — Vitest |
 | [`packages/shared`](packages/shared) | Schémas Zod, constantes, icônes partagés front/back |
-| [`apps/api`](apps/api) | **NestJS 11** + **Prisma 6** / PostgreSQL 16, Socket.IO, tâches planifiées sous bail |
-| [`apps/web`](apps/web) | **Next.js 15**, TanStack Query, lightweight-charts, Tailwind v4, Phosphor Icons |
+| [`apps/api`](apps/api) | **NestJS 12** + **Prisma 6** / PostgreSQL 16, Socket.IO, tâches planifiées sous bail |
+| [`apps/web`](apps/web) | **Next.js 16**, next-intl (français / anglais), TanStack Query, lightweight-charts, Tailwind v4, Phosphor Icons |
 | [`deploy`](deploy) | Pile Docker de production : Caddy, Postgres, sauvegardes quotidiennes |
 
 ## Démarrer en local
@@ -73,6 +73,7 @@ pnpm dev                                     # API :4000 + site :3000
 Vérifications :
 
 ```bash
+pnpm lint
 pnpm typecheck
 pnpm --filter @cryptomeme/engine test
 pnpm --filter @cryptomeme/engine simulate 30 7   # simule 7 jours de marché

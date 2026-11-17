@@ -3,7 +3,7 @@
  * Affiche, par tier, la distribution des rendements journaliers et des drawdowns.
  */
 import Decimal from 'decimal.js';
-import { DEFAULT_PARAMS, initialState, stepMarket, spotPrice, createRng, Pool } from '../src';
+import { DEFAULT_PARAMS, initialState, stepMarket, spotPrice, createRng, type Pool } from '../src';
 
 const days = Number(process.argv[2] ?? 30);
 const seed = Number(process.argv[3] ?? 7);

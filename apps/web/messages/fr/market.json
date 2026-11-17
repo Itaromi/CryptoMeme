@@ -1,0 +1,114 @@
+{
+  "list": {
+    "title": "Le marché",
+    "star": "La star du jour :",
+    "filtersLabel": "Catégorie",
+    "filters": {
+      "ALL": "Tout",
+      "BLUE_CHIP": "Blue chips",
+      "MID_CAP": "Mid caps",
+      "SHITCOIN": "Shitcoins"
+    },
+    "columns": {
+      "asset": "Actif",
+      "price": "Prix",
+      "change24h": "24 h",
+      "trend": "Tendance 24 h",
+      "volume": "Volume",
+      "marketCap": "Capi.",
+      "mood": "Ambiance"
+    },
+    "frozen": "gelé"
+  },
+  "asset": {
+    "notFound": "Cet actif n'existe pas (encore).",
+    "backStocks": "Bourse",
+    "backMarket": "Marché",
+    "stockFallback": "Action",
+    "frozenBadge": "Marché gelé",
+    "change24h": "{change} sur 24 h",
+    "stats": {
+      "marketCap": "Capitalisation",
+      "liquidity": "Liquidité du pool",
+      "volume24h": "Volume 24 h",
+      "holders": "Détenteurs",
+      "fee": "Frais du pool",
+      "mood": "Ambiance"
+    },
+    "createdBy": "Créée par <link>@{username}</link> · liquidité verrouillée, part du créateur en vesting",
+    "trades": {
+      "title": "Derniers trades joueurs",
+      "empty": "Personne n'a encore osé. Sois le premier."
+    },
+    "history": {
+      "title": "Historique de l'actif",
+      "empty": "Rien à signaler. Pour l'instant.",
+      "line": "{label} : {detail}",
+      "type": {
+        "RUG_PULL": "Rug pull",
+        "JUMP": "Saut",
+        "EVENT": "Événement",
+        "EARNINGS": "Résultats",
+        "NEWS": "Brève",
+        "DIVIDEND": "Dividende",
+        "OPEN": "Ouverture",
+        "TAKEOVER": "OPA",
+        "BANKRUPTCY": "Faillite",
+        "SPLIT": "Split",
+        "IPO": "Introduction en bourse"
+      },
+      "typeFallback": "Changement d’ambiance"
+    },
+    "delisted": "{name} n'est plus cotée : impossible d'acheter ou de vendre.",
+    "suspended": "Les échanges sur {name} sont suspendus par l'administration.",
+    "sessionClosed": {
+      "label": "Séance fermée",
+      "opensIn": "Ouverture dans {time}",
+      "hours": "La Bourse cote de 9 h à 22 h (Paris). Les nouvelles de la nuit se répercutent d'un coup à l'ouverture."
+    },
+    "position": {
+      "title": "Ta position",
+      "quantity": "Quantité",
+      "avgCost": "PRU",
+      "liquidationValue": "Valeur de revente",
+      "unrealizedPnl": "PnL latent"
+    }
+  },
+  "chart": {
+    "intervalsLabel": "Durée d'une bougie",
+    "intervals": {
+      "1m": "1 min",
+      "5m": "5 min",
+      "1h": "1 h",
+      "1d": "1 j"
+    }
+  },
+  "order": {
+    "cta": "Envie de trader {name} ?",
+    "register": "Créer un compte",
+    "tabs": {
+      "BUY": "Acheter",
+      "SELL": "Vendre"
+    },
+    "amountBuy": "Montant à investir ($)",
+    "amountSell": "Quantité de {symbol}",
+    "available": "Dispo : {value}",
+    "max": "Max",
+    "receive": "Tu reçois",
+    "get": "Tu touches",
+    "avgPrice": "Prix moyen",
+    "fee": "Frais",
+    "impact": "Impact sur le prix",
+    "slippage": "Slippage max toléré",
+    "slippageTooHigh": "L'impact dépasse ta limite : réduis le montant ou augmente le slippage toléré.",
+    "pending": "Exécution…",
+    "insufficient": "Solde insuffisant",
+    "submit": {
+      "BUY": "Acheter {symbol}",
+      "SELL": "Vendre {symbol}"
+    },
+    "bought": "Acheté {quantity} {symbol} pour {cash}",
+    "sold": "Vendu {quantity} {symbol} pour {cash}",
+    "pnl": " · PnL {pnl}"
+  }
+}

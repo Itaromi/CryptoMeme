@@ -1,0 +1,33 @@
+{
+  "title": "The shop",
+  "intro": "Paid with your season cash: every purchase shrinks your net worth. Cosmetics, though, carry over from one season to the next.",
+  "you": "you",
+  "noTitle": "No title",
+  "previewing": "Preview: {name}",
+  "hoverHint": "Hover an item to try it on.",
+  "avatars": "Avatar (free)",
+  "achievementsLink": "See achievements and their rewards →",
+  "loginCta": "<link>Log in</link> to shop and customize your profile.",
+  "badgeHint": "Up to 3 badges shown next to your username.",
+  "equipped": "Equipped",
+  "equip": "Equip",
+  "unlockedBy": "Achievement: {achievement}",
+  "secret": "secret",
+  "pay": "Pay {price}",
+  "tooPoor": "Not enough cash",
+  "bought": "It's yours. Don't forget to equip it.",
+  "quotedTitle": "“{text}”",
+  "kinds": {
+    "FRAME": "Frames",
+    "BANNER": "Banners",
+    "TITLE": "Titles",
+    "BADGE": "Badges",
+    "NAME_EFFECT": "Name effects"
+  },
+  "rarity": {
+    "COMMON": "Common",
+    "RARE": "Rare",
+    "EPIC": "Epic",
+    "LEGENDARY": "Legendary"
+  }
+}

@@ -2,18 +2,7 @@ import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
 import { z } from 'zod';
 import { AuthUser, CurrentUser, Public } from '../common/auth.decorators';
 import { ZodPipe } from '../common/zod.pipe';
-import { EquipInput, MetaService } from './meta.service';
-
-const slug = z.string().min(1).max(60);
-const equipSchema = z.object({
-  avatar: z.string().max(16).optional(),
-  frame: slug.nullable().optional(),
-  banner: slug.nullable().optional(),
-  title: slug.nullable().optional(),
-  nameEffect: slug.nullable().optional(),
-  badges: z.array(slug).max(3).optional(),
-  showcase: z.array(slug).max(4).optional(),
-});
+import { buyCosmeticSchema, equipSchema, MetaService } from './meta.service';
 
 @Controller()
 export class MetaController {
@@ -26,12 +15,12 @@ export class MetaController {
   }
 
   @Post('shop/buy')
-  buy(@CurrentUser() u: AuthUser, @Body(new ZodPipe(z.object({ slug }))) body: { slug: string }) {
+  buy(@CurrentUser() u: AuthUser, @Body(new ZodPipe(buyCosmeticSchema)) body: z.infer<typeof buyCosmeticSchema>) {
     return this.meta.buy(u.id, body.slug);
   }
 
   @Patch('me/look')
-  equip(@CurrentUser() u: AuthUser, @Body(new ZodPipe(equipSchema)) body: EquipInput) {
+  equip(@CurrentUser() u: AuthUser, @Body(new ZodPipe(equipSchema)) body: z.infer<typeof equipSchema>) {
     return this.meta.equip(u.id, body);
   }
 

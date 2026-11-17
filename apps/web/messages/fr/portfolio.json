@@ -1,0 +1,44 @@
+{
+  "loginPrompt": "<link>Connecte-toi</link> pour voir ton portefeuille.",
+  "sinceStart": "{perf} depuis le début de saison",
+  "stats": {
+    "cash": "Cash",
+    "positions": "Positions",
+    "hardware": "Matériel de minage",
+    "bank": "Banque",
+    "tradingFee": "Frais de trading"
+  },
+  "allocation": {
+    "title": "Répartition",
+    "cash": "Cash"
+  },
+  "positions": {
+    "title": "Positions",
+    "empty": "Tout est en cash. Ça ne fera pas de toi un millionnaire.",
+    "emptyCta": "Choisir une première crypto →",
+    "columns": {
+      "asset": "Actif",
+      "quantity": "Quantité",
+      "avgCost": "PRU",
+      "price": "Prix",
+      "liquidationValue": "Valeur de revente",
+      "liquidationHint": "Ce que tu toucherais en vendant tout maintenant (slippage inclus)",
+      "unrealizedPnl": "PnL latent",
+      "realizedPnl": "PnL réalisé"
+    }
+  },
+  "history": {
+    "title": "Historique des ordres",
+    "empty": "Aucun ordre cette saison.",
+    "columns": {
+      "when": "Quand",
+      "order": "Ordre",
+      "quantity": "Quantité",
+      "amount": "Montant",
+      "avgPrice": "Prix moyen",
+      "fee": "Frais",
+      "impact": "Impact",
+      "pnl": "PnL"
+    }
+  }
+}

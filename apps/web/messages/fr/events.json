@@ -1,0 +1,36 @@
+{
+  "mood": {
+    "NEGATIVE": "Mauvaise nouvelle",
+    "POSITIVE": "Bonne nouvelle",
+    "MARKET": "Marché"
+  },
+  "page": {
+    "title": "L’actu",
+    "intro": "Taxes, piratages, héritages, krachs, canicules… Certains événements sont annoncés à l’avance : c’est le moment de vendre, d’acheter ou de couper tes rigs.",
+    "liveTitle": "À venir et en cours",
+    "empty": "Rien à l’horizon. Profite, ça ne durera pas.",
+    "strikesIn": "Frappe dans {time}",
+    "remaining": "Encore {time}",
+    "ongoing": "En cours",
+    "historyTitle": "Historique",
+    "historyEmpty": "Aucun événement pour l’instant.",
+    "byAdmin": "(déclenché par l’admin)",
+    "cancelled": "Annulé",
+    "affected": "{count, plural, one {# joueur touché} other {# joueurs touchés}}"
+  },
+  "banner": {
+    "label": "Flash info",
+    "flash": "Flash info",
+    "ongoing": "En cours",
+    "in": "dans {time}",
+    "remaining": "encore {time}"
+  },
+  "feed": {
+    "title": "Dernières nouvelles",
+    "empty": "Le marché est calme. Trop calme.",
+    "rugPull": "RUG PULL sur {symbol} : {detail}. Les devs sont aux Bahamas.",
+    "jump": "{symbol} fait un saut de {detail}.",
+    "regime": "{symbol} change d'ambiance : {detail}.",
+    "other": "{symbol} : {detail}"
+  }
+}

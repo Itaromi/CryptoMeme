@@ -1,27 +1,52 @@
 version: 2
+
+# Une seule PR groupée par écosystème et par mois : moins de bruit et moins de CI.
+# Les correctifs de sécurité arrivent toujours tout de suite, indépendamment de ce calendrier.
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 10
+      interval: monthly
+    open-pull-requests-limit: 5
+    labels: ['type: dépendances']
+    commit-message:
+      prefix: 'Dépendances'
     groups:
-      nest:
-        patterns: ['@nestjs/*']
-      prisma:
-        patterns: ['prisma', '@prisma/*']
-      next-react:
-        patterns: ['next', 'react', 'react-dom', '@types/react*']
+      # Mises à jour mineures et correctifs : une PR pour tout
       mineures:
         update-types: [minor, patch]
+      # Versions majeures : groupées par famille, car elles demandent souvent une migration
+      nest:
+        patterns: ['@nestjs/*']
+        update-types: [major]
+      prisma:
+        patterns: ['prisma', '@prisma/*']
+        update-types: [major]
+      next-react:
+        patterns: ['next', 'react', 'react-dom', '@types/react*', 'next-intl', '@next/*']
+        update-types: [major]
+      outillage:
+        patterns: ['typescript', 'eslint', '@eslint/*', 'typescript-eslint', 'eslint-plugin-*', 'vitest', 'turbo', '@types/*']
+        update-types: [major]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    labels: ['type: ci / outillage', 'type: dépendances']
+    commit-message:
+      prefix: 'CI'
+    groups:
+      actions:
+        patterns: ['*']
 
   - package-ecosystem: docker
     directories: [/apps/api, /apps/web]
     schedule:
-      interval: weekly
+      interval: monthly
+    labels: ['zone: déploiement', 'type: dépendances']
+    commit-message:
+      prefix: 'Docker'
+    groups:
+      images:
+        patterns: ['*']

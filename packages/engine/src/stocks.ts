@@ -1,4 +1,4 @@
-import { Rng, gaussian } from './random';
+import { type Rng, gaussian } from './random';
 
 /**
  * Fondamentaux d'une société cotée.
@@ -18,7 +18,7 @@ export interface Fundamentals {
   pe: number;
   /** Part du bénéfice reversée en dividende (0..1). */
   payout: number;
-  /** Santé financière 0..1. En dessous de 0,3 : dividende suspendu ; en dessous de 0,15 : risque de faillite. */
+  /** Santé financière 0..1. Sous DIVIDEND_MIN_HEALTH : dividende suspendu ; sous BANKRUPTCY_HEALTH : risque de faillite. */
   health: number;
 }
 
@@ -34,6 +34,11 @@ export interface EarningsResult {
   next: Fundamentals;
   verdict: 'BEAT' | 'INLINE' | 'MISS' | 'DISASTER' | 'BLOWOUT';
 }
+
+/** En dessous de cette santé financière, le dividende est suspendu. */
+export const DIVIDEND_MIN_HEALTH = 0.3;
+/** En dessous de cette santé financière, la société risque la faillite. */
+export const BANKRUPTCY_HEALTH = 0.15;
 
 export const fundamentalValue = (f: Pick<Fundamentals, 'eps' | 'pe'>) => Math.max(f.eps, 0.0001) * 4 * f.pe;
 
@@ -64,12 +69,12 @@ export function reportEarnings(f: Fundamentals, consensus: number, rng: Rng): Ea
 
   const verdict: EarningsResult['verdict'] =
     surprise <= -0.2 ? 'DISASTER' : surprise <= -0.03 ? 'MISS' : surprise < 0.03 ? 'INLINE' : surprise < 0.2 ? 'BEAT' : 'BLOWOUT';
-  const dividend = health >= 0.3 ? actual * f.payout : 0;
+  const dividend = health >= DIVIDEND_MIN_HEALTH ? actual * f.payout : 0;
   return { consensus, actual, surprise, logJump, dividend, next, verdict };
 }
 
 /** Probabilité de faillite par jour selon la santé financière. */
-export const bankruptcyRisk = (health: number) => (health < 0.15 ? (0.15 - health) * 2 : 0);
+export const bankruptcyRisk = (health: number) => (health < BANKRUPTCY_HEALTH ? (BANKRUPTCY_HEALTH - health) * 2 : 0);
 
 /** Ratio de split pour ramener le prix sous ~500 $ (null si inutile). */
 export function splitRatio(price: number, threshold = 2_000): number | null {

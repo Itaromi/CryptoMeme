@@ -1,0 +1,217 @@
+{
+  "title": "Salle de contrôle",
+  "restricted": "Zone réservée.",
+  "tabs": {
+    "overview": "Économie",
+    "users": "Joueurs",
+    "creations": "Créations",
+    "assets": "Actifs",
+    "stocks": "Bourse",
+    "mining": "Minage",
+    "economy": "Événements & banques",
+    "seasons": "Saisons",
+    "audit": "Audit"
+  },
+  "feedback": {
+    "done": "Fait.",
+    "saved": "Enregistré."
+  },
+  "overview": {
+    "intro": "{season} · démarrée {since}. La « création nette » compare le patrimoine total au capital distribué : très positive = les joueurs vident les pools, très négative = le marché est trop punitif.",
+    "stats": {
+      "users": "Comptes",
+      "players": "Joueurs actifs (saison)",
+      "totalCash": "Cash total",
+      "totalNetWorth": "Patrimoine total",
+      "netCreation": "Création nette de valeur",
+      "trades24h": "Ordres 24 h",
+      "volume24h": "Volume 24 h",
+      "fees24h": "Frais 24 h (puits)",
+      "events24h": "Événements marché 24 h"
+    }
+  },
+  "users": {
+    "search": "Rechercher email ou pseudo…",
+    "total": "{count, plural, one {# compte} other {# comptes}}",
+    "columns": {
+      "player": "Joueur",
+      "email": "Email",
+      "role": "Rôle",
+      "netWorth": "Patrimoine",
+      "lastLogin": "Dernière connexion"
+    },
+    "unverified": "(non vérifié)",
+    "manage": "Gérer",
+    "reason": "Motif (obligatoire, tracé dans l'audit)",
+    "ban": "Bannir",
+    "unban": "Débannir",
+    "banned": "Banni : {reason}",
+    "cashPlaceholder": "Ajustement cash (ex. -500 ou 1000)",
+    "apply": "Appliquer",
+    "sessions": "Sessions récentes",
+    "ledger": "Grand livre (100 dernières écritures)",
+    "assetEntry": "(actif)"
+  },
+  "assets": {
+    "frozen": "gelé",
+    "liquidity": "liquidité {amount}",
+    "params": {
+      "volatility": "Volatilité / jour",
+      "meanReversion": "Retour à la moyenne",
+      "jumpIntensity": "Sauts / jour",
+      "rugRisk": "Risque de rug / jour",
+      "npcActivity": "Activité PNJ",
+      "herding": "Effet troupeau"
+    },
+    "reason": "Motif",
+    "freeze": "Geler le marché",
+    "unfreeze": "Dégeler"
+  },
+  "seasons": {
+    "running": "en cours",
+    "ended": "terminée le {date}",
+    "rollover": {
+      "title": "Clôturer « {name} » et lancer la suivante",
+      "warning": "Le classement est figé et archivé. Chaque joueur repart avec le nouveau capital. Les marchés continuent. Irréversible.",
+      "name": "Nom de la nouvelle saison",
+      "cash": "Capital de départ",
+      "reason": "Motif",
+      "confirm": "Tape « {number} » pour confirmer",
+      "submit": "Lancer la nouvelle saison",
+      "done": "Nouvelle saison lancée."
+    }
+  },
+  "audit": {
+    "empty": "Aucune action admin pour l'instant."
+  },
+  "creations": {
+    "status": {
+      "PENDING": "À modérer",
+      "APPROVED": "Acceptées",
+      "REJECTED": "Refusées"
+    },
+    "empty": "Rien ici.",
+    "kind": {
+      "CRYPTO": "Crypto",
+      "COMPANY": "Entreprise",
+      "POOL": "Pool"
+    },
+    "meta": "{kind} · par @{username} · {ago}",
+    "fee": "Frais {amount}",
+    "deposit": "Dépôt {amount}",
+    "param": "{name} : {value}",
+    "reason": "Motif (obligatoire, visible par le joueur si refus)",
+    "approve": "Accepter",
+    "reject": "Refuser et rembourser",
+    "note": "Note : {note}"
+  },
+  "economy": {
+    "reason": "Motif (obligatoire, tracé dans l’audit)",
+    "pending": {
+      "title": "En attente / en cours",
+      "scheduled": "le {date}",
+      "active": "en cours"
+    },
+    "types": {
+      "title": "Types d’événements",
+      "columns": {
+        "event": "Événement",
+        "rate": "Fréquence / jour",
+        "cooldown": "Cooldown (h)",
+        "notice": "Préavis (min)",
+        "fired": "Déclenchés"
+      },
+      "duration": "({hours} h)",
+      "enable": "Activer",
+      "disable": "Désactiver",
+      "pickBank": "Choisir la banque",
+      "randomBank": "Banque au hasard",
+      "trigger": "Déclencher",
+      "now": "Maintenant",
+      "nowHint": "Sans préavis"
+    },
+    "banks": {
+      "title": "Banques",
+      "columns": {
+        "bank": "Banque",
+        "fee": "Abonnement",
+        "trading": "Trading",
+        "interest": "Intérêts/mois",
+        "failRisk": "Faillite/jour"
+      },
+      "bps": "{bps} bps",
+      "close": "Fermer aux nouveaux",
+      "reopen": "Rouvrir"
+    }
+  },
+  "stocks": {
+    "reason": "Motif (obligatoire, tracé dans l’audit)",
+    "readOnly": "Lecture seule : seuls les admins peuvent agir sur les sociétés.",
+    "columns": {
+      "company": "Société",
+      "status": "Statut",
+      "price": "Cours",
+      "eps": "BPA / attendu",
+      "health": "Santé",
+      "earnings": "Résultats"
+    },
+    "status": {
+      "LISTED": "Cotée",
+      "TAKEOVER": "OPA en cours",
+      "ACQUIRED": "Rachetée",
+      "BANKRUPT": "En faillite"
+    },
+    "actionLabel": "Action",
+    "actions": {
+      "earnings": "Publier les résultats maintenant",
+      "newsGood": "Bonne nouvelle",
+      "newsBad": "Mauvaise nouvelle",
+      "takeover": "Lancer une OPA",
+      "takeoverSuccess": "OPA : forcer la réussite",
+      "takeoverFail": "OPA : forcer l’échec",
+      "split": "Split",
+      "bankrupt": "Faillite",
+      "relist": "Réintroduire en bourse"
+    },
+    "splitRatio": "Ratio du split",
+    "execute": "Exécuter",
+    "confirm": "Confirmer ?"
+  },
+  "mining": {
+    "stats": {
+      "rigs": "Rigs (en marche)",
+      "components": "Composants",
+      "componentsValue": "OK {ok} · panne {broken} · carbonisés {destroyed}",
+      "incidents": "Incidents 24 h"
+    },
+    "reason": "Motif (obligatoire pour toute modification)",
+    "networks": {
+      "title": "Réseaux",
+      "columns": {
+        "coin": "Coin",
+        "price": "Prix",
+        "reward": "Récompense / min",
+        "npc": "PNJ (base)",
+        "players": "Joueurs",
+        "halving": "Halving (j)",
+        "mined": "Total miné joueurs"
+      },
+      "current": "actuel {hashrate}",
+      "apply": "OK"
+    },
+    "pools": {
+      "title": "Pools",
+      "type": {
+        "PPS": "PPS",
+        "PPLNS": "PPLNS",
+        "SOLO": "Solo",
+        "SHADY": "Louche"
+      },
+      "fee": "frais {fee}",
+      "scamRisk": "fuite {risk}/j",
+      "rigs": "{count, plural, one {# rig} other {# rigs}}",
+      "enable": "Réactiver",
+      "disable": "Désactiver"
+    }
+  }
+}

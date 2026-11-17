@@ -1,0 +1,18 @@
+{
+  "kicker": "Leaderboard",
+  "title": "Who's got the biggest diamond hands?",
+  "myRank": "You: <b>#{rank}</b> of {total}",
+  "season": "Season",
+  "currentSeason": "Current season",
+  "empty": "Nobody in this category yet. First place is up for grabs.",
+  "footnote": "Net worth = cash + actual resale value of positions (slippage included) + mining gear. Recalculated every 30 seconds.",
+  "cats": {
+    "general": { "label": "Overall", "hint": "Net worth" },
+    "day": { "label": "24h", "hint": "Net worth change over 24 hours" },
+    "week": { "label": "7 days", "hint": "Net worth change over 7 days" },
+    "trader": { "label": "Trader", "hint": "Realized gains this season" },
+    "miner": { "label": "Miner", "hint": "Value of mined crypto (current price)" },
+    "bestTrade": { "label": "Biggest win", "hint": "Best sale of the season" },
+    "worstTrade": { "label": "Biggest loss", "hint": "Worst sale of the season" }
+  }
+}

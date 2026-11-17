@@ -1,9 +1,26 @@
 name: CI
 
+# Économe en minutes : rien ne tourne pour un changement de documentation,
+# ni sur une PR en brouillon ; un nouveau push annule la vérification en cours.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/DISCUSSION_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/DISCUSSION_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -14,7 +31,8 @@ permissions:
 
 jobs:
   check:
-    name: Typecheck, tests, build
+    name: Lint, typecheck, tests, build
+    if: github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -32,6 +50,9 @@ jobs:
 
       - name: Typecheck (tous les paquets)
         run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
 
       - name: Tests du moteur économique
         run: pnpm --filter @cryptomeme/engine test

@@ -28,13 +28,16 @@ export async function api<T = unknown>(path: string, init: RequestInit & { json?
   if (res.status === 401 && retry && !path.startsWith('/auth/refresh') && !path.startsWith('/auth/login')) {
     if (await refresh()) return api<T>(path, init, false);
   }
-  if (!res.ok) {
-    let msg = `Erreur ${res.status}`;
-    try {
-      const body = await res.json();
-      msg = Array.isArray(body.message) ? body.message[0] : (body.message ?? msg);
-    } catch {}
-    throw new ApiError(res.status, msg);
-  }
+  if (!res.ok) throw new ApiError(res.status, await errorText(res));
   return res.json() as Promise<T>;
+}
+
+/** Message d'erreur renvoyé par l'API (NestJS : `message` texte ou liste), sinon le code HTTP. */
+async function errorText(res: Response): Promise<string> {
+  const fallback = `HTTP ${res.status}`;
+  const body: unknown = await res.json().catch(() => null);
+  if (!body || typeof body !== 'object' || !('message' in body)) return fallback;
+  const { message } = body;
+  if (Array.isArray(message)) return typeof message[0] === 'string' ? message[0] : fallback;
+  return typeof message === 'string' ? message : fallback;
 }

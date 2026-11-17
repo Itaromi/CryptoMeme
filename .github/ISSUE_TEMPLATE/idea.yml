@@ -1,6 +1,6 @@
 name: Idée
 description: Une mécanique, une crypto absurde, un événement, un équilibrage…
-labels: [idée]
+labels: ['type: idée', 'statut: à trier']
 body:
   - type: textarea
     id: idea

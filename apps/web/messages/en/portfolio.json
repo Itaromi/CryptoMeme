@@ -1,0 +1,44 @@
+{
+  "loginPrompt": "<link>Log in</link> to see your portfolio.",
+  "sinceStart": "{perf} since the season started",
+  "stats": {
+    "cash": "Cash",
+    "positions": "Positions",
+    "hardware": "Mining gear",
+    "bank": "Bank",
+    "tradingFee": "Trading fees"
+  },
+  "allocation": {
+    "title": "Allocation",
+    "cash": "Cash"
+  },
+  "positions": {
+    "title": "Positions",
+    "empty": "All cash. That won't make you a millionaire.",
+    "emptyCta": "Pick your first crypto →",
+    "columns": {
+      "asset": "Asset",
+      "quantity": "Quantity",
+      "avgCost": "Avg. cost",
+      "price": "Price",
+      "liquidationValue": "Sell-off value",
+      "liquidationHint": "What you'd pocket selling everything right now (slippage included)",
+      "unrealizedPnl": "Unrealized P&L",
+      "realizedPnl": "Realized P&L"
+    }
+  },
+  "history": {
+    "title": "Order history",
+    "empty": "No orders this season.",
+    "columns": {
+      "when": "When",
+      "order": "Order",
+      "quantity": "Quantity",
+      "amount": "Amount",
+      "avgPrice": "Avg. price",
+      "fee": "Fees",
+      "impact": "Impact",
+      "pnl": "P&L"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "kicker": "Classement",
+  "title": "Qui a les plus grosses mains de diamant ?",
+  "myRank": "Toi : <b>#{rank}</b> sur {total}",
+  "season": "Saison",
+  "currentSeason": "Saison en cours",
+  "empty": "Personne dans cette catégorie. La première place est libre.",
+  "footnote": "Patrimoine = cash + valeur de revente réelle des positions (slippage inclus) + matériel de minage. Recalculé toutes les 30 secondes.",
+  "cats": {
+    "general": { "label": "Général", "hint": "Patrimoine net" },
+    "day": { "label": "24 h", "hint": "Progression du patrimoine sur 24 h" },
+    "week": { "label": "7 jours", "hint": "Progression du patrimoine sur 7 jours" },
+    "trader": { "label": "Trader", "hint": "Plus-values réalisées sur la saison" },
+    "miner": { "label": "Mineur", "hint": "Valeur des cryptos minées (prix actuel)" },
+    "bestTrade": { "label": "Plus gros gain", "hint": "Meilleure vente de la saison" },
+    "worstTrade": { "label": "Plus grosse perte", "hint": "Pire vente de la saison" }
+  }
+}

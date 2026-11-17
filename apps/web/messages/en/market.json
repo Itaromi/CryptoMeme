@@ -1,0 +1,114 @@
+{
+  "list": {
+    "title": "The market",
+    "star": "Today's star:",
+    "filtersLabel": "Category",
+    "filters": {
+      "ALL": "All",
+      "BLUE_CHIP": "Blue chips",
+      "MID_CAP": "Mid caps",
+      "SHITCOIN": "Shitcoins"
+    },
+    "columns": {
+      "asset": "Asset",
+      "price": "Price",
+      "change24h": "24h",
+      "trend": "24h trend",
+      "volume": "Volume",
+      "marketCap": "Mkt cap",
+      "mood": "Vibe"
+    },
+    "frozen": "frozen"
+  },
+  "asset": {
+    "notFound": "This asset doesn't exist (yet).",
+    "backStocks": "Stock market",
+    "backMarket": "Market",
+    "stockFallback": "Stock",
+    "frozenBadge": "Market frozen",
+    "change24h": "{change} over 24h",
+    "stats": {
+      "marketCap": "Market cap",
+      "liquidity": "Pool liquidity",
+      "volume24h": "24h volume",
+      "holders": "Holders",
+      "fee": "Pool fee",
+      "mood": "Vibe"
+    },
+    "createdBy": "Created by <link>@{username}</link> · liquidity locked, creator's share vesting",
+    "trades": {
+      "title": "Latest player trades",
+      "empty": "Nobody's dared yet. Be the first."
+    },
+    "history": {
+      "title": "Asset history",
+      "empty": "Nothing to report. For now.",
+      "line": "{label}: {detail}",
+      "type": {
+        "RUG_PULL": "Rug pull",
+        "JUMP": "Jump",
+        "EVENT": "Event",
+        "EARNINGS": "Earnings",
+        "NEWS": "News flash",
+        "DIVIDEND": "Dividend",
+        "OPEN": "Market open",
+        "TAKEOVER": "Takeover bid",
+        "BANKRUPTCY": "Bankruptcy",
+        "SPLIT": "Split",
+        "IPO": "IPO"
+      },
+      "typeFallback": "Vibe shift"
+    },
+    "delisted": "{name} is no longer listed: no buying, no selling.",
+    "suspended": "Trading in {name} has been suspended by the admins.",
+    "sessionClosed": {
+      "label": "Market closed",
+      "opensIn": "Opens in {time}",
+      "hours": "The stock market trades from 9am to 10pm (Paris time). Overnight news hits all at once at the open."
+    },
+    "position": {
+      "title": "Your position",
+      "quantity": "Quantity",
+      "avgCost": "Avg. cost",
+      "liquidationValue": "Sell-off value",
+      "unrealizedPnl": "Unrealized P&L"
+    }
+  },
+  "chart": {
+    "intervalsLabel": "Candle length",
+    "intervals": {
+      "1m": "1m",
+      "5m": "5m",
+      "1h": "1h",
+      "1d": "1d"
+    }
+  },
+  "order": {
+    "cta": "Fancy trading {name}?",
+    "register": "Create an account",
+    "tabs": {
+      "BUY": "Buy",
+      "SELL": "Sell"
+    },
+    "amountBuy": "Amount to invest ($)",
+    "amountSell": "{symbol} quantity",
+    "available": "Available: {value}",
+    "max": "Max",
+    "receive": "You get",
+    "get": "You receive",
+    "avgPrice": "Avg. price",
+    "fee": "Fees",
+    "impact": "Price impact",
+    "slippage": "Max slippage tolerated",
+    "slippageTooHigh": "Price impact is over your limit: lower the amount or raise your slippage tolerance.",
+    "pending": "Executing…",
+    "insufficient": "Insufficient balance",
+    "submit": {
+      "BUY": "Buy {symbol}",
+      "SELL": "Sell {symbol}"
+    },
+    "bought": "Bought {quantity} {symbol} for {cash}",
+    "sold": "Sold {quantity} {symbol} for {cash}",
+    "pnl": " · P&L {pnl}"
+  }
+}

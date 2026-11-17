@@ -1,0 +1,19 @@
+{
+  "currentSeason": "Current season",
+  "hero": {
+    "line1": "Buy high.",
+    "line2": "Sell <hl>low.</hl>",
+    "pitch": "You start with {cash} of fake money. Absurd cryptos, rug pulls, NPCs in full panic. The market reacts to every single order you place. When the season ends, only one person is #1.",
+    "toMarket": "Go to the market",
+    "start": "Start trading",
+    "leaderboard": "See the leaderboard"
+  },
+  "movers": {
+    "top": "On fire today",
+    "flop": "Deep in the red"
+  },
+  "top10": {
+    "title": "Top 10",
+    "empty": "The leaderboard is empty. The #1 spot is all yours."
+  }
+}

@@ -110,6 +110,8 @@ export const WS_EVENTS = {
   TRADE: 'market:trade',
   SUBSCRIBE: 'market:subscribe',
   UNSUBSCRIBE: 'market:unsubscribe',
+  /** Les événements de jeu (programmés, actifs, terminés) ont changé : recharger le fil. */
+  EVENTS_CHANGED: 'events:changed',
 } as const;
 
 // ─── Auth ───────────────────────────────────────────────────────────
@@ -158,6 +160,11 @@ export const quoteSchema = orderSchema.pick({ symbol: true, side: true, amount: 
 export type QuoteInput = z.infer<typeof quoteSchema>;
 
 // ─── Admin ──────────────────────────────────────────────────────────
+/** Motif obligatoire de toute action d'administration (tracé dans le journal d'audit). */
+export const reasonSchema = z.string().min(3).max(500);
+export const reasonBodySchema = z.object({ reason: reasonSchema });
+export type ReasonBody = z.infer<typeof reasonBodySchema>;
+
 export const adminCashAdjustSchema = z.object({
   amount: z.string().regex(/^-?\d+(\.\d{1,2})?$/),
   reason: z.string().min(5).max(500),
@@ -184,6 +191,19 @@ export interface MarketTick {
   volume24h: string;
   regime: string;
   t: number;
+}
+
+/** Trade d'un joueur diffusé en direct (WS_EVENTS.TRADE, room « asset:SYMBOLE »). */
+export interface MarketTrade {
+  id: string;
+  /** Pseudo du joueur (null si le compte a disparu) */
+  by: string | null;
+  side: 'BUY' | 'SELL';
+  quantity: string;
+  cash: string;
+  price: string;
+  /** Date ISO */
+  at: string;
 }
 
 export interface Candle {

@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { price } from '@/lib/format';
+import { useFormat } from '@/lib/format';
 
 /** Prix qui flashe vert/rouge quand il bouge. */
 export function LivePrice({ value, className = '' }: { value: string | number; className?: string }) {
+  const f = useFormat();
   const prev = useRef(Number(value));
   const [flash, setFlash] = useState<'' | 'flash-up' | 'flash-down'>('');
   const [key, setKey] = useState(0);
@@ -17,7 +18,7 @@ export function LivePrice({ value, className = '' }: { value: string | number; c
   }, [value]);
   return (
     <span key={key} className={`num ${flash} ${className}`}>
-      {price(value)}
+      {f.price(value)}
     </span>
   );
 }

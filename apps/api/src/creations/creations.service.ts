@@ -1,17 +1,24 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { AssetTier, Creation, Prisma } from '@prisma/client';
+import { z } from 'zod';
 import { DEFAULT_PARAMS, STOCK_PARAMS, initialState } from '@cryptomeme/engine';
 import { CREATION, CreationInput, QUARTER_MS, SECTORS } from '@cryptomeme/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeasonsService } from '../seasons/seasons.service';
 import { LeaseService } from '../common/lease.service';
 import { D, Decimal, money } from '../common/decimal';
-import { applyAsset, applyCash } from '../economy/ledger';
+import { applyAsset, applyCash, lockWallets, Tx } from '../economy/ledger';
 import { NotificationsService } from '../economy/notifications';
+import { paramsJson, stateJson } from '../market/asset-state';
+import { AuditService } from '../common/audit.service';
 
 const DAY = 86_400_000;
 const KIND_LABEL = { CRYPTO: 'ta crypto', COMPANY: 'ton entreprise', POOL: 'ton pool de minage' } as const;
+
+/** Paramètres stockés d'une demande (colonne JSON Creation.params), relus avec validation. */
+const assetCreationParams = z.object({ price: z.number(), sector: z.string().optional(), payout: z.number().optional() });
+const poolCreationParams = z.object({ network: z.string(), poolType: z.enum(['PPS', 'PPLNS', 'SOLO']), feeBps: z.number().int() });
 
 /**
  * Création d'actifs par les joueurs : crypto, entreprise cotée, pool de minage.
@@ -33,6 +40,7 @@ export class CreationsService {
     private readonly seasons: SeasonsService,
     private readonly lease: LeaseService,
     private readonly notify: NotificationsService,
+    private readonly audit: AuditService,
   ) {}
 
   async config() {
@@ -49,7 +57,7 @@ export class CreationsService {
     const live = await this.prisma.creation.count({ where: { userId, kind: input.kind, status: { in: ['PENDING', 'APPROVED'] } } });
     if (live >= CREATION.maxPerKind) throw new BadRequestException(`Maximum ${CREATION.maxPerKind} créations de ce type par joueur`);
 
-    let params: Record<string, unknown>;
+    let params: Prisma.InputJsonObject;
     let symbol: string | null = null;
     if (input.kind === 'POOL') {
       const net = await this.prisma.miningNetwork.findFirst({ where: { asset: { symbol: input.network } } });
@@ -67,7 +75,7 @@ export class CreationsService {
 
     const { id: walletId } = await this.seasons.wallet(userId);
     return this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM "Wallet" WHERE id = ${walletId} FOR UPDATE`;
+      await lockWallets(tx, [walletId]);
       const w = await tx.wallet.findUniqueOrThrow({ where: { id: walletId }, select: { cash: true } });
       if (D(w.cash).lt(total)) throw new BadRequestException(`Il te faut ${money(total)} $ (frais ${money(D(cost.fee))} $ + dépôt ${money(D(deposit))} $)`);
       const c = await tx.creation.create({
@@ -80,12 +88,12 @@ export class CreationsService {
           emoji: input.emoji,
           color: input.color,
           description: input.description,
-          params: params as object,
+          params,
           fee: cost.fee,
           deposit,
         },
       });
-      await applyCash(tx, walletId, total.neg(), 'CREATION', `Demande de création : ${input.name}`, { type: 'Creation', id: c.id });
+      await applyCash(tx, walletId, total.neg(), 'CREATION', `Demande de création : ${input.name}`, { type: 'Creation', id: c.id }, { strict: true });
       return { id: c.id, status: c.status };
     });
   }
@@ -107,6 +115,7 @@ export class CreationsService {
       if (!claimed.count) throw new BadRequestException('Demande introuvable ou déjà traitée');
       const c = await tx.creation.findUniqueOrThrow({ where: { id } });
       await applyCash(tx, c.walletId, D(c.fee).add(D(c.deposit)), 'CREATION_REFUND', `Création refusée : ${c.name}`, { type: 'Creation', id: c.id });
+      await this.audit.log({ actorId, action: 'CREATION_REJECT', targetType: 'Creation', targetId: id, reason: note }, tx);
       return c;
     });
     await this.notify.push([{ userId: c.userId, type: 'CREATION', title: `Création refusée : ${c.name}`, body: `Motif : ${note}. Frais et dépôt remboursés.`, amount: D(c.fee).add(D(c.deposit)).toString(), link: '/create' }]);
@@ -120,6 +129,7 @@ export class CreationsService {
       const c = await tx.creation.findUniqueOrThrow({ where: { id } });
       if (c.kind === 'POOL') await this.launchPool(tx, c);
       else await this.launchAsset(tx, c);
+      await this.audit.log({ actorId, action: 'CREATION_APPROVE', targetType: 'Creation', targetId: id, reason: note }, tx);
       return c;
     });
     await this.notify.push([
@@ -134,8 +144,8 @@ export class CreationsService {
     return { ok: true };
   }
 
-  private async launchAsset(tx: Prisma.TransactionClient, c: Creation) {
-    const p = c.params as { price: number; sector?: string; payout?: number };
+  private async launchAsset(tx: Tx, c: Creation) {
+    const p = assetCreationParams.parse(c.params);
     const deposit = Number(c.deposit);
     const base = deposit / p.price;
     const isStock = c.kind === 'COMPANY';
@@ -152,8 +162,8 @@ export class CreationsService {
         description: c.description,
         emoji: c.emoji,
         color: c.color,
-        params: params as object,
-        state: initialState(p.price) as object,
+        params: paramsJson(params),
+        state: stateJson(initialState(p.price)),
         quoteReserve: deposit,
         baseReserve: base,
         price: p.price,
@@ -191,8 +201,8 @@ export class CreationsService {
     await tx.marketEvent.create({ data: { assetId: asset.id, type: 'IPO', detail: `${c.name} fait son entrée sur le marché à ${p.price} $ (création d'un joueur)` } });
   }
 
-  private async launchPool(tx: Prisma.TransactionClient, c: Creation) {
-    const p = c.params as { network: string; poolType: 'PPS' | 'PPLNS' | 'SOLO'; feeBps: number };
+  private async launchPool(tx: Tx, c: Creation) {
+    const p = poolCreationParams.parse(c.params);
     const net = await tx.miningNetwork.findFirstOrThrow({ where: { asset: { symbol: p.network } } });
     const pool = await tx.miningPool.create({
       data: {
@@ -296,18 +306,20 @@ export class CreationsService {
 
   private async vest() {
     const now = Date.now();
-    const assets = await this.prisma.asset.findMany({ where: { creatorId: { not: null }, vestStart: { not: null } }, select: { id: true } });
-    for (const { id } of assets) {
+    const assets = await this.prisma.asset.findMany({ where: { creatorId: { not: null }, vestStart: { not: null } }, select: { id: true, creatorId: true, vestDone: true, vestTotal: true } });
+    for (const { id, creatorId, vestDone, vestTotal } of assets) {
+      if (!creatorId || D(vestDone).gte(D(vestTotal))) continue;
+      const wallet = await this.seasons.wallet(creatorId);
       await this.prisma.$transaction(async (tx) => {
-        // Ordre des verrous : actif puis position (comme le trading) → pas d'interblocage
+        // Ordre des verrous (cf. ledger.ts) : wallet du créateur puis actif → pas d'interblocage avec le trading
+        await lockWallets(tx, [wallet.id]);
         await tx.$queryRaw`SELECT id FROM "Asset" WHERE id = ${id} FOR UPDATE`;
         const a = await tx.asset.findUniqueOrThrow({ where: { id }, include: { company: { select: { status: true } } } });
-        if (D(a.vestDone).gte(D(a.vestTotal)) || !a.creatorId || !a.vestStart || !a.vestEnd) return;
+        if (D(a.vestDone).gte(D(a.vestTotal)) || a.creatorId !== creatorId || !a.vestStart || !a.vestEnd) return;
         if (a.company && !['LISTED', 'TAKEOVER'].includes(a.company.status)) return;
         const frac = Math.min(1, (now - a.vestStart.getTime()) / (a.vestEnd.getTime() - a.vestStart.getTime()));
         const due = D(a.vestTotal).mul(frac).sub(D(a.vestDone)).toDecimalPlaces(8, Decimal.ROUND_DOWN);
         if (due.lte(0)) return;
-        const wallet = await this.seasons.wallet(a.creatorId);
         await tx.asset.update({ where: { id }, data: { vestDone: D(a.vestDone).add(due).toString() } });
         await applyAsset(tx, wallet.id, id, due, 'VESTING', `Part du créateur ${a.symbol}`, { type: 'Asset', id });
       });

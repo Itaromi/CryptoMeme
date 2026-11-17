@@ -1,0 +1,222 @@
+{
+  "nav": {
+    "label": "Minage",
+    "farm": "Ma ferme",
+    "shop": "Boutique matos",
+    "pools": "Pools & réseaux"
+  },
+  "kind": {
+    "GPU": "Cartes graphiques",
+    "CPU": "Processeurs",
+    "ASIC": "ASIC",
+    "MOTHERBOARD": "Cartes mères",
+    "PSU": "Alimentations",
+    "COOLING": "Refroidissement",
+    "RACK": "Racks"
+  },
+  "kindShort": {
+    "GPU": "GPU",
+    "CPU": "CPU",
+    "ASIC": "ASIC",
+    "MOTHERBOARD": "Carte mère",
+    "PSU": "Alim",
+    "COOLING": "Refroid.",
+    "RACK": "Rack"
+  },
+  "poolType": {
+    "PPS": {
+      "label": "PPS",
+      "help": "Paiement fixe à chaque part. Zéro variance, frais élevés."
+    },
+    "PPLNS": {
+      "label": "PPLNS",
+      "help": "Payé selon la chance du pool. Variance modérée, frais bas."
+    },
+    "SOLO": {
+      "label": "Solo",
+      "help": "Tout ou rien : tu touches un bloc entier quand tu le trouves."
+    },
+    "SHADY": {
+      "label": "Louche",
+      "help": "Bonus juteux, paiement toutes les 6 h… s’il ne part pas avec la caisse."
+    }
+  },
+  "specs": {
+    "psu": "{power} · rendement {efficiency}",
+    "motherboard": "{socket} · {slots, plural, one {# slot} other {# slots}} GPU",
+    "cooling": "dissipe {cooling}",
+    "coolingPowered": "dissipe {cooling} · {power}",
+    "rack": "{slots, plural, one {# rig} other {# rigs}} · flux d'air ×{airflow}"
+  },
+  "item": {
+    "BROKEN": "EN PANNE",
+    "DESTROYED": "CARBONISÉ",
+    "wear": "usure {value}",
+    "wearHint": "Usure {value}",
+    "repair": "Réparer ({cost})"
+  },
+  "perDay": "{value}/j",
+  "farm": {
+    "title": "Ferme de minage",
+    "intro": "Achète du matos, monte des rigs dans tes racks, branche-les sur un pool. Surveille la température : le feu ne prévient pas.",
+    "loginPrompt": "<link>Connecte-toi</link> pour monter ta ferme de minage.",
+    "powerCut": "Coupure de courant : tu n’avais plus de cash pour payer l’électricité. Rentre du cash (vends des coins) puis redémarre tes rigs.",
+    "stats": {
+      "running": "Rigs en marche",
+      "revenue": "Revenu estimé",
+      "elec": "Électricité",
+      "net": "Bénéfice net",
+      "hardware": "Valeur du matériel"
+    },
+    "buyFacility": "Acheter un nouveau local"
+  },
+  "facility": {
+    "info": "{type} · {elecPrice} $/kWh · {temp} °C ambiant · {racks}/{slots} racks",
+    "noRack": "Aucun rack ici. Installe un rack depuis ton inventaire, ou <link>achètes-en un</link>.",
+    "rackInfo": "{rigs}/{slots} rigs · flux d’air ×{airflow}",
+    "buildRig": "+ Monter une rig ({free, plural, one {# emplacement libre} other {# emplacements libres}})",
+    "power": "Puissance",
+    "uninstallRack": "Retirer le rack"
+  },
+  "inventory": {
+    "title": "Inventaire ({count})",
+    "empty": "Rien en stock. <link>La boutique est par là.</link>",
+    "installIn": "Installer dans…",
+    "discard": "Jeter",
+    "resell": "Revendre {price}"
+  },
+  "sidebar": {
+    "pendingTitle": "En attente (pools louches)",
+    "pendingNote": "Versé toutes les 6 h. En théorie.",
+    "federationsTitle": "Fédérations",
+    "federationCount": "{count}/3 pools",
+    "federationDiscount": "· −1 % de frais",
+    "logTitle": "Journal de la ferme"
+  },
+  "rig": {
+    "status": {
+      "destroyed": "Carbonisée",
+      "broken": "En panne",
+      "running": "En marche",
+      "stopped": "À l’arrêt"
+    },
+    "summary": "{status} · {count, plural, one {# pièce} other {# pièces}}",
+    "tempHint": "Température estimée",
+    "pool": "Pool",
+    "choosePool": "Choisir un pool…",
+    "overclock": "Overclock",
+    "oc": {
+      "stock": "Stock",
+      "light": "OC léger",
+      "heavy": "OC costaud",
+      "suicidal": "OC suicidaire"
+    },
+    "netOfElec": "net d’élec.",
+    "start": "Démarrer",
+    "stop": "Arrêter",
+    "stats": {
+      "psuLoad": "Conso / alim",
+      "wall": "À la prise",
+      "elec": "Électricité",
+      "revenue": "Revenu estimé",
+      "poolFee": "Frais du pool",
+      "failRisk": "Risque de panne",
+      "fireRisk": "Risque d’incendie",
+      "mined": "Total miné"
+    },
+    "dismantle": "Démonter la rig (les pièces retournent à l’inventaire)"
+  },
+  "builder": {
+    "emptyTitle": "Ton inventaire est vide.",
+    "emptyHelp": "Une rig GPU = carte mère + CPU + GPU(s) + alimentation + refroidissement. Une rig ASIC = un ASIC + une alimentation. <link>Passer à la boutique →</link>",
+    "pick": "Choisis les composants",
+    "preview": "Aperçu",
+    "previewEmpty": "Coche des composants pour voir ce que donnerait la rig.",
+    "valid": "Configuration valide",
+    "psu": "Alimentation",
+    "cooling": "Refroidissement",
+    "temperature": "Température",
+    "throttled": "(bridée {value})",
+    "wall": "Conso à la prise",
+    "elec": "Électricité",
+    "perDayLong": "{value} / jour",
+    "failRisk": "Risque de panne",
+    "netEstimate": "Rentabilité nette estimée sur {symbol} : <b>{value}/jour</b>",
+    "namePlaceholder": "Nom de la rig (optionnel)",
+    "create": "Monter la rig"
+  },
+  "shop": {
+    "title": "Boutique matos",
+    "facilitiesTab": "Locaux",
+    "cash": "Cash dispo : <b>{cash}</b>",
+    "search": "Rechercher un modèle…",
+    "allAlgos": "Tous algos",
+    "sort": {
+      "priceAsc": "Prix ↑",
+      "priceDesc": "Prix ↓",
+      "perDollar": "Rentabilité / $",
+      "perWatt": "Rentabilité / W"
+    },
+    "count": "{count, plural, one {# modèle} other {# modèles}}",
+    "cols": {
+      "model": "Modèle",
+      "hashrate": "Hashrate",
+      "specs": "Caractéristiques",
+      "power": "Conso",
+      "price": "Prix"
+    },
+    "prev": "← Précédents",
+    "next": "Suivants →"
+  },
+  "catalog": {
+    "psu": "{power} max · rendement {efficiency}",
+    "motherboard": "Socket {socket} · {slots, plural, one {# slot} other {# slots}} GPU",
+    "cooling": "Dissipe {cooling}",
+    "rack": "{slots, plural, one {# rig} other {# rigs}} · flux d’air ×{airflow}",
+    "grossPerDay": "≈ {value}/j brut en {algo}",
+    "asicCooling": "refroidit {cooling}",
+    "quantity": "Quantité",
+    "tooExpensive": "Trop cher",
+    "buy": "Acheter",
+    "buyTotal": "Acheter ({total})",
+    "added": "Ajouté à l’inventaire"
+  },
+  "facilities": {
+    "free": "Gratuit",
+    "elec": "Électricité",
+    "power": "Puissance",
+    "racks": "Racks",
+    "ambient": "Ambiant",
+    "elecPrice": "{price} $/kWh",
+    "buy": "Acheter",
+    "bought": "Local acheté. Installe-y un rack depuis ta ferme.",
+    "owned": "Tu en as {count}"
+  },
+  "pools": {
+    "title": "Pools & réseaux",
+    "networksTitle": "Réseaux minables",
+    "networksIntro": "Chaque coin a un algorithme et une émission fixe par minute, partagée entre tous les mineurs (joueurs et PNJ). Plus il y a de hashrate sur un réseau, moins chacun gagne : cherche le réseau sous-miné. Les PNJ arrivent quand le prix monte et partent quand il baisse.",
+    "cols": {
+      "coin": "Coin",
+      "algo": "Algo",
+      "price": "Prix",
+      "networkHashrate": "Hashrate réseau",
+      "players": "dont joueurs",
+      "profitability": "Rentabilité",
+      "profitabilityHint": "Revenu brut pour 1 MH/s pendant 24 h, avant frais de pool",
+      "nextHalving": "Prochain halving"
+    },
+    "perMhDay": "/ MH/s / j",
+    "poolsTitle": "Pools",
+    "type": "Type",
+    "fee": "Frais",
+    "feeBonus": "+{value} bonus",
+    "federation": "Fédération",
+    "createdBy": "Créé par",
+    "rigs": "Rigs",
+    "scamRisk": "Risque de fuite",
+    "howTitle": "Comment choisir",
+    "howItem": "<b>{label}</b> : {help}",
+    "howFederations": "<b>Fédérations</b> : branche des rigs sur 3 pools différents d’une même fédération et tous ses pools te prennent 1 % de frais en moins. Diversifier rapporte."
+  }
+}

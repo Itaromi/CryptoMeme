@@ -1,0 +1,64 @@
+{
+  "meta": {
+    "title": "CryptoMeme — la bourse des mèmes",
+    "description": "Trade des cryptos parfaitement fictives et finis #1 du classement."
+  },
+  "locale": {
+    "label": "Langue",
+    "fr": "Français",
+    "en": "English"
+  },
+  "nav": {
+    "market": "Cryptos",
+    "stocks": "Bourse",
+    "portfolio": "Portefeuille",
+    "mining": "Minage",
+    "banks": "Banques",
+    "events": "Actu",
+    "leaderboard": "Classement",
+    "shop": "Boutique",
+    "create": "Créer",
+    "admin": "Admin"
+  },
+  "masthead": {
+    "liveTape": "Cours en direct",
+    "netWorth": "Patrimoine",
+    "logout": "Déconnexion",
+    "login": "Connexion",
+    "play": "Jouer",
+    "verifyPrompt": "Confirme ton e-mail pour sécuriser ton compte.",
+    "verifyResend": "Renvoyer le lien",
+    "verifySent": "E-mail renvoyé."
+  },
+  "regime": {
+    "CALM": "Calme plat",
+    "NORMAL": "Normal",
+    "HYPE": "Hype",
+    "PANIC": "Panique"
+  },
+  "tier": {
+    "BLUE_CHIP": "Blue chip",
+    "MID_CAP": "Mid cap",
+    "SHITCOIN": "Shitcoin"
+  },
+  "side": {
+    "BUY": "Achat",
+    "SELL": "Vente"
+  },
+  "actions": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "delete": "Supprimer",
+    "close": "Fermer",
+    "retry": "Réessayer",
+    "loadMore": "Voir plus",
+    "back": "Retour"
+  },
+  "states": {
+    "loading": "Chargement…",
+    "empty": "Rien pour l'instant.",
+    "error": "Une erreur est survenue.",
+    "loginRequired": "Connecte-toi pour voir cette page."
+  }
+}

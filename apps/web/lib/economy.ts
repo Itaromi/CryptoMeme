@@ -1,8 +1,10 @@
 'use client';
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { WS_EVENTS } from '@cryptomeme/shared';
 import { api } from './api';
 import { getSocket } from './hooks';
+import { queryKeys } from './queryKeys';
 
 export interface GameEventView {
   id: string;
@@ -50,37 +52,51 @@ export interface NotificationView {
   createdAt: string;
 }
 
-export const MOOD_STYLE: Record<GameEventView['mood'], { bg: string; label: string }> = {
-  NEGATIVE: { bg: 'bg-down-bg', label: 'Mauvaise nouvelle' },
-  POSITIVE: { bg: 'bg-up-bg', label: 'Bonne nouvelle' },
-  MARKET: { bg: 'bg-acid', label: 'Marché' },
+/** Couleur de fond selon le ton de l'événement (libellés : messages/<langue>/events.json, clé `mood`). */
+export const MOOD_STYLE: Record<GameEventView['mood'], { bg: string }> = {
+  NEGATIVE: { bg: 'bg-down-bg' },
+  POSITIVE: { bg: 'bg-up-bg' },
+  MARKET: { bg: 'bg-acid' },
 };
 
-/** Fil des événements, rafraîchi en direct quand le serveur signale un changement. */
+/** Fil des événements de jeu, rafraîchi en direct quand le serveur signale un changement. */
 export function useEvents() {
   const qc = useQueryClient();
   useEffect(() => {
     const s = getSocket();
-    const onChange = () => {
-      qc.invalidateQueries({ queryKey: ['events-feed'] });
-      qc.invalidateQueries({ queryKey: ['notifications'] });
-      qc.invalidateQueries({ queryKey: ['portfolio'] });
-    };
-    s.on('events:changed', onChange);
+    // Un événement touche le cash, les banques (faillite) ou la ferme (canicule, coupure) : on recharge tout ça.
+    const touched = [queryKeys.gameEvents, queryKeys.notifications, queryKeys.portfolio, queryKeys.banks, queryKeys.mining.farm];
+    const refresh = () => Promise.all(touched.map((queryKey) => qc.invalidateQueries({ queryKey })));
+    // Un écouteur de socket ne peut pas être attendu : l'échec d'un rafraîchissement est sans conséquence.
+    const onChange = () => void refresh();
+    s.on(WS_EVENTS.EVENTS_CHANGED, onChange);
     return () => {
-      s.off('events:changed', onChange);
+      s.off(WS_EVENTS.EVENTS_CHANGED, onChange);
     };
   }, [qc]);
   return useQuery({
-    queryKey: ['events-feed'],
+    queryKey: queryKeys.gameEvents,
     queryFn: () => api<{ upcoming: GameEventView[]; active: GameEventView[]; recent: GameEventView[] }>('/events'),
     refetchInterval: 60_000,
   });
 }
 
+/** Événement de marché (rug pull, saut de prix, changement d'ambiance) tel que renvoyé par l'API. */
+export interface MarketEventView {
+  symbol: string;
+  emoji: string;
+  type: string;
+  detail: string;
+  at: string;
+}
+
+/** Brèves du marché. */
+export const useMarketEvents = () =>
+  useQuery({ queryKey: queryKeys.marketEvents, queryFn: () => api<MarketEventView[]>('/market/events'), refetchInterval: 15_000 });
+
 export const useNotifications = (enabled: boolean) =>
   useQuery({
-    queryKey: ['notifications'],
+    queryKey: queryKeys.notifications,
     queryFn: () => api<{ unread: number; items: NotificationView[] }>('/notifications'),
     enabled,
     refetchInterval: 30_000,
@@ -88,16 +104,11 @@ export const useNotifications = (enabled: boolean) =>
 
 export const useBanks = () =>
   useQuery({
-    queryKey: ['banks'],
+    queryKey: queryKeys.banks,
     queryFn: () => api<{ current: { bankId: string; since: string; canSwitchAt: string } | null; netWorth: string | null; banks: BankView[] }>('/banks'),
   });
 
-/** « dans 1 h 05 », « dans 32 s » */
-export function countdown(to: string | Date, now = Date.now()) {
-  const s = Math.max(0, Math.round((new Date(to).getTime() - now) / 1000));
-  if (s < 60) return `${s} s`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m} min`;
-  const h = Math.floor(m / 60);
-  return `${h} h ${String(m % 60).padStart(2, '0')}`;
-}
+/**
+ * Durée restante : « 1 h 05 », « 32 s » (unités communes au français et à l'anglais).
+ * Dans un composant, passe `now` depuis `useNow()` de next-intl : la valeur par défaut n'est là que pour le code hors rendu.
+ */

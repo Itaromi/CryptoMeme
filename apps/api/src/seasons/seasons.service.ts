@@ -1,6 +1,7 @@
 import { Global, Injectable, Module, NotFoundException } from '@nestjs/common';
-import { Season } from '@prisma/client';
+import { Prisma, Season } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { lockWallets } from '../economy/ledger';
 
 @Injectable()
 export class SeasonsService {
@@ -20,11 +21,27 @@ export class SeasonsService {
     this.cache = null;
   }
 
+  list() {
+    return this.prisma.season.findMany({ orderBy: { number: 'desc' }, select: { number: true, name: true, status: true, startsAt: true, endsAt: true } });
+  }
+
   /** Wallet du joueur pour la saison active — créé à la volée avec le capital de départ. */
   async wallet(userId: string) {
     const season = await this.active();
     const existing = await this.prisma.wallet.findUnique({ where: { userId_seasonId: { userId, seasonId: season.id } } });
     if (existing) return existing;
+    try {
+      return await this.createWallet(userId, season);
+    } catch (e) {
+      // Deux requêtes simultanées du même joueur : la seconde perd la course sur (userId, seasonId)
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        return this.prisma.wallet.findUniqueOrThrow({ where: { userId_seasonId: { userId, seasonId: season.id } } });
+      }
+      throw e;
+    }
+  }
+
+  private async createWallet(userId: string, season: Season) {
     const bank = await this.prisma.bank.findFirstOrThrow({ where: { isDefault: true } });
     return this.prisma.$transaction(async (tx) => {
       const w = await tx.wallet.upsert({
@@ -40,6 +57,8 @@ export class SeasonsService {
           peakNetWorth: season.startingCash,
         },
       });
+      // Verrou du wallet AVANT de vérifier la dotation : deux créations concurrentes ne l'écrivent qu'une fois
+      await lockWallets(tx, [w.id]);
       const granted = await tx.ledgerEntry.count({ where: { walletId: w.id, kind: 'SEASON_GRANT' } });
       if (!granted) {
         await tx.ledgerEntry.create({

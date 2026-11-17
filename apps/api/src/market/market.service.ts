@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Asset } from '@prisma/client';
 import { Pool, buyWithCash, sellForCash, SwapError } from '@cryptomeme/engine';
 import { Candle, QuoteInput } from '@cryptomeme/shared';
-import { BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SeasonsService } from '../seasons/seasons.service';
 import { D } from '../common/decimal';
 import { INTERVALS, Interval } from './candles';
+import { regimeOf } from './asset-state';
 
 export interface DayStats {
   open: number;
@@ -24,7 +25,10 @@ export class MarketService {
   private stats = new Map<string, DayStats>();
   private statsAt = 0;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly seasons: SeasonsService,
+  ) {}
 
   /** Ouverture 24 h, volume 24 h et mini-graphe, mis en cache 30 s. */
   async dayStats(): Promise<Map<string, DayStats>> {
@@ -60,7 +64,7 @@ export class MarketService {
       volume24h: s?.volume ?? 0,
       liquidity: Number(a.quoteReserve),
       marketCap: price * Number(a.baseReserve),
-      regime: (a.state as { regime?: string })?.regime ?? 'NORMAL',
+      regime: regimeOf(a),
       frozen: a.frozen,
       spark: s?.spark ?? [],
     };
@@ -112,6 +116,16 @@ export class MarketService {
     };
   }
 
+  /** Derniers événements de marché, tous actifs confondus. */
+  async recentEvents() {
+    const ev = await this.prisma.marketEvent.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      include: { asset: { select: { symbol: true, emoji: true } } },
+    });
+    return ev.map((e) => ({ symbol: e.asset.symbol, emoji: e.asset.emoji, type: e.type, detail: e.detail, at: e.createdAt }));
+  }
+
   async candles(symbol: string, interval: Interval, limit = 300): Promise<Candle[]> {
     if (!(interval in INTERVALS)) throw new BadRequestException('Intervalle invalide');
     const a = await this.bySymbol(symbol);
@@ -128,6 +142,13 @@ export class MarketService {
       c: Number(c.c),
       v: Number(c.v),
     }));
+  }
+
+  /** Devis pour un joueur, avec les frais de sa banque. */
+  async quoteFor(userId: string, q: QuoteInput) {
+    const wallet = await this.seasons.wallet(userId);
+    const bank = await this.prisma.bank.findUniqueOrThrow({ where: { id: wallet.bankId }, select: { tradingFeeBps: true } });
+    return this.quote(q, bank.tradingFeeBps);
   }
 
   /** Devis sans exécution (prévisualisation du slippage dans le formulaire). */

@@ -1,4 +1,5 @@
-import { Rng, gaussian, poissonHit } from './random';
+import Decimal from 'decimal.js';
+import { type Rng, gaussian, poissonHit } from './random';
 
 /**
  * Moteur de minage (pur, sans I/O).
@@ -189,4 +190,91 @@ export function stepNpcHashrate(npc: number, base: number, price: number, initia
 /** Valeur de revente d'un composant (comptée dans le patrimoine). */
 export function resaleValue(price: number, wear: number, broken: boolean): number {
   return price * (broken ? 0.1 : 0.6 * (1 - wear));
+}
+
+// ─── Économie du minage (pools, fédérations, matériel) ──────────────
+/** Achat de matériel : nombre max d'exemplaires par commande. */
+export const MAX_BUY = 20;
+/** Nombre max de composants dans une rig. */
+export const MAX_RIG_PARTS = 20;
+/** Une fédération accorde sa remise à partir de ce nombre de pools distincts utilisés. */
+export const FEDERATION_MIN_POOLS = 3;
+/** Remise de fédération sur les frais de pool (bps). */
+export const FEDERATION_DISCOUNT_BPS = 100;
+/** Coût d'une réparation, en fraction du prix catalogue. */
+export const REPAIR_RATIO = 0.3;
+/** Revente d'un local : fraction du prix d'achat. */
+export const FACILITY_RESALE_RATIO = 0.5;
+
+export interface PoolFeeSpec {
+  id: string;
+  feeBps: number;
+  federation: string | null;
+}
+
+/** Nombre de pools distincts utilisés par fédération (par les rigs fournies). */
+export function federationCounts(rigs: Array<{ pool: Pick<PoolFeeSpec, 'id' | 'federation'> | null }>): Map<string, number> {
+  const sets = new Map<string, Set<string>>();
+  for (const r of rigs) {
+    const fed = r.pool?.federation;
+    if (!r.pool || !fed) continue;
+    const set = sets.get(fed) ?? new Set<string>();
+    set.add(r.pool.id);
+    sets.set(fed, set);
+  }
+  return new Map([...sets].map(([k, v]) => [k, v.size]));
+}
+
+/** Frais effectifs d'un pool pour un joueur (bps), remise de fédération comprise. */
+export function effectiveFee(pool: Pick<PoolFeeSpec, 'feeBps' | 'federation'>, counts: Map<string, number>): number {
+  if (pool.federation && (counts.get(pool.federation) ?? 0) >= FEDERATION_MIN_POOLS) return pool.feeBps - FEDERATION_DISCOUNT_BPS;
+  return pool.feeBps;
+}
+
+/**
+ * Commission du propriétaire d'un pool : `paid` pièces ont été versées au mineur après une retenue de `feeBps`,
+ * la part retenue (paid × fee / (1 − fee)) revient au propriétaire au lieu de disparaître.
+ */
+export function poolOwnerCut(paid: number, feeBps: number): number {
+  if (paid <= 0 || feeBps <= 0 || feeBps >= 10_000) return 0;
+  return (paid * feeBps) / (10_000 - feeBps);
+}
+
+export interface NetworkLoad {
+  /** Pièces émises par minute pour tout le réseau */
+  blockReward: number;
+  npcHashrate: number;
+  playerHashrate: number;
+}
+
+/** Gain attendu (pièces / minute) pour `hash` MH/s ; `includeSelf` ajoute ce hashrate au réseau (rig pas encore en marche). */
+export function coinsPerMinute(hash: number, net: NetworkLoad, includeSelf = false): number {
+  const total = net.npcHashrate + net.playerHashrate + (includeSelf ? hash : 0);
+  return total > 0 ? (hash / total) * net.blockReward : 0;
+}
+
+/** Arrondi au centime inférieur, en décimal exact (même règle que les montants du grand livre). */
+const cents = (v: Decimal.Value) => new Decimal(v).toDecimalPlaces(2, Decimal.ROUND_DOWN).toNumber();
+
+/** Prix payé pour un composant : prix catalogue × multiplicateur des événements (pénurie…), au centime. */
+export function hardwarePrice(catalogPrice: number, multiplier: number): number {
+  return cents(new Decimal(catalogPrice).mul(multiplier));
+}
+
+export type ItemCondition = 'OK' | 'BROKEN' | 'DESTROYED';
+
+/** Valeur de revente d'un exemplaire (au centime), multiplicateur des événements compris. Carbonisé = 0. */
+export function itemResale(catalogPrice: number, wear: number, status: ItemCondition, multiplier: number): number {
+  if (status === 'DESTROYED') return 0;
+  return cents(new Decimal(resaleValue(catalogPrice, wear, status === 'BROKEN')).mul(multiplier));
+}
+
+/** Coût d'une réparation (au centime). */
+export function repairCost(catalogPrice: number): number {
+  return cents(new Decimal(catalogPrice).mul(REPAIR_RATIO));
+}
+
+/** Valeur de revente d'un local (au centime). */
+export function facilityResale(price: number): number {
+  return cents(new Decimal(price).mul(FACILITY_RESALE_RATIO));
 }

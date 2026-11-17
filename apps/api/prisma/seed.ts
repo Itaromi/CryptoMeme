@@ -6,6 +6,7 @@ import { CATALOG, FACILITY_TYPES, NETWORKS, POOLS } from './catalog';
 import { BANKS, EVENT_TYPES } from './economy-catalog';
 import { COMPANIES } from '../src/stocks/catalog';
 import { ACHIEVEMENTS, AVATARS, COSMETICS } from '../src/meta/catalog';
+import { paramsJson, stateJson } from '../src/market/asset-state';
 
 const prisma = new PrismaClient();
 
@@ -58,8 +59,8 @@ async function main() {
         description: c.description,
         emoji: c.emoji,
         color: c.color,
-        params: DEFAULT_PARAMS[c.tier] as object,
-        state: initialState(c.price) as object,
+        params: paramsJson(DEFAULT_PARAMS[c.tier]),
+        state: stateJson(initialState(c.price)),
         quoteReserve: liq,
         baseReserve: liq / c.price,
         price: c.price,
@@ -105,8 +106,8 @@ async function main() {
         description: c.description,
         emoji: c.emoji,
         color: c.color,
-        params: { ...STOCK_PARAMS, volatility: STOCK_PARAMS.volatility * c.volMul, noiseVolume: STOCK_PARAMS.noiseVolume * c.volMul } as object,
-        state: initialState(c.price) as object,
+        params: paramsJson({ ...STOCK_PARAMS, volatility: STOCK_PARAMS.volatility * c.volMul, noiseVolume: STOCK_PARAMS.noiseVolume * c.volMul }),
+        state: stateJson(initialState(c.price)),
         quoteReserve: liq,
         baseReserve: liq / c.price,
         price: c.price,

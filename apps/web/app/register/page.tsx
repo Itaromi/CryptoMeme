@@ -2,42 +2,50 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { registerSchema, STARTING_CASH } from '@cryptomeme/shared';
-import { AuthShell, Field, useSubmit } from '@/components/AuthShell';
+import { useTranslations } from 'next-intl';
+import { type RegisterInput, registerSchema, STARTING_CASH } from '@cryptomeme/shared';
+import { ALL_QUERIES, AuthShell, Field, FormError } from '@/components/AuthShell';
 import { api } from '@/lib/api';
-import { money } from '@/lib/format';
+import { useFormat } from '@/lib/format';
+import { errorMessage, useApiMutation } from '@/lib/mutation';
 
 export default function RegisterPage() {
+  const t = useTranslations('auth');
+  const f = useFormat();
   const router = useRouter();
-  const qc = useQueryClient();
+  // Messages de validation du schéma partagé, affichés tels quels
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const { submit, pending, error } = useSubmit(async (f: FormData) => {
-    const parsed = registerSchema.safeParse(Object.fromEntries(f));
+  const register = useApiMutation({
+    mutationFn: (input: RegisterInput) => api('/auth/register', { method: 'POST', json: input }),
+    invalidate: [ALL_QUERIES],
+    onSuccess: () => router.push('/market'),
+  });
+
+  function submit(form: FormData) {
+    const parsed = registerSchema.safeParse(Object.fromEntries(form));
     if (!parsed.success) {
       setFieldErrors(Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message])));
       return;
     }
     setFieldErrors({});
-    await api('/auth/register', { method: 'POST', json: parsed.data });
-    await qc.invalidateQueries();
-    router.push('/market');
-  });
+    register.mutate(parsed.data);
+  }
+
   return (
-    <AuthShell kicker="Inscription" title={`${money(STARTING_CASH)} pour devenir une légende.`}>
+    <AuthShell kicker={t('register.kicker')} title={t('register.title', { cash: f.money(STARTING_CASH) })}>
       <form action={submit} className="space-y-4" noValidate>
-        <Field label="Pseudo" name="username" autoComplete="username" error={fieldErrors.username} />
-        <Field label="Email" name="email" type="email" autoComplete="email" error={fieldErrors.email} />
-        <Field label="Mot de passe" name="password" type="password" autoComplete="new-password" error={fieldErrors.password} />
-        <p className="text-xs text-ink-2">8 caractères minimum, avec au moins une lettre et un chiffre.</p>
-        {error && <p className="text-sm text-down">{error}</p>}
-        <button className="btn w-full bg-acid" disabled={pending}>
-          {pending ? 'Création…' : 'Ouvrir mon compte'}
+        <Field label={t('fields.username')} name="username" autoComplete="username" error={fieldErrors.username} />
+        <Field label={t('fields.email')} name="email" type="email" autoComplete="email" error={fieldErrors.email} />
+        <Field label={t('fields.password')} name="password" type="password" autoComplete="new-password" error={fieldErrors.password} />
+        <p className="text-xs text-ink-2">{t('register.passwordHint')}</p>
+        <FormError message={register.error && errorMessage(register.error)} />
+        <button className="btn w-full bg-acid" disabled={register.isPending}>
+          {register.isPending ? t('register.pending') : t('register.submit')}
         </button>
         <p className="text-sm">
-          Déjà un compte ? <Link href="/login" className="font-semibold underline">Se connecter</Link>
+          {t('register.hasAccount')} <Link href="/login" className="font-semibold underline">{t('register.login')}</Link>
         </p>
-        <p className="text-xs text-ink-3">Argent 100 % fictif. Aucune vraie crypto n'a été maltraitée.</p>
+        <p className="text-xs text-ink-3">{t('register.disclaimer')}</p>
       </form>
     </AuthShell>
   );

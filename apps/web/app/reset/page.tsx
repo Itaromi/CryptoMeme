@@ -1,38 +1,39 @@
 'use client';
 import Link from 'next/link';
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { AuthShell, Field, useSubmit } from '@/components/AuthShell';
+import { useTranslations } from 'next-intl';
+import { AuthShell, Field, FormError } from '@/components/AuthShell';
 import { api } from '@/lib/api';
+import { errorMessage, useApiMutation } from '@/lib/mutation';
 
 function ResetForm() {
+  const t = useTranslations('auth.reset');
   const token = useSearchParams().get('token') ?? '';
-  const [done, setDone] = useState(false);
-  const { submit, pending, error } = useSubmit(async (f: FormData) => {
-    await api('/auth/reset-password', { method: 'POST', json: { token, password: f.get('password') } });
-    setDone(true);
+  const reset = useApiMutation({
+    mutationFn: (f: FormData) => api('/auth/reset-password', { method: 'POST', json: { token, password: f.get('password') } }),
   });
-  if (done)
+  if (reset.isSuccess)
     return (
       <p className="text-lg">
-        Mot de passe changé, toutes tes sessions ont été fermées.{' '}
-        <Link href="/login" className="font-semibold underline">Se connecter</Link>
+        {t('done')} <Link href="/login" className="font-semibold underline">{t('login')}</Link>
       </p>
     );
   return (
-    <form action={submit} className="space-y-4">
-      <Field label="Nouveau mot de passe" name="password" type="password" autoComplete="new-password" required />
-      {error && <p className="text-sm text-down">{error}</p>}
-      <button className="btn w-full bg-acid" disabled={pending || !token}>
-        Changer le mot de passe
+    <form action={(f) => reset.mutate(f)} className="space-y-4">
+      <Field label={t('password')} name="password" type="password" autoComplete="new-password" required />
+      <FormError message={reset.error && errorMessage(reset.error)} />
+      <button className="btn w-full bg-acid" disabled={reset.isPending || !token}>
+        {t('submit')}
       </button>
     </form>
   );
 }
 
 export default function ResetPage() {
+  const t = useTranslations('auth.reset');
   return (
-    <AuthShell kicker="Réinitialisation" title="Nouveau départ.">
+    <AuthShell kicker={t('kicker')} title={t('title')}>
       <Suspense>
         <ResetForm />
       </Suspense>

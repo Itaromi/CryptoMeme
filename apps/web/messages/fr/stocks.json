@@ -1,0 +1,98 @@
+{
+  "page": {
+    "title": "La Bourse",
+    "intro": "Des sociétés (presque) sérieuses. Le cours suit les résultats trimestriels, les actionnaires touchent des dividendes, et parfois quelqu'un rachète tout. Ou tout s'effondre.",
+    "sessionOpen": "Séance ouverte",
+    "sessionClosed": "Séance fermée",
+    "closesIn": "Clôture dans {time}",
+    "opensIn": "Ouverture dans {time}",
+    "hours": "Cotations de 9 h à 22 h (Paris)",
+    "columns": {
+      "company": "Société",
+      "price": "Cours",
+      "change24h": "24 h",
+      "trend": "Tendance",
+      "marketCap": "Capi.",
+      "pe": "PER",
+      "yield": "Rendement",
+      "health": "Santé",
+      "earnings": "Résultats"
+    },
+    "relistSoon": "Retour en bourse sous 24 h",
+    "earningsIn": "dans {time}",
+    "expectedEps": "BPA attendu {eps}",
+    "calendar": "Calendrier des résultats",
+    "recent": "Dernières publications",
+    "recentEmpty": "Aucune publication pour l'instant. La première tombe bientôt."
+  },
+  "status": {
+    "LISTED": "Cotée",
+    "TAKEOVER": "OPA en cours",
+    "ACQUIRED": "Rachetée",
+    "BANKRUPT": "En faillite"
+  },
+  "verdict": {
+    "BLOWOUT": "Explosion",
+    "BEAT": "Au-dessus",
+    "INLINE": "Conforme",
+    "MISS": "Déception",
+    "DISASTER": "Catastrophe"
+  },
+  "health": {
+    "solid": "Solide",
+    "fair": "Correcte",
+    "fragile": "Fragile",
+    "dividendSuspended": "Dividende suspendu",
+    "bankruptcyRisk": "Risque de faillite"
+  },
+  "company": {
+    "takeover": {
+      "label": "OPA en cours · verdict dans {time}",
+      "offer": "{buyer} offre {price} par action",
+      "explain": "Si l'offre passe, chaque action détenue est rachetée à ce prix et le titre quitte la cote. Si elle échoue, le cours retombe."
+    },
+    "bankrupt": "Faillite. Rideau.",
+    "acquired": "Rachetée, retirée de la cote.",
+    "relist": "La société reviendra en bourse environ 24 h après, avec un nouveau prix d'introduction.",
+    "fundamentals": {
+      "title": "Fondamentaux",
+      "sector": "Secteur",
+      "ceo": "PDG",
+      "eps": "BPA trimestriel",
+      "pe": "PER actuel",
+      "peHint": "Normal pour le secteur : {fairPe}",
+      "fundamental": "Valeur fondamentale",
+      "fundamentalHint": "BPA annualisé × PER du secteur",
+      "dividendYield": "Rendement du dividende",
+      "yieldValue": "{value} / an",
+      "growth": "Croissance attendue",
+      "growthValue": "{value} / trim.",
+      "health": "Santé financière"
+    },
+    "next": {
+      "label": "Prochains résultats (T{quarter})",
+      "in": "dans {time}",
+      "consensus": "BPA attendu par les analystes",
+      "explain": "Au-dessus du consensus, le cours grimpe ; en dessous, il plonge. Une publication hors séance se joue à l'ouverture (gap)."
+    },
+    "reports": {
+      "title": "Résultats trimestriels",
+      "empty": "Pas encore de publication cette saison.",
+      "quarter": "Trim.",
+      "expected": "Attendu",
+      "actual": "Publié",
+      "verdict": "Verdict",
+      "price": "Cours",
+      "quarterLabel": "T{quarter}"
+    },
+    "dividends": {
+      "title": "Dividendes",
+      "none": "Aucun dividende versé pour l’instant.",
+      "noPayout": "Cette société ne verse pas de dividende : elle « réinvestit ».",
+      "perShare": "{amount} / action",
+      "paid": "versé · {holders, plural, one {# actionnaire} other {# actionnaires}}",
+      "recordIn": "détachement dans {time}",
+      "explain": "Le dividende est versé à ceux qui détiennent l'action au moment du détachement ; le cours baisse alors du même montant."
+    }
+  }
+}

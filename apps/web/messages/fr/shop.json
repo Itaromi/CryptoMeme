@@ -1,0 +1,33 @@
+{
+  "title": "La boutique",
+  "intro": "Payée avec le cash de ta saison : chaque achat fait baisser ton patrimoine. Mais les cosmétiques, eux, restent d’une saison à l’autre.",
+  "you": "toi",
+  "noTitle": "Sans titre",
+  "previewing": "Aperçu : {name}",
+  "hoverHint": "Survole un objet pour l’essayer.",
+  "avatars": "Avatar (gratuit)",
+  "achievementsLink": "Voir les succès et leurs récompenses →",
+  "loginCta": "<link>Connecte-toi</link> pour acheter et personnaliser ton profil.",
+  "badgeHint": "Jusqu’à 3 badges affichés à côté de ton pseudo.",
+  "equipped": "Équipé",
+  "equip": "Équiper",
+  "unlockedBy": "Succès : {achievement}",
+  "secret": "secret",
+  "pay": "Payer {price}",
+  "tooPoor": "Cash insuffisant",
+  "bought": "À toi. Pense à l’équiper.",
+  "quotedTitle": "« {text} »",
+  "kinds": {
+    "FRAME": "Cadres",
+    "BANNER": "Bannières",
+    "TITLE": "Titres",
+    "BADGE": "Badges",
+    "NAME_EFFECT": "Effets de pseudo"
+  },
+  "rarity": {
+    "COMMON": "Commun",
+    "RARE": "Rare",
+    "EPIC": "Épique",
+    "LEGENDARY": "Légendaire"
+  }
+}

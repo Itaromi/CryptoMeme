@@ -1,0 +1,217 @@
+{
+  "title": "Control room",
+  "restricted": "Staff only. Nothing to see here.",
+  "tabs": {
+    "overview": "Economy",
+    "users": "Players",
+    "creations": "Creations",
+    "assets": "Assets",
+    "stocks": "Stocks",
+    "mining": "Mining",
+    "economy": "Events & banks",
+    "seasons": "Seasons",
+    "audit": "Audit"
+  },
+  "feedback": {
+    "done": "Done.",
+    "saved": "Saved."
+  },
+  "overview": {
+    "intro": "{season} · started {since}. “Net creation” compares total net worth to the capital handed out: way positive = players are draining the pools, way negative = the market is too brutal.",
+    "stats": {
+      "users": "Accounts",
+      "players": "Active players (season)",
+      "totalCash": "Total cash",
+      "totalNetWorth": "Total net worth",
+      "netCreation": "Net value creation",
+      "trades24h": "Orders 24h",
+      "volume24h": "Volume 24h",
+      "fees24h": "Fees 24h (sink)",
+      "events24h": "Market events 24h"
+    }
+  },
+  "users": {
+    "search": "Search email or username…",
+    "total": "{count, plural, one {# account} other {# accounts}}",
+    "columns": {
+      "player": "Player",
+      "email": "Email",
+      "role": "Role",
+      "netWorth": "Net worth",
+      "lastLogin": "Last login"
+    },
+    "unverified": "(unverified)",
+    "manage": "Manage",
+    "reason": "Reason (required, logged in the audit)",
+    "ban": "Ban",
+    "unban": "Unban",
+    "banned": "Banned: {reason}",
+    "cashPlaceholder": "Cash adjustment (e.g. -500 or 1000)",
+    "apply": "Apply",
+    "sessions": "Recent sessions",
+    "ledger": "Ledger (last 100 entries)",
+    "assetEntry": "(asset)"
+  },
+  "assets": {
+    "frozen": "frozen",
+    "liquidity": "liquidity {amount}",
+    "params": {
+      "volatility": "Volatility / day",
+      "meanReversion": "Mean reversion",
+      "jumpIntensity": "Jumps / day",
+      "rugRisk": "Rug risk / day",
+      "npcActivity": "NPC activity",
+      "herding": "Herd effect"
+    },
+    "reason": "Reason",
+    "freeze": "Freeze market",
+    "unfreeze": "Unfreeze"
+  },
+  "seasons": {
+    "running": "in progress",
+    "ended": "ended on {date}",
+    "rollover": {
+      "title": "Close “{name}” and start the next one",
+      "warning": "The leaderboard gets frozen and archived. Every player restarts with the new capital. Markets keep running. No undo.",
+      "name": "New season name",
+      "cash": "Starting capital",
+      "reason": "Reason",
+      "confirm": "Type “{number}” to confirm",
+      "submit": "Start the new season",
+      "done": "New season is live."
+    }
+  },
+  "audit": {
+    "empty": "No admin actions yet."
+  },
+  "creations": {
+    "status": {
+      "PENDING": "To review",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
+    "empty": "Nothing here.",
+    "kind": {
+      "CRYPTO": "Crypto",
+      "COMPANY": "Company",
+      "POOL": "Pool"
+    },
+    "meta": "{kind} · by @{username} · {ago}",
+    "fee": "Fee {amount}",
+    "deposit": "Deposit {amount}",
+    "param": "{name}: {value}",
+    "reason": "Reason (required, shown to the player if rejected)",
+    "approve": "Approve",
+    "reject": "Reject and refund",
+    "note": "Note: {note}"
+  },
+  "economy": {
+    "reason": "Reason (required, logged in the audit)",
+    "pending": {
+      "title": "Scheduled / running",
+      "scheduled": "on {date}",
+      "active": "running"
+    },
+    "types": {
+      "title": "Event types",
+      "columns": {
+        "event": "Event",
+        "rate": "Rate / day",
+        "cooldown": "Cooldown (h)",
+        "notice": "Notice (min)",
+        "fired": "Fired"
+      },
+      "duration": "({hours}h)",
+      "enable": "Enable",
+      "disable": "Disable",
+      "pickBank": "Pick a bank",
+      "randomBank": "Random bank",
+      "trigger": "Trigger",
+      "now": "Right now",
+      "nowHint": "No notice"
+    },
+    "banks": {
+      "title": "Banks",
+      "columns": {
+        "bank": "Bank",
+        "fee": "Subscription",
+        "trading": "Trading",
+        "interest": "Interest/month",
+        "failRisk": "Failure/day"
+      },
+      "bps": "{bps} bps",
+      "close": "Close to newcomers",
+      "reopen": "Reopen"
+    }
+  },
+  "stocks": {
+    "reason": "Reason (required, logged in the audit)",
+    "readOnly": "Read-only: only admins can mess with companies.",
+    "columns": {
+      "company": "Company",
+      "status": "Status",
+      "price": "Price",
+      "eps": "EPS / expected",
+      "health": "Health",
+      "earnings": "Earnings"
+    },
+    "status": {
+      "LISTED": "Listed",
+      "TAKEOVER": "Takeover bid",
+      "ACQUIRED": "Acquired",
+      "BANKRUPT": "Bankrupt"
+    },
+    "actionLabel": "Action",
+    "actions": {
+      "earnings": "Release earnings now",
+      "newsGood": "Good news",
+      "newsBad": "Bad news",
+      "takeover": "Launch a takeover bid",
+      "takeoverSuccess": "Takeover: force success",
+      "takeoverFail": "Takeover: force failure",
+      "split": "Split",
+      "bankrupt": "Bankruptcy",
+      "relist": "Relist on the exchange"
+    },
+    "splitRatio": "Split ratio",
+    "execute": "Run",
+    "confirm": "Sure?"
+  },
+  "mining": {
+    "stats": {
+      "rigs": "Rigs (running)",
+      "components": "Components",
+      "componentsValue": "OK {ok} · broken {broken} · fried {destroyed}",
+      "incidents": "Incidents 24h"
+    },
+    "reason": "Reason (required for any change)",
+    "networks": {
+      "title": "Networks",
+      "columns": {
+        "coin": "Coin",
+        "price": "Price",
+        "reward": "Reward / min",
+        "npc": "NPC (base)",
+        "players": "Players",
+        "halving": "Halving (d)",
+        "mined": "Total mined by players"
+      },
+      "current": "now {hashrate}",
+      "apply": "OK"
+    },
+    "pools": {
+      "title": "Pools",
+      "type": {
+        "PPS": "PPS",
+        "PPLNS": "PPLNS",
+        "SOLO": "Solo",
+        "SHADY": "Shady"
+      },
+      "fee": "fee {fee}",
+      "scamRisk": "exit scam {risk}/day",
+      "rigs": "{count, plural, one {# rig} other {# rigs}}",
+      "enable": "Re-enable",
+      "disable": "Disable"
+    }
+  }
+}

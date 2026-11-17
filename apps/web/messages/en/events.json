@@ -1,0 +1,36 @@
+{
+  "mood": {
+    "NEGATIVE": "Bad news",
+    "POSITIVE": "Good news",
+    "MARKET": "Market"
+  },
+  "page": {
+    "title": "The news",
+    "intro": "Taxes, hacks, inheritances, crashes, heatwaves… Some events are announced ahead of time: that’s your cue to sell, buy or unplug your rigs.",
+    "liveTitle": "Coming up and ongoing",
+    "empty": "Nothing on the horizon. Enjoy it, it won’t last.",
+    "strikesIn": "Hits in {time}",
+    "remaining": "{time} left",
+    "ongoing": "Ongoing",
+    "historyTitle": "History",
+    "historyEmpty": "No events yet.",
+    "byAdmin": "(triggered by an admin)",
+    "cancelled": "Cancelled",
+    "affected": "{count, plural, one {# player hit} other {# players hit}}"
+  },
+  "banner": {
+    "label": "Breaking news",
+    "flash": "Breaking",
+    "ongoing": "Ongoing",
+    "in": "in {time}",
+    "remaining": "{time} left"
+  },
+  "feed": {
+    "title": "Latest news",
+    "empty": "The market is quiet. Too quiet.",
+    "rugPull": "RUG PULL on {symbol}: {detail}. The devs are in the Bahamas.",
+    "jump": "{symbol} jumps {detail}.",
+    "regime": "{symbol} switches vibe: {detail}.",
+    "other": "{symbol}: {detail}"
+  }
+}

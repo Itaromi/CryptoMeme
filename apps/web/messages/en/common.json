@@ -1,0 +1,64 @@
+{
+  "meta": {
+    "title": "CryptoMeme — the meme stock exchange",
+    "description": "Trade perfectly fake cryptos and finish #1 on the leaderboard."
+  },
+  "locale": {
+    "label": "Language",
+    "fr": "Français",
+    "en": "English"
+  },
+  "nav": {
+    "market": "Cryptos",
+    "stocks": "Stocks",
+    "portfolio": "Portfolio",
+    "mining": "Mining",
+    "banks": "Banks",
+    "events": "News",
+    "leaderboard": "Leaderboard",
+    "shop": "Shop",
+    "create": "Create",
+    "admin": "Admin"
+  },
+  "masthead": {
+    "liveTape": "Live prices",
+    "netWorth": "Net worth",
+    "logout": "Log out",
+    "login": "Log in",
+    "play": "Play",
+    "verifyPrompt": "Confirm your email to secure your account.",
+    "verifyResend": "Resend the link",
+    "verifySent": "Email sent again."
+  },
+  "regime": {
+    "CALM": "Dead calm",
+    "NORMAL": "Normal",
+    "HYPE": "Hype",
+    "PANIC": "Panic"
+  },
+  "tier": {
+    "BLUE_CHIP": "Blue chip",
+    "MID_CAP": "Mid cap",
+    "SHITCOIN": "Shitcoin"
+  },
+  "side": {
+    "BUY": "Buy",
+    "SELL": "Sell"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "close": "Close",
+    "retry": "Retry",
+    "loadMore": "Load more",
+    "back": "Back"
+  },
+  "states": {
+    "loading": "Loading…",
+    "empty": "Nothing here yet.",
+    "error": "Something went wrong.",
+    "loginRequired": "Log in to see this page."
+  }
+}

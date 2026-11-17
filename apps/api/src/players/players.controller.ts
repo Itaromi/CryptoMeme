@@ -1,44 +1,43 @@
 import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { z } from 'zod';
-import { Category, CATEGORIES, PlayersService } from './players.service';
+import { CATEGORIES, PlayersService } from './players.service';
 import { AuthUser, CurrentUser, Public } from '../common/auth.decorators';
-import { ZodPipe } from '../common/zod.pipe';
-import { PrismaService } from '../prisma/prisma.service';
+import { optionalParam, ZodPipe } from '../common/zod.pipe';
 import { SeasonsService } from '../seasons/seasons.service';
 
 const profileSchema = z.object({ bio: z.string().max(280).nullable() });
+const leaderboardQuery = z.object({
+  season: optionalParam(z.coerce.number().int().min(1)),
+  category: optionalParam(z.enum(CATEGORIES)).transform((c) => c ?? 'general'),
+});
 
 @Controller()
 export class PlayersController {
   constructor(
     private readonly players: PlayersService,
-    private readonly prisma: PrismaService,
     private readonly seasons: SeasonsService,
   ) {}
 
   @Public()
   @Get('leaderboard')
-  leaderboard(@Query('season') season?: string, @Query('category') category?: string) {
-    const cat = (CATEGORIES as readonly string[]).includes(category ?? '') ? (category as Category) : 'general';
-    return this.players.leaderboard(season ? Number(season) : undefined, cat);
+  leaderboard(@Query(new ZodPipe(leaderboardQuery)) q: z.infer<typeof leaderboardQuery>) {
+    return this.players.leaderboard(q.season, q.category);
   }
 
   @Public()
   @Get('seasons')
   seasonsList() {
-    return this.prisma.season.findMany({ orderBy: { number: 'desc' }, select: { number: true, name: true, status: true, startsAt: true, endsAt: true } });
+    return this.seasons.list();
   }
 
   @Get('me/rank')
-  async myRank(@CurrentUser() u: AuthUser) {
-    const w = await this.seasons.wallet(u.id);
-    return this.players.rankOf(w.id, w.seasonId, w.netWorth.toString());
+  myRank(@CurrentUser() u: AuthUser) {
+    return this.players.myRank(u.id);
   }
 
   @Patch('me/profile')
-  async updateProfile(@CurrentUser() u: AuthUser, @Body(new ZodPipe(profileSchema)) body: { bio: string | null }) {
-    await this.prisma.user.update({ where: { id: u.id }, data: { bio: body.bio } });
-    return { ok: true };
+  updateProfile(@CurrentUser() u: AuthUser, @Body(new ZodPipe(profileSchema)) body: z.infer<typeof profileSchema>) {
+    return this.players.updateBio(u.id, body.bio);
   }
 
   @Public()

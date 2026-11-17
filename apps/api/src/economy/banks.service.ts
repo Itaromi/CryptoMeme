@@ -1,14 +1,11 @@
-import { BadRequestException, Body, Controller, Get, Injectable, Logger, NotFoundException, Post } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { Bank } from '@prisma/client';
-import { z } from 'zod';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeasonsService } from '../seasons/seasons.service';
 import { LeaseService } from '../common/lease.service';
-import { AuthUser, CurrentUser, Public } from '../common/auth.decorators';
-import { ZodPipe } from '../common/zod.pipe';
 import { D, Decimal, money } from '../common/decimal';
-import { applyCash } from './ledger';
+import { applyCash, lockWallets, Tx } from './ledger';
 import { NotificationsService } from './notifications';
 
 const HOUR = 3_600_000;
@@ -47,6 +44,11 @@ export class BanksService {
     private readonly notify: NotificationsService,
   ) {}
 
+  /** Toutes les banques (administration), y compris celles fermées aux nouveaux clients. */
+  async adminList() {
+    return (await this.prisma.bank.findMany({ orderBy: { monthlyFee: 'asc' } })).map((b) => ({ ...bankView(b), available: b.available }));
+  }
+
   async list(userId?: string) {
     const banks = await this.prisma.bank.findMany({ where: { available: true }, orderBy: { monthlyFee: 'asc' } });
     const wallet = userId ? await this.seasons.wallet(userId) : null;
@@ -59,20 +61,21 @@ export class BanksService {
   }
 
   async switchBank(userId: string, bankId: string) {
-    const wallet = await this.seasons.wallet(userId);
+    const { id: walletId } = await this.seasons.wallet(userId);
     const bank = await this.prisma.bank.findUnique({ where: { id: bankId } });
     if (!bank || !bank.available) throw new NotFoundException('Banque indisponible');
-    if (bank.id === wallet.bankId) throw new BadRequestException('Tu es déjà client de cette banque');
-    if (Date.now() - wallet.bankSince.getTime() < SWITCH_COOLDOWN_MS) throw new BadRequestException('Un seul changement de banque par 24 h');
-    if (D(wallet.netWorth).lt(D(bank.minNetWorth))) throw new BadRequestException(`Patrimoine minimum requis : ${money(bank.minNetWorth)} $`);
     return this.prisma.$transaction(async (tx) => {
+      // Vérifications sous verrou du wallet : deux changements simultanés ne passent pas tous les deux
+      await lockWallets(tx, [walletId]);
+      const wallet = await tx.wallet.findUniqueOrThrow({ where: { id: walletId } });
+      if (bank.id === wallet.bankId) throw new BadRequestException('Tu es déjà client de cette banque');
+      if (Date.now() - wallet.bankSince.getTime() < SWITCH_COOLDOWN_MS) throw new BadRequestException('Un seul changement de banque par 24 h');
+      if (D(wallet.netWorth).lt(D(bank.minNetWorth))) throw new BadRequestException(`Patrimoine minimum requis : ${money(bank.minNetWorth)} $`);
       const fee = D(bank.openingFee);
       if (fee.gt(0)) {
-        const w = await tx.wallet.findUniqueOrThrow({ where: { id: wallet.id } });
-        if (D(w.cash).lt(fee)) throw new BadRequestException(`Frais d'ouverture : ${money(fee)} $ en cash`);
-        await applyCash(tx, wallet.id, fee.neg(), 'BANK_SWITCH', `Ouverture de compte : ${bank.name}`, { type: 'Bank', id: bank.id });
+        await applyCash(tx, walletId, fee.neg(), 'BANK_SWITCH', `Ouverture de compte : ${bank.name}`, { type: 'Bank', id: bank.id }, { strict: true, message: `Frais d'ouverture : ${money(fee)} $ en cash` });
       }
-      await tx.wallet.update({ where: { id: wallet.id }, data: { bankId: bank.id, bankSince: new Date(), bankAccrued: 0 } });
+      await tx.wallet.update({ where: { id: walletId }, data: { bankId: bank.id, bankSince: new Date(), bankAccrued: 0 } });
       return { ok: true, bank: bank.name };
     });
   }
@@ -95,29 +98,31 @@ export class BanksService {
       const free = await this.prisma.bank.findFirstOrThrow({ where: { isDefault: true } });
       const wallets = await this.prisma.wallet.findMany({
         where: { seasonId: season.id, OR: [{ bank: { monthlyFee: { gt: 0 } } }, { bank: { interestMonthly: { gt: 0 } } }] },
-        include: { bank: true, user: { select: { id: true } } },
+        select: { id: true },
       });
-      for (const w of wallets) {
+      for (const { id } of wallets) {
         await this.prisma.$transaction(async (tx) => {
-          await tx.$queryRaw`SELECT id FROM "Wallet" WHERE id = ${w.id} FOR UPDATE`;
-          const fresh = await tx.wallet.findUniqueOrThrow({ where: { id: w.id } });
-          const cash = D(fresh.cash);
+          await lockWallets(tx, [id]);
+          // Relu sous verrou : la banque a pu changer depuis la sélection (changement, faillite bancaire…)
+          const w = await tx.wallet.findUniqueOrThrow({ where: { id }, include: { bank: true } });
+          if (w.bank.monthlyFee.lte(0) && w.bank.interestMonthly <= 0) return;
+          const cash = D(w.cash);
           const interest = cash.mul(w.bank.interestMonthly / 100).mul(hours / 720);
           const fee = D(w.bank.monthlyFee).mul(hours / 720);
-          const accrued = D(fresh.bankAccrued).add(interest).sub(fee);
+          const accrued = D(w.bankAccrued).add(interest).sub(fee);
           const settle = accrued.toDecimalPlaces(2, Decimal.ROUND_DOWN);
           if (settle.lt(0) && cash.lt(settle.neg())) {
-            await tx.wallet.update({ where: { id: w.id }, data: { bankId: free.id, bankSince: new Date(), bankAccrued: 0 } });
+            await tx.wallet.update({ where: { id }, data: { bankId: free.id, bankSince: new Date(), bankAccrued: 0 } });
             await this.notify.push(
-              [{ userId: w.user.id, type: 'BANK', title: 'Compte clôturé', body: `${w.bank.name} a fermé ton compte faute de provision. Retour à ${free.name}.`, link: '/banks' }],
+              [{ userId: w.userId, type: 'BANK', title: 'Compte clôturé', body: `${w.bank.name} a fermé ton compte faute de provision. Retour à ${free.name}.`, link: '/banks' }],
               tx,
             );
             return;
           }
           if (!settle.isZero()) {
-            await applyCash(tx, w.id, settle, settle.gt(0) ? 'BANK_INTEREST' : 'BANK_FEE', settle.gt(0) ? `Intérêts ${w.bank.name}` : `Abonnement ${w.bank.name}`);
+            await applyCash(tx, id, settle, settle.gt(0) ? 'BANK_INTEREST' : 'BANK_FEE', settle.gt(0) ? `Intérêts ${w.bank.name}` : `Abonnement ${w.bank.name}`);
           }
-          await tx.wallet.update({ where: { id: w.id }, data: { bankAccrued: accrued.sub(settle).toFixed(8) } });
+          await tx.wallet.update({ where: { id }, data: { bankAccrued: accrued.sub(settle).toFixed(8) } });
         });
       }
     } catch (e) {
@@ -128,7 +133,7 @@ export class BanksService {
   }
 
   /** Remboursement par l'assurance de la banque (pannes, incendies). Appelé par le tick de minage. */
-  async insure(tx: Parameters<typeof applyCash>[0], walletId: string, userId: string | null, loss: number, what: string) {
+  async insure(tx: Tx, walletId: string, userId: string | null, loss: number, what: string) {
     const w = await tx.wallet.findUniqueOrThrow({ where: { id: walletId }, include: { bank: true } });
     if (w.bank.insuranceRate <= 0 || loss <= 0) return 0;
     const refund = D(loss * w.bank.insuranceRate);
@@ -137,21 +142,5 @@ export class BanksService {
       await this.notify.push([{ userId, type: 'INSURANCE', title: 'Assurance', body: `${w.bank.name} te rembourse ${money(applied)} $ (${what}).`, amount: applied.toString() }], tx);
     }
     return Number(applied);
-  }
-}
-
-@Controller('banks')
-export class BanksController {
-  constructor(private readonly banks: BanksService) {}
-
-  @Public()
-  @Get()
-  list(@CurrentUser() u?: AuthUser) {
-    return this.banks.list(u?.id);
-  }
-
-  @Post('switch')
-  switch(@CurrentUser() u: AuthUser, @Body(new ZodPipe(z.object({ bankId: z.string().min(1) }))) b: { bankId: string }) {
-    return this.banks.switchBank(u.id, b.bankId);
   }
 }

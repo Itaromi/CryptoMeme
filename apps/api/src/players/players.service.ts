@@ -1,67 +1,107 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, Interval } from '@nestjs/schedule';
-import { liquidationValue, Pool } from '@cryptomeme/engine';
+import { liquidationValue } from '@cryptomeme/engine';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeasonsService } from '../seasons/seasons.service';
+import { LeaseService } from '../common/lease.service';
 import { poolOf } from '../market/market.service';
 import { D, money } from '../common/decimal';
-import { MiningService } from '../mining/mining.service';
 import { MetaService } from '../meta/meta.service';
+import { NetWorthService } from '../economy/net-worth.service';
+import { WalletStatsService } from './wallet-stats.service';
 
 export const CATEGORIES = ['general', 'day', 'week', 'trader', 'miner', 'best-trade', 'worst-trade'] as const;
 export type Category = (typeof CATEGORIES)[number];
 
+const RECOMPUTE_MS = 30_000;
+
 @Injectable()
 export class PlayersService {
   private readonly log = new Logger('Leaderboard');
-  private busy = false;
+  /** Calcul en cours (partagé par tous les appelants) */
+  private current: { promise: Promise<void>; snapshot: boolean } | null = null;
+  /** Calcul avec snapshot demandé pendant un calcul sans snapshot : relancé juste après */
+  private queuedSnapshot: Promise<void> | null = null;
+  private catCache = new Map<string, { at: number; data: unknown }>();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly seasons: SeasonsService,
-    private readonly mining: MiningService,
+    private readonly lease: LeaseService,
     private readonly meta: MetaService,
+    private readonly netWorth: NetWorthService,
+    private readonly stats: WalletStatsService,
   ) {}
 
-  private catCache = new Map<string, { at: number; data: unknown }>();
+  // ─── Jobs planifiés (sous bail : une seule instance de l'API) ─────
+  @Interval(RECOMPUTE_MS)
+  async tick() {
+    await this.scheduled(false);
+  }
 
-  /** Recalcule le patrimoine net (valeur liquidative) de tous les wallets de la saison. */
-  @Interval(30_000)
-  async recompute(snapshot = false) {
-    if (this.busy) return;
-    this.busy = true;
+  /** Snapshot du patrimoine toutes les 15 minutes (courbes, classements jour / semaine). */
+  @Cron('0 */15 * * * *')
+  async snapshotTick() {
+    await this.scheduled(true);
+  }
+
+  private async scheduled(snapshot: boolean) {
     try {
-      const season = await this.seasons.active();
-      const assets = await this.prisma.asset.findMany();
-      const pools = new Map<string, Pool>(assets.map((a) => [a.id, poolOf(a)]));
-      const wallets = await this.prisma.wallet.findMany({
-        where: { seasonId: season.id },
-        include: { holdings: { where: { quantity: { gt: 0 } } } },
-      });
-      const now = new Date();
-      const hardware = await this.mining.hardwareValue(wallets.map((w) => w.id));
-      for (const w of wallets) {
-        const hw = D((hardware.get(w.id) ?? 0).toFixed(2));
-        const value = w.holdings.reduce((s, h) => s.add(liquidationValue(pools.get(h.assetId)!, D(h.quantity))), D(w.cash)).add(hw);
-        const nw = money(value);
-        await this.prisma.wallet.update({
-          where: { id: w.id },
-          data: { netWorth: nw, hardwareValue: money(hw), ...(value.gt(D(w.peakNetWorth)) ? { peakNetWorth: nw } : {}) },
-        });
-        if (snapshot) {
-          await this.prisma.netWorthSnapshot.create({ data: { walletId: w.id, t: now, netWorth: nw, cash: w.cash } });
-        }
-      }
+      if (!(await this.lease.acquire('leaderboard-tick', 3 * RECOMPUTE_MS))) return;
+      await this.recompute(snapshot);
     } catch (e) {
       this.log.error(e);
-    } finally {
-      this.busy = false;
     }
   }
 
-  @Cron('0 */15 * * * *')
-  async snapshot() {
-    await this.recompute(true);
+  /** Recalcul en arrière-plan (après un événement, un ajustement admin…) : les erreurs sont journalisées, jamais propagées. */
+  requestRecompute() {
+    this.recompute().catch((e: unknown) => this.log.error(e));
+  }
+
+  /**
+   * Recalcule le patrimoine net de tous les wallets de la saison (et fige un snapshot si demandé).
+   * Un seul calcul à la fois : un appel pendant un calcul en cours en partage le résultat ; si un snapshot
+   * est demandé pendant un calcul sans snapshot, un second calcul avec snapshot est enchaîné (jamais perdu).
+   */
+  recompute(snapshot = false): Promise<void> {
+    const cur = this.current;
+    if (!cur) return this.start(snapshot);
+    if (!snapshot || cur.snapshot) return cur.promise;
+    this.queuedSnapshot ??= cur.promise
+      .catch(() => undefined)
+      .then(() => {
+        this.queuedSnapshot = null;
+        return this.recompute(true);
+      });
+    return this.queuedSnapshot;
+  }
+
+  private start(snapshot: boolean) {
+    const promise: Promise<void> = this.compute(snapshot).finally(() => {
+      if (this.current?.promise === promise) this.current = null;
+    });
+    this.current = { promise, snapshot };
+    return promise;
+  }
+
+  private async compute(snapshot: boolean) {
+    const season = await this.seasons.active();
+    const wallets = await this.prisma.wallet.findMany({ where: { seasonId: season.id }, select: { id: true, peakNetWorth: true } });
+    const values = await this.netWorth.netWorthOf(wallets.map((w) => w.id));
+    const now = new Date();
+    for (const w of wallets) {
+      const v = values.get(w.id);
+      if (!v) continue;
+      const nw = money(v.total);
+      await this.prisma.wallet.update({
+        where: { id: w.id },
+        data: { netWorth: nw, hardwareValue: money(v.hardware), ...(v.total.gt(D(w.peakNetWorth)) ? { peakNetWorth: nw } : {}) },
+      });
+      if (snapshot) {
+        await this.prisma.netWorthSnapshot.create({ data: { walletId: w.id, t: now, netWorth: nw, cash: money(v.cash) } });
+      }
+    }
   }
 
   async leaderboard(seasonNumber?: number, category: Category = 'general', take = 100) {
@@ -99,20 +139,12 @@ export class PlayersService {
         }),
       );
     } else if (category === 'trader' || category === 'best-trade' || category === 'worst-trade') {
-      const rows = await this.prisma.trade.groupBy({
-        by: ['walletId'],
-        where: { walletId: { in: ids }, realizedPnl: { not: null } },
-        _sum: { realizedPnl: true },
-        _max: { realizedPnl: true },
-        _min: { realizedPnl: true },
-      });
-      score = new Map(
-        rows.map((r) => [r.walletId!, Number(category === 'trader' ? r._sum.realizedPnl : category === 'best-trade' ? r._max.realizedPnl : r._min.realizedPnl)]),
-      );
+      for (const [walletId, t] of await this.stats.tradeStats(ids)) {
+        if (!t.closed) continue;
+        score.set(walletId, category === 'trader' ? t.realizedPnl : category === 'best-trade' ? (t.bestTrade ?? 0) : (t.worstTrade ?? 0));
+      }
     } else if (category === 'miner') {
-      const rows = await this.prisma.ledgerEntry.groupBy({ by: ['walletId', 'assetId'], where: { walletId: { in: ids }, kind: 'MINING_REWARD' }, _sum: { delta: true } });
-      const prices = new Map((await this.prisma.asset.findMany({ select: { id: true, price: true } })).map((a) => [a.id, Number(a.price)]));
-      for (const r of rows) score.set(r.walletId, (score.get(r.walletId) ?? 0) + Number(r._sum.delta ?? 0) * (prices.get(r.assetId!) ?? 0));
+      score = await this.stats.minedValue(ids);
     }
 
     const asc = category === 'worst-trade';
@@ -146,6 +178,17 @@ export class PlayersService {
     return { rank: better + 1, total };
   }
 
+  /** Rang du joueur connecté dans la saison active. */
+  async myRank(userId: string) {
+    const w = await this.seasons.wallet(userId);
+    return this.rankOf(w.id, w.seasonId, w.netWorth.toString());
+  }
+
+  async updateBio(userId: string, bio: string | null) {
+    await this.prisma.user.update({ where: { id: userId }, data: { bio } });
+    return { ok: true };
+  }
+
   /** Profil public + statistiques avancées de la saison active. */
   async profile(username: string) {
     const user = await this.prisma.user.findFirst({
@@ -162,22 +205,17 @@ export class PlayersService {
     const base = { username: user.username, bio: user.bio, joinedAt: user.createdAt, role: user.role, look: looks.get(user.id)!, achievements };
     if (!wallet) return { ...base, season: season.number, stats: null };
 
-    const [trades, snapshots, rank] = await Promise.all([
-      this.prisma.trade.findMany({
-        where: { walletId: wallet.id },
-        select: { side: true, cash: true, fee: true, realizedPnl: true, assetId: true, createdAt: true, asset: { select: { symbol: true } } },
-      }),
+    const [tradeStats, byAsset, snapshots, rank, minedValue] = await Promise.all([
+      this.stats.tradeStats([wallet.id]),
+      this.prisma.trade.groupBy({ by: ['assetId'], where: { walletId: wallet.id }, _sum: { cash: true } }),
       this.prisma.netWorthSnapshot.findMany({ where: { walletId: wallet.id }, orderBy: { t: 'asc' }, select: { t: true, netWorth: true } }),
       this.rankOf(wallet.id, season.id, wallet.netWorth.toString()),
+      this.stats.minedValue([wallet.id]),
     ]);
-
-    const sells = trades.filter((t) => t.side === 'SELL' && t.realizedPnl != null);
-    const pnls = sells.map((t) => Number(t.realizedPnl));
-    const volume = trades.reduce((s, t) => s + Number(t.cash), 0);
-    const fees = trades.reduce((s, t) => s + Number(t.fee), 0);
-    const bySymbol = new Map<string, number>();
-    for (const t of trades) bySymbol.set(t.asset.symbol, (bySymbol.get(t.asset.symbol) ?? 0) + Number(t.cash));
-    const favorite = [...bySymbol.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+    const t = tradeStats.get(wallet.id);
+    // Actif le plus échangé (en volume)
+    const top = [...byAsset].sort((a, b) => Number(b._sum.cash ?? 0) - Number(a._sum.cash ?? 0))[0];
+    const favorite = top ? ((await this.prisma.asset.findUnique({ where: { id: top.assetId }, select: { symbol: true } }))?.symbol ?? null) : null;
 
     // Drawdown max & Sharpe sur la courbe de patrimoine (snapshots 15 min)
     const curve = [...snapshots.map((s) => Number(s.netWorth)), Number(wallet.netWorth)];
@@ -202,12 +240,10 @@ export class PlayersService {
     }));
     allocation.push({ symbol: 'CASH', emoji: 'Money', color: '#94a3b8', value: Number(wallet.cash) });
     allocation.push({ symbol: 'MATÉRIEL', emoji: 'Shovel', color: '#78716c', value: Number(wallet.hardwareValue) });
-    const [rigCount, mined, elec] = await Promise.all([
+    const [rigCount, elec] = await Promise.all([
       this.prisma.rig.count({ where: { walletId: wallet.id } }),
-      this.prisma.ledgerEntry.groupBy({ by: ['assetId'], where: { walletId: wallet.id, kind: 'MINING_REWARD' }, _sum: { delta: true } }),
       this.prisma.ledgerEntry.aggregate({ where: { walletId: wallet.id, kind: 'ELECTRICITY' }, _sum: { delta: true } }),
     ]);
-    const minedAssets = await this.prisma.asset.findMany({ where: { id: { in: mined.map((m) => m.assetId!) } }, select: { id: true, price: true } });
     const [flowRows, heat] = await Promise.all([
       this.prisma.ledgerEntry.groupBy({
         by: ['kind'],
@@ -225,7 +261,6 @@ export class PlayersService {
     for (const h of heat) heatmap[h.dow - 1][h.hour] = h.n;
     const exposure = { crypto: 0, stocks: 0, mining: Number(wallet.hardwareValue), cash: Number(wallet.cash) };
     for (const h of wallet.holdings) exposure[h.asset.kind === 'STOCK' ? 'stocks' : 'crypto'] += Number(liquidationValue(poolOf(h.asset), D(h.quantity)));
-    const minedValue = mined.reduce((s, m) => s + Number(m._sum.delta ?? 0) * Number(minedAssets.find((a) => a.id === m.assetId)?.price ?? 0), 0);
 
     return {
       ...base,
@@ -236,18 +271,18 @@ export class PlayersService {
         netWorth: wallet.netWorth.toString(),
         peakNetWorth: wallet.peakNetWorth.toString(),
         performance: Number(wallet.netWorth) / Number(season.startingCash) - 1,
-        trades: trades.length,
-        volume,
-        fees,
-        realizedPnl: pnls.reduce((a, b) => a + b, 0),
-        winRate: pnls.length ? pnls.filter((p) => p > 0).length / pnls.length : null,
-        bestTrade: pnls.length ? Math.max(...pnls) : null,
-        worstTrade: pnls.length ? Math.min(...pnls) : null,
+        trades: t?.trades ?? 0,
+        volume: t?.volume ?? 0,
+        fees: t?.fees ?? 0,
+        realizedPnl: t?.realizedPnl ?? 0,
+        winRate: t?.closed ? t.wins / t.closed : null,
+        bestTrade: t?.bestTrade ?? null,
+        worstTrade: t?.worstTrade ?? null,
         favorite,
         maxDrawdown: maxDd,
         sharpe,
         allocation: allocation.filter((a) => a.value > 0.005),
-        mining: { rigs: rigCount, minedValue, electricity: -Number(elec._sum.delta ?? 0), hardwareValue: Number(wallet.hardwareValue) },
+        mining: { rigs: rigCount, minedValue: minedValue.get(wallet.id) ?? 0, electricity: -Number(elec._sum.delta ?? 0), hardwareValue: Number(wallet.hardwareValue) },
         flows: {
           taxes: -led('TAX'),
           dividends: led('DIVIDEND'),

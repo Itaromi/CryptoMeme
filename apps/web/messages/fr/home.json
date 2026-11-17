@@ -1,0 +1,19 @@
+{
+  "currentSeason": "Saison en cours",
+  "hero": {
+    "line1": "Achète haut.",
+    "line2": "Vends <hl>bas.</hl>",
+    "pitch": "Tu démarres avec {cash} fictifs. Des cryptos absurdes, des rug pulls, des PNJ qui paniquent. Le marché réagit à chacun de tes ordres. À la fin de la saison, une seule personne est #1.",
+    "toMarket": "Aller au marché",
+    "start": "Commencer à trader",
+    "leaderboard": "Voir le classement"
+  },
+  "movers": {
+    "top": "En feu aujourd'hui",
+    "flop": "Dans le rouge"
+  },
+  "top10": {
+    "title": "Top 10",
+    "empty": "Le classement est vide. La place de #1 t'attend."
+  }
+}

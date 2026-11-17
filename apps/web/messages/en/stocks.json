@@ -1,0 +1,98 @@
+{
+  "page": {
+    "title": "The Stock Market",
+    "intro": "(Almost) serious companies. Prices follow quarterly earnings, shareholders pocket dividends, and sometimes someone buys the whole thing. Or it all collapses.",
+    "sessionOpen": "Market open",
+    "sessionClosed": "Market closed",
+    "closesIn": "Closes in {time}",
+    "opensIn": "Opens in {time}",
+    "hours": "Trading 9am to 10pm (Paris time)",
+    "columns": {
+      "company": "Company",
+      "price": "Price",
+      "change24h": "24h",
+      "trend": "Trend",
+      "marketCap": "Mkt cap",
+      "pe": "P/E",
+      "yield": "Yield",
+      "health": "Health",
+      "earnings": "Earnings"
+    },
+    "relistSoon": "Back on the market within 24h",
+    "earningsIn": "in {time}",
+    "expectedEps": "Expected EPS {eps}",
+    "calendar": "Earnings calendar",
+    "recent": "Latest reports",
+    "recentEmpty": "No reports yet. The first one drops soon."
+  },
+  "status": {
+    "LISTED": "Listed",
+    "TAKEOVER": "Takeover bid",
+    "ACQUIRED": "Acquired",
+    "BANKRUPT": "Bankrupt"
+  },
+  "verdict": {
+    "BLOWOUT": "Blowout",
+    "BEAT": "Beat",
+    "INLINE": "In line",
+    "MISS": "Miss",
+    "DISASTER": "Disaster"
+  },
+  "health": {
+    "solid": "Solid",
+    "fair": "Decent",
+    "fragile": "Shaky",
+    "dividendSuspended": "Dividend suspended",
+    "bankruptcyRisk": "Bankruptcy risk"
+  },
+  "company": {
+    "takeover": {
+      "label": "Takeover bid · verdict in {time}",
+      "offer": "{buyer} offers {price} per share",
+      "explain": "If the bid goes through, every share held is bought out at that price and the stock is delisted. If it fails, the price drops back."
+    },
+    "bankrupt": "Bankrupt. Curtain.",
+    "acquired": "Acquired and delisted.",
+    "relist": "The company will be back on the market about 24h later, with a fresh IPO price.",
+    "fundamentals": {
+      "title": "Fundamentals",
+      "sector": "Sector",
+      "ceo": "CEO",
+      "eps": "Quarterly EPS",
+      "pe": "Current P/E",
+      "peHint": "Normal for the sector: {fairPe}",
+      "fundamental": "Fundamental value",
+      "fundamentalHint": "Annualized EPS × sector P/E",
+      "dividendYield": "Dividend yield",
+      "yieldValue": "{value} / yr",
+      "growth": "Expected growth",
+      "growthValue": "{value} / qtr",
+      "health": "Financial health"
+    },
+    "next": {
+      "label": "Next earnings (Q{quarter})",
+      "in": "in {time}",
+      "consensus": "Analysts' expected EPS",
+      "explain": "Beat the consensus and the price climbs; miss it and it dives. Reports dropped outside trading hours hit at the open (gap)."
+    },
+    "reports": {
+      "title": "Quarterly earnings",
+      "empty": "No reports yet this season.",
+      "quarter": "Qtr",
+      "expected": "Expected",
+      "actual": "Reported",
+      "verdict": "Verdict",
+      "price": "Price",
+      "quarterLabel": "Q{quarter}"
+    },
+    "dividends": {
+      "title": "Dividends",
+      "none": "No dividends paid yet.",
+      "noPayout": "This company pays no dividend: it \"reinvests\".",
+      "perShare": "{amount} / share",
+      "paid": "paid · {holders, plural, one {# shareholder} other {# shareholders}}",
+      "recordIn": "ex-dividend in {time}",
+      "explain": "The dividend goes to whoever holds the stock at the ex-dividend moment; the price then drops by the same amount."
+    }
+  }
+}

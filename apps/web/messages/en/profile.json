@@ -1,0 +1,83 @@
+{
+  "notFound": "This player doesn't exist.",
+  "joined": "Playing since {date}",
+  "role": {
+    "ADMIN": "Admin",
+    "MODERATOR": "Mod"
+  },
+  "customize": "Customize my profile →",
+  "rankOf": "out of {players, plural, one {# player} other {# players}} · season {season}",
+  "notPlaying": "Hasn't hit the market yet this season.",
+  "netWorth": "Net worth",
+  "portfolio": "Portfolio",
+  "bio": {
+    "label": "Bio",
+    "ok": "OK",
+    "empty": "No bio yet. Tell your legend.",
+    "edit": "Edit"
+  },
+  "showcase": {
+    "title": "Showcase · {count}/{total} achievements",
+    "choose": "Pick",
+    "pickHint": "Up to {max} achievements ({count}/{max}).",
+    "empty": "No achievements yet.",
+    "emptyMine": "No achievements yet. <link>See the list</link>"
+  },
+  "advanced": {
+    "title": "Advanced stats",
+    "realizedPnl": "Realized PnL",
+    "winRate": "Win rate",
+    "winRateHint": "Sales closed at a profit",
+    "bestTrade": "Best trade",
+    "worstTrade": "Worst trade",
+    "trades": "Orders placed",
+    "volume": "Volume traded",
+    "fees": "Fees paid",
+    "peak": "Net worth record",
+    "drawdown": "Max drawdown",
+    "drawdownHint": "Worst drop from a peak",
+    "sharpe": "Sharpe ratio",
+    "sharpeHint": "Return / risk, annualized",
+    "favorite": "Favorite crypto"
+  },
+  "exposure": {
+    "title": "Exposure",
+    "crypto": "Crypto",
+    "stocks": "Stocks",
+    "mining": "Hardware",
+    "cash": "Cash"
+  },
+  "flows": {
+    "title": "Season cash flows",
+    "taxes": "Taxes paid",
+    "dividends": "Dividends received",
+    "bank": "Bank (interest − fees)",
+    "events": "Events & insurance",
+    "shop": "Spent in the shop"
+  },
+  "heatmap": {
+    "title": "When do they trade?",
+    "label": "Orders by day and hour",
+    "empty": "No orders yet.",
+    "cell": "{day} {hour}h: {count, plural, one {# order} other {# orders}}",
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
+  },
+  "mining": {
+    "title": "Mining",
+    "rigs": "Rigs",
+    "minedValue": "Mined value (current price)",
+    "electricity": "Electricity bill",
+    "hardware": "Hardware value",
+    "yield": "Electricity yield",
+    "yieldHint": "Value mined per $1 of electricity",
+    "yieldValue": "${ratio} per $"
+  }
+}

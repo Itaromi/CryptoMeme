@@ -14,13 +14,13 @@ export function clientIp(req: Request): string {
 /** Limitation de débit par IP réelle (et non par l'IP du proxy, sinon tout le monde partagerait le même quota). */
 @Injectable()
 export class RealIpThrottlerGuard extends ThrottlerGuard {
-  protected async getTracker(req: Record<string, unknown>): Promise<string> {
-    return clientIp(req as unknown as Request);
+  protected getTracker(req: Record<string, unknown>): Promise<string> {
+    return Promise.resolve(clientIp(req as unknown as Request));
   }
 
   protected getRequestResponse(context: ExecutionContext) {
     const http = context.switchToHttp();
-    return { req: http.getRequest(), res: http.getResponse() };
+    return { req: http.getRequest<Record<string, unknown>>(), res: http.getResponse<Record<string, unknown>>() };
   }
 }
 

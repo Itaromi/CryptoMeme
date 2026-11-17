@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { buyWithCash, liquidationValue, sellForCash, SwapError, SwapResult } from '@cryptomeme/engine';
+import { buyWithCash, CASH_DP, liquidationValue, QTY_DP, sellForCash, SwapError, SwapResult } from '@cryptomeme/engine';
 import { MIN_ORDER_CASH, ORDER_COOLDOWN_MS, OrderInput, stockMarketStatus } from '@cryptomeme/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeasonsService } from '../seasons/seasons.service';
@@ -8,6 +8,8 @@ import { MarketGateway } from '../market/market.gateway';
 import { poolOf } from '../market/market.service';
 import { recordCandle } from '../market/candles';
 import { D, Decimal, money } from '../common/decimal';
+import { applyAsset, applyCash, costOfSale, lockWallets } from '../economy/ledger';
+import { NetWorthService } from '../economy/net-worth.service';
 
 @Injectable()
 export class TradingService {
@@ -15,19 +17,22 @@ export class TradingService {
     private readonly prisma: PrismaService,
     private readonly seasons: SeasonsService,
     private readonly gateway: MarketGateway,
+    private readonly netWorth: NetWorthService,
   ) {}
 
   /**
    * Exécute un ordre au marché contre le pool AMM.
-   * Tout se fait dans une transaction avec verrous de ligne (wallet puis actif) : pas de double dépense possible.
+   * Tout se fait dans une transaction avec verrous de ligne (wallet puis actif, cf. ledger.ts) : pas de double dépense possible.
+   * Les mouvements de cash et d'actif passent par le grand livre (applyCash / applyAsset).
    */
   async execute(userId: string, order: OrderInput) {
     const { id: walletId } = await this.seasons.wallet(userId);
     const symbol = order.symbol.toUpperCase();
+    const isBuy = order.side === 'BUY';
 
     const result = await this.prisma.$transaction(
       async (tx) => {
-        await tx.$queryRaw`SELECT id FROM "Wallet" WHERE id = ${walletId} FOR UPDATE`;
+        await lockWallets(tx, [walletId]);
 
         // Idempotence : même clientOrderId ⇒ on renvoie le trade déjà exécuté
         const dup = await tx.trade.findUnique({ where: { walletId_clientOrderId: { walletId, clientOrderId: order.clientOrderId } } });
@@ -50,34 +55,19 @@ export class TradingService {
 
         const holding = await tx.holding.findUnique({ where: { walletId_assetId: { walletId, assetId: asset.id } } });
         const heldQty = D(holding?.quantity);
-        const heldCost = D(holding?.costBasis);
-        const cash = D(wallet.cash);
         const feeBps = wallet.bank.tradingFeeBps;
 
         let swap: SwapResult;
-        let cashAfter: Decimal;
-        let qtyAfter: Decimal;
-        let costAfter: Decimal;
-        let realized: Decimal | null = null;
-
         try {
-          if (order.side === 'BUY') {
-            const spend = D(order.amount);
+          if (isBuy) {
+            const spend = D(order.amount).toDecimalPlaces(CASH_DP, Decimal.ROUND_DOWN);
             if (spend.lt(MIN_ORDER_CASH)) throw new BadRequestException(`Ordre minimum : ${MIN_ORDER_CASH} $`);
-            if (spend.gt(cash)) throw new BadRequestException('Cash insuffisant');
+            if (spend.gt(D(wallet.cash))) throw new BadRequestException('Cash insuffisant');
             swap = buyWithCash(poolOf(asset), spend, feeBps);
-            cashAfter = cash.sub(swap.amountIn);
-            qtyAfter = heldQty.add(swap.amountOut);
-            costAfter = heldCost.add(swap.amountIn);
           } else {
-            const qty = D(order.amount);
+            const qty = D(order.amount).toDecimalPlaces(QTY_DP, Decimal.ROUND_DOWN);
             if (qty.gt(heldQty)) throw new BadRequestException('Quantité insuffisante');
             swap = sellForCash(poolOf(asset), qty, feeBps);
-            const costSold = heldQty.isZero() ? D(0) : heldCost.mul(swap.amountIn).div(heldQty).toDecimalPlaces(2);
-            realized = swap.amountOut.sub(costSold);
-            cashAfter = cash.add(swap.amountOut);
-            qtyAfter = heldQty.sub(swap.amountIn);
-            costAfter = qtyAfter.isZero() ? D(0) : Decimal.max(heldCost.sub(costSold), 0);
           }
         } catch (e) {
           if (e instanceof SwapError) throw new BadRequestException(e.message);
@@ -93,9 +83,9 @@ export class TradingService {
         // Royalties du créateur (actif créé par un joueur) : prélevées sur les frais, jamais créées
         const royalty =
           asset.creatorId && asset.creatorId !== wallet.userId && asset.royaltyShare > 0
-            ? swap.fee.mul(asset.royaltyShare).toDecimalPlaces(8, Decimal.ROUND_DOWN)
+            ? swap.fee.mul(asset.royaltyShare).toDecimalPlaces(QTY_DP, Decimal.ROUND_DOWN)
             : D(0);
-        const quote = order.side === 'SELL' ? swap.pool.quote.sub(royalty) : swap.pool.quote;
+        const quote = isBuy ? swap.pool.quote : swap.pool.quote.sub(royalty);
         const price = quote.div(swap.pool.base);
         await tx.asset.update({
           where: { id: asset.id },
@@ -106,20 +96,12 @@ export class TradingService {
             ...(royalty.gt(0) ? { royaltyAccrued: { increment: royalty.toString() } } : {}),
           },
         });
-        await tx.wallet.update({ where: { id: walletId }, data: { cash: money(cashAfter), lastOrderAt: new Date() } });
-        await tx.holding.upsert({
-          where: { walletId_assetId: { walletId, assetId: asset.id } },
-          update: {
-            quantity: qtyAfter.toString(),
-            costBasis: money(costAfter),
-            ...(realized ? { realizedPnl: { increment: money(realized) } } : {}),
-          },
-          create: { walletId, assetId: asset.id, quantity: qtyAfter.toString(), costBasis: money(costAfter) },
-        });
+        await tx.wallet.update({ where: { id: walletId }, data: { lastOrderAt: new Date() } });
 
-        const isBuy = order.side === 'BUY';
+        // Montants déjà au centime / à 8 décimales (moteur AMM)
         const qty = isBuy ? swap.amountOut : swap.amountIn;
         const cashMoved = isBuy ? swap.amountIn : swap.amountOut;
+        const realized = isBuy ? null : cashMoved.sub(costOfSale(D(holding?.costBasis), heldQty, qty));
         const trade = await tx.trade.create({
           data: {
             walletId,
@@ -135,13 +117,10 @@ export class TradingService {
           },
         });
 
-        const ref = { refType: 'Trade', refId: trade.id };
-        await tx.ledgerEntry.createMany({
-          data: [
-            { walletId, kind: 'TRADE', delta: money(isBuy ? cashMoved.neg() : cashMoved), balanceAfter: money(cashAfter), ...ref },
-            { walletId, kind: 'TRADE', assetId: asset.id, delta: (isBuy ? qty : qty.neg()).toString(), balanceAfter: qtyAfter.toString(), ...ref },
-          ],
-        });
+        const ref = { type: 'Trade', id: trade.id };
+        const memo = `${isBuy ? 'Achat' : 'Vente'} ${asset.symbol}`;
+        await applyCash(tx, walletId, isBuy ? cashMoved.neg() : cashMoved, 'TRADE', memo, ref, { strict: true });
+        await applyAsset(tx, walletId, asset.id, isBuy ? qty : qty.neg(), 'TRADE', memo, ref, isBuy ? { cost: cashMoved } : { realizedPnl: realized ?? undefined });
         await recordCandle(tx, asset.id, price.toString(), cashMoved.toString());
         return { trade, duplicate: false };
       },
@@ -158,7 +137,7 @@ export class TradingService {
         quantity: t.quantity.toString(),
         cash: t.cash.toString(),
         price: t.price.toString(),
-        at: t.createdAt,
+        at: t.createdAt.toISOString(),
       });
     }
     return result.trade;
@@ -192,13 +171,18 @@ export class TradingService {
         realizedPnl: h.realizedPnl.toString(),
       };
     });
+    const nw = (await this.netWorth.netWorthOf([wallet.id])).get(wallet.id);
     const holdingsValue = positions.reduce((s, p) => s.add(p.liquidationValue), D(0));
+    const hardware = nw?.hardware ?? D(0);
     return {
       season: { number: season.number, name: season.name, startingCash: season.startingCash.toString() },
       bank: { name: full.bank.name, tradingFeeBps: full.bank.tradingFeeBps, color: full.bank.color, interestMonthly: full.bank.interestMonthly },
       cash: full.cash.toString(),
       holdingsValue: money(holdingsValue),
-      netWorth: money(D(full.cash).add(holdingsValue)),
+      /** Revente du matériel de minage et des locaux (comprise dans netWorth) */
+      hardwareValue: money(hardware),
+      /** Patrimoine net : même calcul que le classement (NetWorthService) */
+      netWorth: money(nw?.total ?? D(full.cash).add(holdingsValue)),
       positions,
     };
   }

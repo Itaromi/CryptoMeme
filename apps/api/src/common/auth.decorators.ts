@@ -7,8 +7,9 @@ export interface AuthUser {
   role: Role;
 }
 
+/** Joueur connecté (posé sur la requête par AuthGuard ; absent sur une route publique sans session). */
 export const CurrentUser = createParamDecorator((_: unknown, ctx: ExecutionContext): AuthUser => {
-  return ctx.switchToHttp().getRequest().user;
+  return ctx.switchToHttp().getRequest<{ user: AuthUser }>().user;
 });
 
 export const PUBLIC_KEY = 'isPublic';

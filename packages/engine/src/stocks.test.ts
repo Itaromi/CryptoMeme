@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createRng } from './random';
-import { bankruptcyRisk, consensusEps, fundamentalValue, reportEarnings, splitRatio, Fundamentals } from './stocks';
+import { BANKRUPTCY_HEALTH, bankruptcyRisk, consensusEps, DIVIDEND_MIN_HEALTH, fundamentalValue, reportEarnings, splitRatio, type Fundamentals } from './stocks';
 
 const base: Fundamentals = { eps: 1, growth: 0.02, epsVol: 0.08, pe: 20, payout: 0.4, health: 0.7 };
 
@@ -36,6 +36,12 @@ describe('actions', () => {
     expect(r.dividend).toBe(0);
     expect(bankruptcyRisk(r.next.health)).toBeGreaterThan(0);
     expect(bankruptcyRisk(0.7)).toBe(0);
+  });
+
+  it('seuils de santé : faillite possible seulement sous BANKRUPTCY_HEALTH', () => {
+    expect(BANKRUPTCY_HEALTH).toBeLessThan(DIVIDEND_MIN_HEALTH);
+    expect(bankruptcyRisk(BANKRUPTCY_HEALTH)).toBe(0);
+    expect(bankruptcyRisk(BANKRUPTCY_HEALTH - 0.05)).toBeCloseTo(0.1);
   });
 
   it('split seulement au-dessus du seuil, ramène sous 500 $', () => {

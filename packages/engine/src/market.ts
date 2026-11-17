@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
-import { Pool, buyWithCash, cashToReachPrice, sellForCash, spotPrice, SwapResult } from './amm';
-import { Rng, gaussian, poissonHit } from './random';
+import { type Pool, buyWithCash, cashToReachPrice, sellForCash, spotPrice, type SwapResult } from './amm';
+import { type Rng, gaussian, poissonHit } from './random';
 
 /**
  * Moteur de flux des traders PNJ.

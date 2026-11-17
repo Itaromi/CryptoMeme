@@ -1,40 +1,43 @@
 'use client';
 import Link from 'next/link';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { AuthShell } from '@/components/AuthShell';
 import { api } from '@/lib/api';
+import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { queryKeys } from '@/lib/queryKeys';
 
 function Verify() {
+  const t = useTranslations('auth.verify');
   const token = useSearchParams().get('token');
-  const qc = useQueryClient();
-  const [state, setState] = useState<string>('pending');
+  const verify = useApiMutation({
+    mutationFn: (tok: string) => api('/auth/verify-email', { method: 'POST', json: { token: tok } }),
+    invalidate: [queryKeys.me],
+  });
+  const { mutate } = verify;
+  // Le jeton est à usage unique : une seule tentative, même si l'effet est rejoué (mode strict)
   const ran = useRef(false);
   useEffect(() => {
     if (ran.current || !token) return;
     ran.current = true;
-    api('/auth/verify-email', { method: 'POST', json: { token } })
-      .then(() => {
-        setState('ok');
-        qc.invalidateQueries({ queryKey: ['me'] });
-      })
-      .catch((e: Error) => setState(e.message));
-  }, [token, qc]);
-  if (!token) return <p>Lien incomplet.</p>;
-  if (state === 'pending') return <p>Vérification…</p>;
-  if (state === 'ok')
-    return (
-      <p className="text-lg">
-        Email confirmé. <Link href="/market" className="font-semibold underline">Direction le marché</Link>
-      </p>
-    );
-  return <p className="text-down">{state}</p>;
+    mutate(token);
+  }, [token, mutate]);
+
+  if (!token) return <p>{t('incomplete')}</p>;
+  if (verify.isError) return <p className="text-down">{errorMessage(verify.error)}</p>;
+  if (!verify.isSuccess) return <p>{t('pending')}</p>;
+  return (
+    <p className="text-lg">
+      {t('done')} <Link href="/market" className="font-semibold underline">{t('toMarket')}</Link>
+    </p>
+  );
 }
 
 export default function VerifyPage() {
+  const t = useTranslations('auth.verify');
   return (
-    <AuthShell kicker="Vérification" title="Presque prêt.">
+    <AuthShell kicker={t('kicker')} title={t('title')}>
       <Suspense>
         <Verify />
       </Suspense>

@@ -1,25 +1,27 @@
 'use client';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAssets } from '@/lib/hooks';
-import { compactMoney, pct, REGIME_LABEL, TIER_LABEL, tone } from '@/lib/format';
+import { tone, useFormat } from '@/lib/format';
 import { LivePrice } from '@/components/LivePrice';
 import { Spark } from '@/components/Spark';
 import { EventFeed } from '@/components/EventFeed';
+import { SortTh } from '@/components/market/SortTh';
+import { regimeCls, useAssetLabels } from '@/components/market/labels';
 import { Glyph } from '@/lib/icons';
 
-const FILTERS = [
-  { id: 'ALL', label: 'Tout' },
-  { id: 'BLUE_CHIP', label: 'Blue chips' },
-  { id: 'MID_CAP', label: 'Mid caps' },
-  { id: 'SHITCOIN', label: 'Shitcoins' },
-];
+const FILTERS = ['ALL', 'BLUE_CHIP', 'MID_CAP', 'SHITCOIN'] as const;
+type Filter = (typeof FILTERS)[number];
 
 type SortKey = 'change24h' | 'volume24h' | 'marketCap';
 
 export default function MarketPage() {
+  const t = useTranslations('market.list');
+  const f = useFormat();
+  const labels = useAssetLabels();
   const { data, isLoading } = useAssets();
-  const [filter, setFilter] = useState('ALL');
+  const [filter, setFilter] = useState<Filter>('ALL');
   const [sort, setSort] = useState<SortKey>('marketCap');
 
   const rows = useMemo(
@@ -33,27 +35,27 @@ export default function MarketPage() {
       <div className="rise min-w-0">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="display text-6xl font-extrabold">Le marché</h1>
+            <h1 className="display text-6xl font-extrabold">{t('title')}</h1>
             {movers && (
               <p className="mt-2 text-ink-2">
-                La star du jour :{' '}
+                {t('star')}{' '}
                 <Link href={`/market/${movers.symbol}`} className="font-semibold text-ink underline">
                   <Glyph name={movers.emoji} color={movers.color} /> {movers.name}
                 </Link>{' '}
-                <span className={`num font-semibold ${tone(movers.change24h)}`}>{pct(movers.change24h)}</span>
+                <span className={`num font-semibold ${tone(movers.change24h)}`}>{f.pct(movers.change24h)}</span>
               </p>
             )}
           </div>
-          <div className="flex gap-1 text-sm font-semibold" role="tablist">
-            {FILTERS.map((f) => (
+          <div className="flex gap-1 text-sm font-semibold" role="tablist" aria-label={t('filtersLabel')}>
+            {FILTERS.map((id) => (
               <button
-                key={f.id}
+                key={id}
                 role="tab"
-                aria-selected={filter === f.id}
-                onClick={() => setFilter(f.id)}
-                className={`px-3 py-1.5 ${filter === f.id ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
+                aria-selected={filter === id}
+                onClick={() => setFilter(id)}
+                className={`px-3 py-1.5 ${filter === id ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
               >
-                {f.label}
+                {t(`filters.${id}`)}
               </button>
             ))}
           </div>
@@ -63,13 +65,13 @@ export default function MarketPage() {
           <table className="w-full min-w-[760px] border-collapse text-left">
             <thead>
               <tr className="border-y-2 border-ink text-xs uppercase tracking-wider text-ink-2">
-                <th className="py-2 pr-4 font-semibold">Actif</th>
-                <th className="py-2 pr-4 text-right font-semibold">Prix</th>
-                <SortTh label="24 h" k="change24h" sort={sort} setSort={setSort} />
-                <th className="py-2 pr-4 font-semibold">Tendance 24 h</th>
-                <SortTh label="Volume" k="volume24h" sort={sort} setSort={setSort} />
-                <SortTh label="Capi." k="marketCap" sort={sort} setSort={setSort} />
-                <th className="py-2 font-semibold">Ambiance</th>
+                <th className="py-2 pr-4 font-semibold">{t('columns.asset')}</th>
+                <th className="py-2 pr-4 text-right font-semibold">{t('columns.price')}</th>
+                <SortTh label={t('columns.change24h')} k="change24h" sort={sort} setSort={setSort} />
+                <th className="py-2 pr-4 font-semibold">{t('columns.trend')}</th>
+                <SortTh label={t('columns.volume')} k="volume24h" sort={sort} setSort={setSort} />
+                <SortTh label={t('columns.marketCap')} k="marketCap" sort={sort} setSort={setSort} />
+                <th className="py-2 font-semibold">{t('columns.mood')}</th>
               </tr>
             </thead>
             <tbody>
@@ -91,8 +93,8 @@ export default function MarketPage() {
                       <span>
                         <span className="block font-semibold group-hover:underline">{a.name}</span>
                         <span className="text-xs text-ink-2">
-                          {a.symbol} · {TIER_LABEL[a.tier]}
-                          {a.frozen && <span className="ml-1 font-semibold text-down">· gelé</span>}
+                          {a.symbol} · {labels.tier(a.tier)}
+                          {a.frozen && <span className="ml-1 font-semibold text-down">· {t('frozen')}</span>}
                         </span>
                       </span>
                     </Link>
@@ -100,16 +102,14 @@ export default function MarketPage() {
                   <td className="py-3 pr-4 text-right font-semibold">
                     <LivePrice value={a.price} className="px-1" />
                   </td>
-                  <td className={`num py-3 pr-4 text-right font-semibold ${tone(a.change24h)}`}>{pct(a.change24h)}</td>
+                  <td className={`num py-3 pr-4 text-right font-semibold ${tone(a.change24h)}`}>{f.pct(a.change24h)}</td>
                   <td className="py-3 pr-4">
                     <Spark data={a.spark} />
                   </td>
-                  <td className="num py-3 pr-4 text-right text-ink-2">{compactMoney(a.volume24h)}</td>
-                  <td className="num py-3 pr-4 text-right">{compactMoney(a.marketCap)}</td>
+                  <td className="num py-3 pr-4 text-right text-ink-2">{f.compactMoney(a.volume24h)}</td>
+                  <td className="num py-3 pr-4 text-right">{f.compactMoney(a.marketCap)}</td>
                   <td className="py-3 text-sm">
-                    <span className={a.regime === 'PANIC' ? 'font-semibold text-down' : a.regime === 'HYPE' ? 'font-semibold text-up' : 'text-ink-2'}>
-                      {REGIME_LABEL[a.regime] ?? a.regime}
-                    </span>
+                    <span className={regimeCls(a.regime) ? `font-semibold ${regimeCls(a.regime)}` : 'text-ink-2'}>{labels.regime(a.regime)}</span>
                   </td>
                 </tr>
               ))}
@@ -121,16 +121,5 @@ export default function MarketPage() {
         <EventFeed limit={12} />
       </aside>
     </div>
-  );
-}
-
-function SortTh({ label, k, sort, setSort }: { label: string; k: SortKey; sort: SortKey; setSort: (k: SortKey) => void }) {
-  return (
-    <th className="py-2 pr-4 text-right font-semibold" aria-sort={sort === k ? 'descending' : 'none'}>
-      <button onClick={() => setSort(k)} className={`uppercase ${sort === k ? 'text-ink underline decoration-2' : 'hover:text-ink'}`}>
-        {label}
-        {sort === k && ' ↓'}
-      </button>
-    </th>
   );
 }

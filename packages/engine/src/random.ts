@@ -26,3 +26,18 @@ export function gaussian(rng: Rng): number {
 export function poissonHit(rng: Rng, ratePerDay: number, dtDays: number): boolean {
   return rng() < 1 - Math.exp(-ratePerDay * dtDays);
 }
+
+/** Élément au hasard (undefined si la liste est vide). */
+export function pick<T>(rng: Rng, xs: readonly T[]): T | undefined {
+  return xs[Math.floor(rng() * xs.length)];
+}
+
+/** Copie mélangée (Fisher-Yates). */
+export function shuffle<T>(rng: Rng, xs: readonly T[]): T[] {
+  const out = [...xs];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}

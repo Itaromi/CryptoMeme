@@ -1,32 +1,31 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { countdown, MOOD_STYLE, useEvents } from '@/lib/economy';
+import { useNow, useTranslations } from 'next-intl';
+import { useFormat } from '@/lib/format';
+import { MOOD_STYLE, useEvents } from '@/lib/economy';
 
-/** Bandeau « flash info » : événements annoncés (compte à rebours) et en cours. */
+/** Bandeau « flash info » : événements annoncés (compte à rebours) et en cours. Titres et descriptions viennent de l'API. */
 export function EventBanner() {
+  const t = useTranslations('events.banner');
+  const f = useFormat();
   const { data } = useEvents();
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const items = [...(data?.upcoming ?? []), ...(data?.active ?? []).filter((e) => e.endsAt && new Date(e.endsAt).getTime() > now)];
+  const now = useNow({ updateInterval: 1000 });
+  const upcoming = (data?.upcoming ?? []).map((e) => ({ e, label: t('flash'), time: t('in', { time: f.countdown(e.startsAt, now) }) }));
+  const active = (data?.active ?? []).flatMap((e) =>
+    e.endsAt && new Date(e.endsAt) > now ? [{ e, label: t('ongoing'), time: t('remaining', { time: f.countdown(e.endsAt, now) }) }] : [],
+  );
+  const items = [...upcoming, ...active];
   if (!items.length) return null;
   return (
-    <div className="-mt-8 mb-8 border-b-2 border-ink">
-      {items.map((e) => (
+    <aside aria-label={t('label')} className="-mt-8 mb-8 border-b-2 border-ink">
+      {items.map(({ e, label, time }) => (
         <Link key={e.id} href="/events" className={`flex flex-wrap items-baseline gap-x-3 px-4 py-2 text-sm hover:underline sm:px-8 ${MOOD_STYLE[e.mood].bg}`}>
-          <span className="bg-ink px-1.5 text-xs font-bold uppercase tracking-widest text-paper">
-            {e.status === 'SCHEDULED' ? 'Flash info' : 'En cours'}
-          </span>
+          <span className="bg-ink px-1.5 text-xs font-bold uppercase tracking-widest text-paper">{label}</span>
           <strong>{e.title}</strong>
-          <span className="num font-semibold">
-            {e.status === 'SCHEDULED' ? `dans ${countdown(e.startsAt, now)}` : `encore ${countdown(e.endsAt!, now)}`}
-          </span>
+          <span className="num font-semibold">{time}</span>
           <span className="hidden text-ink-2 md:inline">{e.description}</span>
         </Link>
       ))}
-    </div>
+    </aside>
   );
 }

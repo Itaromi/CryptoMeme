@@ -45,7 +45,7 @@ import {
   HandFist,
   Parachute,
   Target,
-  Infinity,
+  Infinity as InfinityIcon,
   Spiral,
   Cube,
   Hexagon,
@@ -181,7 +181,7 @@ export const ICONS: Record<IconName, PhosphorIcon> = {
   HandFist,
   Parachute,
   Target,
-  Infinity,
+  Infinity: InfinityIcon,
   Spiral,
   Cube,
   Hexagon,
@@ -324,7 +324,7 @@ const MEANING: Partial<Record<IconName, string>> = {
 };
 
 export function iconColor(name: string | null | undefined): string {
-  if (name && isIconName(name) && MEANING[name]) return MEANING[name]!;
+  if (name && isIconName(name) && MEANING[name]) return MEANING[name];
   let h = 0;
   for (const ch of name ?? '') h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return ROTATION[h % ROTATION.length];

@@ -1,9 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNow } from 'next-intl';
 import { stockMarketStatus } from '@cryptomeme/shared';
 import { api } from './api';
 import type { AssetRow } from './hooks';
+import { queryKeys } from './queryKeys';
 
 export type CompanyStatus = 'LISTED' | 'TAKEOVER' | 'ACQUIRED' | 'BANKRUPT';
 
@@ -56,43 +57,33 @@ export interface StockDetail extends CompanyView {
   dividends: Array<{ perShare: string; recordAt: string; paidAt: string | null; total: string; holders: number }>;
 }
 
-export const useStocks = () => useQuery({ queryKey: ['stocks'], queryFn: () => api<StocksResponse>('/stocks'), refetchInterval: 20_000 });
+export const useStocks = () => useQuery({ queryKey: queryKeys.stocks, queryFn: () => api<StocksResponse>('/stocks'), refetchInterval: 20_000 });
 
 export const useStock = (symbol: string, enabled = true) =>
-  useQuery({ queryKey: ['stock', symbol], queryFn: () => api<StockDetail>(`/stocks/${symbol}`), refetchInterval: 20_000, enabled });
+  useQuery({ queryKey: queryKeys.stock(symbol), queryFn: () => api<StockDetail>(`/stocks/${symbol}`), refetchInterval: 20_000, enabled });
 
 /** État de la Bourse recalculé chaque seconde côté client (même règle que le serveur). */
 export function useMarketClock() {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  return { now, ...stockMarketStatus(new Date(now)) };
+  const date = useNow({ updateInterval: 1000 });
+  return { now: date.getTime(), ...stockMarketStatus(date) };
 }
 
-export const VERDICT: Record<Verdict, { label: string; cls: string }> = {
-  BLOWOUT: { label: 'Explosion', cls: 'bg-up text-paper' },
-  BEAT: { label: 'Au-dessus', cls: 'text-up' },
-  INLINE: { label: 'Conforme', cls: 'text-ink-2' },
-  MISS: { label: 'Déception', cls: 'text-down' },
-  DISASTER: { label: 'Catastrophe', cls: 'bg-down text-paper' },
+/** Style de chaque verdict de résultats ; le libellé est dans les messages (`stocks.verdict.*`). */
+export const VERDICT_CLS: Record<Verdict, string> = {
+  BLOWOUT: 'bg-up text-paper',
+  BEAT: 'text-up',
+  INLINE: 'text-ink-2',
+  MISS: 'text-down',
+  DISASTER: 'bg-down text-paper',
 };
 
-export const STATUS_LABEL: Record<CompanyStatus, string> = {
-  LISTED: 'Cotée',
-  TAKEOVER: 'OPA en cours',
-  ACQUIRED: 'Rachetée',
-  BANKRUPT: 'En faillite',
-};
+export type HealthLevel = 'solid' | 'fair' | 'fragile' | 'dividendSuspended' | 'bankruptcyRisk';
 
-/** Santé financière lisible. */
-export function healthLabel(h: number): { label: string; cls: string } {
-  if (h >= 0.75) return { label: 'Solide', cls: 'text-up' };
-  if (h >= 0.45) return { label: 'Correcte', cls: '' };
-  if (h >= 0.3) return { label: 'Fragile', cls: 'text-down' };
-  if (h >= 0.15) return { label: 'Dividende suspendu', cls: 'font-bold text-down' };
-  return { label: 'Risque de faillite', cls: 'bg-down px-1 font-bold text-paper' };
+/** Santé financière par palier ; le libellé est dans les messages (`stocks.health.*`). */
+export function healthLevel(h: number): { level: HealthLevel; cls: string } {
+  if (h >= 0.75) return { level: 'solid', cls: 'text-up' };
+  if (h >= 0.45) return { level: 'fair', cls: '' };
+  if (h >= 0.3) return { level: 'fragile', cls: 'text-down' };
+  if (h >= 0.15) return { level: 'dividendSuspended', cls: 'font-bold text-down' };
+  return { level: 'bankruptcyRisk', cls: 'bg-down px-1 font-bold text-paper' };
 }
-
-export const pctFr = (x: number, digits = 1) => `${x >= 0 ? '+' : ''}${(x * 100).toLocaleString('fr-FR', { maximumFractionDigits: digits, minimumFractionDigits: digits })} %`;

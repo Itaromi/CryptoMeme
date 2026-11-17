@@ -353,6 +353,8 @@ model LedgerEntry {
   createdAt    DateTime   @default(now())
 
   @@index([walletId, createdAt])
+  /// Écritures d'une même opération (versement d'un dividende, OPA…) : reprise idempotente et totaux
+  @@index([refType, refId])
 }
 
 model NetWorthSnapshot {

@@ -1,0 +1,222 @@
+{
+  "nav": {
+    "label": "Mining",
+    "farm": "My farm",
+    "shop": "Gear shop",
+    "pools": "Pools & networks"
+  },
+  "kind": {
+    "GPU": "Graphics cards",
+    "CPU": "Processors",
+    "ASIC": "ASICs",
+    "MOTHERBOARD": "Motherboards",
+    "PSU": "Power supplies",
+    "COOLING": "Cooling",
+    "RACK": "Racks"
+  },
+  "kindShort": {
+    "GPU": "GPU",
+    "CPU": "CPU",
+    "ASIC": "ASIC",
+    "MOTHERBOARD": "Mobo",
+    "PSU": "PSU",
+    "COOLING": "Cooling",
+    "RACK": "Rack"
+  },
+  "poolType": {
+    "PPS": {
+      "label": "PPS",
+      "help": "Fixed payout for every share. Zero variance, steep fees."
+    },
+    "PPLNS": {
+      "label": "PPLNS",
+      "help": "Paid according to the pool’s luck. Some variance, low fees."
+    },
+    "SOLO": {
+      "label": "Solo",
+      "help": "All or nothing: you pocket a whole block when you find one."
+    },
+    "SHADY": {
+      "label": "Shady",
+      "help": "Juicy bonus, paid every 6 h… unless they run off with the till."
+    }
+  },
+  "specs": {
+    "psu": "{power} · {efficiency} efficiency",
+    "motherboard": "{socket} · {slots, plural, one {# GPU slot} other {# GPU slots}}",
+    "cooling": "dissipates {cooling}",
+    "coolingPowered": "dissipates {cooling} · {power}",
+    "rack": "{slots, plural, one {# rig} other {# rigs}} · airflow ×{airflow}"
+  },
+  "item": {
+    "BROKEN": "BROKEN",
+    "DESTROYED": "TOAST",
+    "wear": "{value} wear",
+    "wearHint": "Wear {value}",
+    "repair": "Repair ({cost})"
+  },
+  "perDay": "{value}/day",
+  "farm": {
+    "title": "Mining farm",
+    "intro": "Buy gear, build rigs in your racks, plug them into a pool. Keep an eye on the temperature: fire doesn’t send a warning.",
+    "loginPrompt": "<link>Log in</link> to build your mining farm.",
+    "powerCut": "Power cut: you ran out of cash to pay the electric bill. Get some cash back (sell coins), then restart your rigs.",
+    "stats": {
+      "running": "Rigs running",
+      "revenue": "Est. revenue",
+      "elec": "Electricity",
+      "net": "Net profit",
+      "hardware": "Hardware value"
+    },
+    "buyFacility": "Buy a new facility"
+  },
+  "facility": {
+    "info": "{type} · ${elecPrice}/kWh · {temp} °C ambient · {racks}/{slots} racks",
+    "noRack": "No rack in here. Install one from your inventory, or <link>buy one</link>.",
+    "rackInfo": "{rigs}/{slots} rigs · airflow ×{airflow}",
+    "buildRig": "+ Build a rig ({free, plural, one {# free slot} other {# free slots}})",
+    "power": "Power",
+    "uninstallRack": "Remove rack"
+  },
+  "inventory": {
+    "title": "Inventory ({count})",
+    "empty": "Nothing in stock. <link>The shop is that way.</link>",
+    "installIn": "Install in…",
+    "discard": "Bin it",
+    "resell": "Resell {price}"
+  },
+  "sidebar": {
+    "pendingTitle": "Pending (shady pools)",
+    "pendingNote": "Paid every 6 h. In theory.",
+    "federationsTitle": "Federations",
+    "federationCount": "{count}/3 pools",
+    "federationDiscount": "· −1% fees",
+    "logTitle": "Farm log"
+  },
+  "rig": {
+    "status": {
+      "destroyed": "Toast",
+      "broken": "Broken",
+      "running": "Running",
+      "stopped": "Stopped"
+    },
+    "summary": "{status} · {count, plural, one {# part} other {# parts}}",
+    "tempHint": "Estimated temperature",
+    "pool": "Pool",
+    "choosePool": "Pick a pool…",
+    "overclock": "Overclock",
+    "oc": {
+      "stock": "Stock",
+      "light": "Mild OC",
+      "heavy": "Beefy OC",
+      "suicidal": "Suicidal OC"
+    },
+    "netOfElec": "after power",
+    "start": "Start",
+    "stop": "Stop",
+    "stats": {
+      "psuLoad": "Draw / PSU",
+      "wall": "At the wall",
+      "elec": "Electricity",
+      "revenue": "Est. revenue",
+      "poolFee": "Pool fee",
+      "failRisk": "Breakdown risk",
+      "fireRisk": "Fire risk",
+      "mined": "Total mined"
+    },
+    "dismantle": "Tear down the rig (parts go back to your inventory)"
+  },
+  "builder": {
+    "emptyTitle": "Your inventory is empty.",
+    "emptyHelp": "A GPU rig = motherboard + CPU + GPU(s) + power supply + cooling. An ASIC rig = one ASIC + a power supply. <link>Off to the shop →</link>",
+    "pick": "Pick your parts",
+    "preview": "Preview",
+    "previewEmpty": "Tick some parts to see what the rig would look like.",
+    "valid": "Valid build",
+    "psu": "Power supply",
+    "cooling": "Cooling",
+    "temperature": "Temperature",
+    "throttled": "(throttled to {value})",
+    "wall": "Draw at the wall",
+    "elec": "Electricity",
+    "perDayLong": "{value} / day",
+    "failRisk": "Breakdown risk",
+    "netEstimate": "Estimated net profit on {symbol}: <b>{value}/day</b>",
+    "namePlaceholder": "Rig name (optional)",
+    "create": "Build the rig"
+  },
+  "shop": {
+    "title": "Gear shop",
+    "facilitiesTab": "Facilities",
+    "cash": "Cash available: <b>{cash}</b>",
+    "search": "Search for a model…",
+    "allAlgos": "All algos",
+    "sort": {
+      "priceAsc": "Price ↑",
+      "priceDesc": "Price ↓",
+      "perDollar": "Profit / $",
+      "perWatt": "Profit / W"
+    },
+    "count": "{count, plural, one {# model} other {# models}}",
+    "cols": {
+      "model": "Model",
+      "hashrate": "Hashrate",
+      "specs": "Specs",
+      "power": "Draw",
+      "price": "Price"
+    },
+    "prev": "← Previous",
+    "next": "Next →"
+  },
+  "catalog": {
+    "psu": "{power} max · {efficiency} efficiency",
+    "motherboard": "Socket {socket} · {slots, plural, one {# GPU slot} other {# GPU slots}}",
+    "cooling": "Dissipates {cooling}",
+    "rack": "{slots, plural, one {# rig} other {# rigs}} · airflow ×{airflow}",
+    "grossPerDay": "≈ {value}/day gross on {algo}",
+    "asicCooling": "cools {cooling}",
+    "quantity": "Quantity",
+    "tooExpensive": "Too pricey",
+    "buy": "Buy",
+    "buyTotal": "Buy ({total})",
+    "added": "Added to your inventory"
+  },
+  "facilities": {
+    "free": "Free",
+    "elec": "Electricity",
+    "power": "Power",
+    "racks": "Racks",
+    "ambient": "Ambient",
+    "elecPrice": "${price}/kWh",
+    "buy": "Buy",
+    "bought": "Facility bought. Install a rack in it from your farm.",
+    "owned": "You own {count}"
+  },
+  "pools": {
+    "title": "Pools & networks",
+    "networksTitle": "Minable networks",
+    "networksIntro": "Every coin has an algorithm and a fixed emission per minute, split between all miners (players and NPCs). The more hashrate on a network, the less each miner earns: hunt for the under-mined one. NPCs pile in when the price pumps and bail when it dumps.",
+    "cols": {
+      "coin": "Coin",
+      "algo": "Algo",
+      "price": "Price",
+      "networkHashrate": "Network hashrate",
+      "players": "from players",
+      "profitability": "Profitability",
+      "profitabilityHint": "Gross revenue for 1 MH/s over 24 h, before pool fees",
+      "nextHalving": "Next halving"
+    },
+    "perMhDay": "/ MH/s / day",
+    "poolsTitle": "Pools",
+    "type": "Type",
+    "fee": "Fee",
+    "feeBonus": "+{value} bonus",
+    "federation": "Federation",
+    "createdBy": "Created by",
+    "rigs": "Rigs",
+    "scamRisk": "Rug risk",
+    "howTitle": "How to pick",
+    "howItem": "<b>{label}</b>: {help}",
+    "howFederations": "<b>Federations</b>: plug rigs into 3 different pools of the same federation and every one of its pools charges you 1% less in fees. Diversifying pays."
+  }
+}

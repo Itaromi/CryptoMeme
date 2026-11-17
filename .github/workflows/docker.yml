@@ -1,15 +1,25 @@
 name: Images Docker
 
-# Construit les images de l'API et du site à chaque PR (vérification),
-# et les publie sur GHCR à chaque push sur main et à chaque tag vX.Y.Z.
+# Publie les images sur GHCR quand le code applicatif change sur main, et à chaque tag vX.Y.Z.
+# Sur une PR, ne construit que si un Dockerfile, les dépendances ou ce workflow changent
+# (la compilation du code est déjà vérifiée par la CI).
 on:
   push:
     branches: [main]
     tags: ['v*.*.*']
-  pull_request:
     paths:
       - 'apps/**'
       - 'packages/**'
+      - '!**.md'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'tsconfig.base.json'
+      - '.github/workflows/docker.yml'
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'apps/*/Dockerfile'
       - 'pnpm-lock.yaml'
       - '.github/workflows/docker.yml'
 
@@ -24,6 +34,7 @@ permissions:
 jobs:
   image:
     name: ${{ matrix.app }}
+    if: github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:

@@ -1,0 +1,17 @@
+{
+  "title": "Achievements",
+  "intro": "Some unlock by winning, others by losing in spectacular fashion. The best ones grant a cosmetic you can't buy in the shop. They stick with you from one season to the next.",
+  "unlocked": "unlocked",
+  "unlockedOn": "Unlocked on {date}",
+  "notYet": "Not yet",
+  "rarity": "{share} of players",
+  "nobody": "Nobody yet",
+  "reward": "reward in the shop",
+  "signupCta": "<link>Create an account</link> to start your collection.",
+  "tier": {
+    "BRONZE": "Bronze",
+    "SILVER": "Silver",
+    "GOLD": "Gold",
+    "LEGENDARY": "Legendary"
+  }
+}

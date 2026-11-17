@@ -1,12 +1,16 @@
-import { ComponentItem, ComponentModel, Facility, FacilityType, MiningNetwork, MiningPool, Rig } from '@prisma/client';
-import { Algo, ComponentSpec, computeRig, FacilitySpec, Hashrates, RackSpec, RigStats } from '@cryptomeme/engine';
+import { ComponentItem, ComponentModel, Facility, FacilityType, MiningNetwork, MiningPool, Prisma, Rig } from '@prisma/client';
+import { ComponentSpec, computeRig, FacilitySpec, Hashrates, NetworkLoad, RackSpec, RigStats } from '@cryptomeme/engine';
 
 export type ItemWithModel = ComponentItem & { model: ComponentModel };
 export type RackWithFacility = ItemWithModel & { facility: (Facility & { type: FacilityType }) | null };
 export type FullRig = Rig & { parts: ItemWithModel[]; rack: RackWithFacility; pool: MiningPool | null };
 
-export const FEDERATION_MIN_POOLS = 3;
-export const FEDERATION_DISCOUNT_BPS = 100;
+/** Relations chargées pour calculer une rig (composants, rack, local, pool). */
+export const RIG_INCLUDE = {
+  parts: { include: { model: true } },
+  rack: { include: { model: true, facility: { include: { type: true } } } },
+  pool: true,
+} satisfies Prisma.RigInclude;
 
 export const toSpec = (i: ItemWithModel): ComponentSpec => ({
   id: i.id,
@@ -26,6 +30,13 @@ export const toSpec = (i: ItemWithModel): ComponentSpec => ({
 export const facilitySpec = (t: FacilityType): FacilitySpec => ({ ambientTemp: t.ambientTemp, elecPrice: t.elecPrice, maxPowerKw: t.maxPowerKw });
 export const rackSpec = (m: ComponentModel): RackSpec => ({ slots: m.rackSlots ?? 1, airflow: m.airflow ?? 1 });
 
+/** Charge d'un réseau au format du moteur. */
+export const networkLoad = (n: Pick<MiningNetwork, 'blockReward' | 'npcHashrate' | 'playerHashrate'>): NetworkLoad => ({
+  blockReward: Number(n.blockReward),
+  npcHashrate: n.npcHashrate,
+  playerHashrate: n.playerHashrate,
+});
+
 export interface Env {
   ambientDelta: number;
   /** Multiplicateur final du prix du kWh (événements × remise bancaire) */
@@ -43,30 +54,3 @@ export function rigStats(rig: FullRig, env: Env = NO_ENV): RigStats | null {
     rackSpec(rig.rack.model),
   );
 }
-
-/** Frais effectifs d'un pool pour un joueur, avec la remise de fédération. */
-export function effectiveFee(pool: MiningPool, federationCounts: Map<string, number>): number {
-  if (pool.federation && (federationCounts.get(pool.federation) ?? 0) >= FEDERATION_MIN_POOLS) {
-    return pool.feeBps - FEDERATION_DISCOUNT_BPS;
-  }
-  return pool.feeBps;
-}
-
-/** Nombre de pools distincts utilisés par fédération (rigs en marche ou configurées). */
-export function federationCounts(rigs: Array<{ pool: MiningPool | null }>): Map<string, number> {
-  const sets = new Map<string, Set<string>>();
-  for (const r of rigs) {
-    if (!r.pool?.federation) continue;
-    if (!sets.has(r.pool.federation)) sets.set(r.pool.federation, new Set());
-    sets.get(r.pool.federation)!.add(r.pool.id);
-  }
-  return new Map([...sets].map(([k, v]) => [k, v.size]));
-}
-
-/** Gain attendu en pièces par minute pour `hash` MH/s sur un réseau. */
-export function coinsPerMinute(hash: number, net: Pick<MiningNetwork, 'blockReward' | 'npcHashrate' | 'playerHashrate'>, includeSelf = false) {
-  const total = net.npcHashrate + net.playerHashrate + (includeSelf ? hash : 0);
-  return total > 0 ? (hash / total) * Number(net.blockReward) : 0;
-}
-
-export const algoOf = (net: MiningNetwork) => net.algo as Algo;
