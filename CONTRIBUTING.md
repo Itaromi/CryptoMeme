@@ -30,6 +30,18 @@ pnpm --filter @cryptomeme/engine test
 - Les textes du jeu sont en français, sur un ton « mème » mais lisible.
 - Les icônes viennent de [Phosphor](https://phosphoricons.com) ; ajoute-les à `ICON_GROUPS` dans `packages/shared`.
 
+## Utiliser l'IA
+
+Les assistants IA (Copilot, ChatGPT, Claude…) sont autorisés. Quelques règles pour que ça reste utile :
+
+- **Tu comprends ce que tu proposes.** Chaque ligne de ta PR doit pouvoir être expliquée par toi, pas par l'outil.
+- **Tu relis et tu testes.** Le code généré passe `pnpm typecheck` et les tests, et tu l'as essayé dans le jeu.
+- **Tu respectes les règles du projet.** L'IA ne connaît pas le grand livre : vérifie que l'argent et les actifs passent bien par `applyCash` / `applyAsset`.
+- **Tu restes concis.** Pas de PR géante générée d'un coup, pas de description ou d'issue remplie de texte creux.
+- **Tu le signales** dans la case prévue du modèle de PR.
+
+Les PR visiblement générées sans relecture seront fermées.
+
 ## Organisation du code
 
 | Dossier | Rôle |

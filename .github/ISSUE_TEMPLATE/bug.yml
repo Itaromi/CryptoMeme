@@ -2,6 +2,12 @@ name: Bug
 description: Quelque chose ne marche pas comme prévu
 labels: [bug]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler un bug ! Vérifie d'abord qu'il n'existe pas déjà une issue sur le même sujet.
+
+        **Faille de sécurité ?** N'ouvre pas d'issue publique : voir [SECURITY.md](https://github.com/Itaromi/CryptoMeme/blob/main/SECURITY.md).
   - type: textarea
     id: what
     attributes:
@@ -29,4 +35,6 @@ body:
       label: Navigateur / appareil
   - type: markdown
     attributes:
-      value: "**Faille de sécurité ?** N'ouvre pas d'issue : voir [SECURITY.md](../blob/main/SECURITY.md)."
+      value: |
+        > [!NOTE]
+        > Tu peux t'aider d'une IA pour analyser ou rédiger, mais vérifie que le bug se reproduit vraiment chez toi. Une issue courte et exacte vaut mieux qu'un long texte généré.

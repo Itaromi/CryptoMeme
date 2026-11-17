@@ -17,3 +17,8 @@ body:
     attributes:
       label: Impact sur l'économie
       description: Est-ce que ça crée de l'argent ? Peut-on en abuser ?
+  - type: markdown
+    attributes:
+      value: |
+        > [!NOTE]
+        > Une IA peut t'aider à formuler ton idée : garde-la courte et relis-la pour qu'elle dise vraiment ce que tu veux.
