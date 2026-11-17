@@ -6,7 +6,8 @@ import { api } from '@/lib/api';
 import { usePortfolio } from '@/lib/hooks';
 import { useFormat } from '@/lib/format';
 import { Glyph } from '@/lib/icons';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useTexts } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 import { IconPicker } from '@/components/IconPicker';
 import { LabeledField } from '@/components/ui/LabeledField';
@@ -16,10 +17,10 @@ export const POOL_TYPES: readonly PoolType[] = ['PPS', 'PPLNS', 'SOLO'];
 /** Plafond du dividende d'une entreprise, en %, tiré du schéma partagé (0,8 → 80 %). */
 export const PAYOUT_MAX_PCT = Math.round((creationSchema.options[1].shape.payout.maxValue ?? 0) * 100);
 
-type Issue = NonNullable<ReturnType<typeof creationSchema.safeParse>['error']>['issues'][number];
-
 /** Formulaire de demande de création, validé avec le schéma partagé avant envoi. */
 export function CreateForm({ kind, cfg }: { kind: Kind; cfg: CreationConfig }) {
+  const texts = useTexts();
+  const errorMessage = texts.error;
   const t = useTranslations('create.form');
   const f = useFormat();
   const { data: pf } = usePortfolio(true);
@@ -55,15 +56,6 @@ export function CreateForm({ kind, cfg }: { kind: Kind; cfg: CreationConfig }) {
   const share = (r: number) => f.number(r, { style: 'percent', maximumFractionDigits: 0 });
   const units = (n: number) => t('summary.units', { amount: f.number(n, { maximumFractionDigits: 0 }) });
 
-  /** Message traduit d'une erreur de validation (les bornes viennent du schéma). */
-  function issueText(i: Issue): string {
-    const n = (x: number | bigint) => f.number(Number(x), { maximumFractionDigits: 6 });
-    if (i.code === 'too_small') return i.origin === 'string' ? t('errors.tooShort', { min: n(i.minimum) }) : t('errors.tooSmall', { min: n(i.minimum) });
-    if (i.code === 'too_big') return i.origin === 'string' ? t('errors.tooLong', { max: n(i.maximum) }) : t('errors.tooBig', { max: n(i.maximum) });
-    if (i.path[0] === 'symbol') return t('errors.symbol');
-    return t('errors.invalid');
-  }
-
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const common = { kind, name: v.name, emoji: v.emoji, color: v.color, description: v.description };
@@ -75,7 +67,7 @@ export function CreateForm({ kind, cfg }: { kind: Kind; cfg: CreationConfig }) {
           : { ...common, symbol: v.symbol, price, deposit, sector: v.sector, payout: Number(v.payout) / 100 },
     );
     if (!parsed.success) {
-      setErrors(Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), issueText(i)])));
+      setErrors(Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), texts.issue(i)])));
       return;
     }
     setErrors({});
@@ -95,7 +87,7 @@ export function CreateForm({ kind, cfg }: { kind: Kind; cfg: CreationConfig }) {
           <p className="text-xs font-semibold uppercase tracking-widest text-ink-2">
             {kind === 'POOL'
               ? t('preview.pool', { type: poolType, network: v.network })
-              : t('preview.asset', { symbol: v.symbol || t('preview.symbol'), kind: kind === 'COMPANY' ? v.sector : t('preview.crypto') })}
+              : t('preview.asset', { symbol: v.symbol || t('preview.symbol'), kind: kind === 'COMPANY' ? texts.sector(v.sector) : t('preview.crypto') })}
           </p>
           <p className="display truncate text-3xl font-bold">{v.name || t('preview.name')}</p>
         </div>
@@ -145,7 +137,7 @@ export function CreateForm({ kind, cfg }: { kind: Kind; cfg: CreationConfig }) {
           <LabeledField label={t('sector')}>
             <select className="field" value={v.sector} onChange={set('sector')}>
               {Object.entries(cfg.sectors).map(([s, pe]) => (
-                <option key={s} value={s}>{t('sectorOption', { sector: s, pe })}</option>
+                <option key={s} value={s}>{t('sectorOption', { sector: texts.sector(s), pe })}</option>
               ))}
             </select>
             {err('sector')}

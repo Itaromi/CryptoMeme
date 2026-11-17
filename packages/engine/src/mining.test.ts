@@ -51,8 +51,8 @@ describe('computeRig', () => {
     parts[1].socket = 'LGA1700';
     const r = computeRig(parts, 0, garage, rack);
     expect(r.valid).toBe(false);
-    expect(r.errors.join()).toMatch(/Alimentation/);
-    expect(r.errors.join()).toMatch(/socket/);
+    expect(r.errors.map((e) => e.code)).toContain('RIG_PSU_TOO_WEAK');
+    expect(r.errors.map((e) => e.code)).toContain('RIG_SOCKET');
   });
 
   it('refroidissement insuffisant ⇒ surchauffe, bridage et risque de panne', () => {

@@ -22,6 +22,8 @@ import { LeaseService } from '../common/lease.service';
 import { Modifiers, ModifiersService } from '../economy/modifiers.service';
 import { BanksService } from '../economy/banks.service';
 import { applyAsset, applyCash, lockWallets } from '../economy/ledger';
+import { param, type TextParams } from '@cryptomeme/shared';
+import { facilityLabel, textColumns } from '../common/texts';
 
 const TICK_MS = 60_000;
 const SHADY_PAYOUT_MS = 6 * 3600_000;
@@ -119,7 +121,8 @@ export class MiningTickService {
   private async runWallet(walletId: string, mods: Modifiers, netByAsset: Map<string, Network>, playerHash: Map<string, number>, minutes: number) {
     const minted = new Map<string, number>();
     const cuts = new Map<string, number>();
-    const logs: Array<[type: string, message: string]> = [];
+    const logs: Array<{ type: string; message: string; key: string; params?: TextParams }> = [];
+    const log = (type: string, message: string, key: string, params?: TextParams) => logs.push({ type, message, key, params });
     await this.prisma.$transaction(
       async (tx) => {
         // Verrou du wallet d'abord : les actions du joueur (vente, réparation, réglage d'une rig…) attendent la fin du tick
@@ -140,7 +143,7 @@ export class MiningTickService {
           const f = rig.rack.facility;
           if (f && !tripped.has(f.id) && (loadByFacility.get(f.id) ?? 0) > f.type.maxPowerKw * 1000) {
             tripped.add(f.id);
-            logs.push(['POWER', `Disjoncteur ! ${f.name} dépasse ${f.type.maxPowerKw} kW. Toutes ses rigs sont coupées.`]);
+            log('POWER', `Disjoncteur ! ${f.name} dépasse ${f.type.maxPowerKw} kW. Toutes ses rigs sont coupées.`, 'game.mining.breaker', { facility: facilityLabel(f), max: f.type.maxPowerKw });
           }
         }
 
@@ -161,8 +164,8 @@ export class MiningTickService {
         if (cash.lt(charge) || (cash.isZero() && elec > 0)) {
           await tx.rig.updateMany({ where: { walletId, running: true }, data: { running: false } });
           await tx.wallet.update({ where: { id: walletId }, data: { powerCut: true } });
-          logs.push(['POWER', "Coupure de courant : plus assez de cash pour payer l'électricité. Toutes tes rigs sont à l'arrêt."]);
-          for (const [type, message] of logs) await tx.miningLog.create({ data: { walletId, type, message } });
+          log('POWER', "Coupure de courant : plus assez de cash pour payer l'électricité. Toutes tes rigs sont à l'arrêt.", 'game.mining.powerCut');
+          for (const l of logs) await tx.miningLog.create({ data: { walletId, type: l.type, message: l.message, ...textColumns(l.key, l.params) } });
           return;
         }
         if (charge.gt(0)) await applyCash(tx, walletId, charge.neg(), 'ELECTRICITY', `${minutes.toFixed(1)} min`, undefined, { strict: true });
@@ -188,7 +191,9 @@ export class MiningTickService {
           if (coins > 0) {
             if (pool.type === 'SHADY') shady.set(pool.id, (shady.get(pool.id) ?? 0) + coins);
             else rewards.set(pool.assetId, (rewards.get(pool.assetId) ?? 0) + coins);
-            if (pool.type === 'SOLO') logs.push(['BLOCK', `BLOC TROUVÉ ! ${rig.name} remporte ${coins.toFixed(4)} ${net.asset.symbol} en solo.`]);
+            if (pool.type === 'SOLO') {
+              log('BLOCK', `BLOC TROUVÉ ! ${rig.name} remporte ${coins.toFixed(4)} ${net.asset.symbol} en solo.`, 'game.mining.block', { rig: rig.name, qty: param.qty(coins), symbol: net.asset.symbol });
+            }
           }
 
           // Usure, pannes, incendie (composants relus sous verrou : l'usure repart de la valeur à jour)
@@ -196,9 +201,9 @@ export class MiningTickService {
           let stopped = false;
           if (poissonHit(mathRng, s.firePerHour * 24, minutes / 1440)) {
             await tx.componentItem.updateMany({ where: { rigId: rig.id }, data: { status: 'DESTROYED', wear: 1 } });
-            logs.push(['FIRE', `INCENDIE dans ${rig.name} (${Math.round(s.temperature)} °C). Tous les composants sont carbonisés.`]);
+            log('FIRE', `INCENDIE dans ${rig.name} (${Math.round(s.temperature)} °C). Tous les composants sont carbonisés.`, 'game.mining.fire', { rig: rig.name, temp: Math.round(s.temperature) });
             const loss = rig.parts.reduce((sum, p) => sum + Number(p.model.price) * 0.6 * (1 - p.wear), 0);
-            await this.banks.insure(tx, walletId, wallet.userId, loss, `incendie de ${rig.name}`);
+            await this.banks.insure(tx, walletId, wallet.userId, loss, param.t('game.insurance.fire', `incendie de ${rig.name}`, { rig: rig.name }));
             stopped = true;
           } else {
             const failed = poissonHit(mathRng, Math.min(1, s.failurePerHour * mods.failureMultiplier) * 24, minutes / 1440);
@@ -209,8 +214,12 @@ export class MiningTickService {
               await tx.componentItem.update({ where: { id: p.id }, data: { wear, ...(broken ? { status: 'BROKEN' } : {}) } });
               if (broken) {
                 // Perte assurée : le coût de la réparation
-                await this.banks.insure(tx, walletId, wallet.userId, repairCost(Number(p.model.price)), `panne ${p.model.name}`);
-                logs.push(['BREAK', `${p.model.brand} ${p.model.name} a lâché dans ${rig.name}${wear >= 1 ? ' (usure totale)' : ''}. Rig arrêtée.`]);
+                await this.banks.insure(tx, walletId, wallet.userId, repairCost(Number(p.model.price)), param.t('game.insurance.break', `panne ${p.model.name}`, { part: p.model.name }));
+                log('BREAK', `${p.model.brand} ${p.model.name} a lâché dans ${rig.name}${wear >= 1 ? ' (usure totale)' : ''}. Rig arrêtée.`, 'game.mining.break', {
+                  part: `${p.model.brand} ${p.model.name}`,
+                  rig: rig.name,
+                  worn: wear >= 1 ? 'yes' : 'no',
+                });
                 stopped = true;
               }
             }
@@ -238,7 +247,7 @@ export class MiningTickService {
             create: { walletId, poolId, pending: coins.toFixed(8) },
           });
         }
-        for (const [type, message] of logs) await tx.miningLog.create({ data: { walletId, type, message } });
+        for (const l of logs) await tx.miningLog.create({ data: { walletId, type: l.type, message: l.message, ...textColumns(l.key, l.params) } });
       },
       { timeout: 20_000 },
     );
@@ -254,10 +263,15 @@ export class MiningTickService {
           this.prisma.poolBalance.updateMany({ where: { poolId: pool.id }, data: { pending: 0, lastPaidAt: new Date() } }),
           ...victims.map((v) =>
             this.prisma.miningLog.create({
-              data: { walletId: v.walletId, type: 'SCAM', message: `EXIT SCAM : ${pool.name} a disparu avec tes ${Number(v.pending).toFixed(4)} ${pool.asset.symbol} en attente. Le site affiche maintenant une page « En maintenance ».` },
+              data: {
+                walletId: v.walletId,
+                type: 'SCAM',
+                message: `EXIT SCAM : ${pool.name} a disparu avec tes ${Number(v.pending).toFixed(4)} ${pool.asset.symbol} en attente. Le site affiche maintenant une page « En maintenance ».`,
+                ...textColumns('game.mining.scam', { pool: pool.name, qty: param.qty(v.pending), symbol: pool.asset.symbol }),
+              },
             }),
           ),
-          this.prisma.marketEvent.create({ data: { assetId: pool.assetId, type: 'POOL_SCAM', detail: `${pool.name} part avec la caisse` } }),
+          this.prisma.marketEvent.create({ data: { assetId: pool.assetId, type: 'POOL_SCAM', detail: `${pool.name} part avec la caisse`, ...textColumns('game.market.poolScam', { pool: pool.name }) } }),
         ]);
         continue;
       }
@@ -271,7 +285,14 @@ export class MiningTickService {
           if (D(fresh.pending).lte(0)) return;
           await applyAsset(tx, b.walletId, pool.assetId, D(fresh.pending), 'MINING_REWARD', `Paiement ${pool.name}`, { type: 'MiningPool', id: pool.id });
           await tx.poolBalance.update({ where: { walletId_poolId: { walletId: b.walletId, poolId: pool.id } }, data: { pending: 0, lastPaidAt: new Date() } });
-          await tx.miningLog.create({ data: { walletId: b.walletId, type: 'PAYOUT', message: `${pool.name} a (pour une fois) payé ${Number(fresh.pending).toFixed(4)} ${pool.asset.symbol}.` } });
+          await tx.miningLog.create({
+            data: {
+              walletId: b.walletId,
+              type: 'PAYOUT',
+              message: `${pool.name} a (pour une fois) payé ${Number(fresh.pending).toFixed(4)} ${pool.asset.symbol}.`,
+              ...textColumns('game.mining.payout', { pool: pool.name, qty: param.qty(fresh.pending), symbol: pool.asset.symbol }),
+            },
+          });
         });
       }
     }
@@ -290,7 +311,7 @@ export class MiningTickService {
       },
     });
     if (halving) {
-      await this.prisma.marketEvent.create({ data: { assetId: n.assetId, type: 'HALVING', detail: 'La récompense de bloc est divisée par deux' } });
+      await this.prisma.marketEvent.create({ data: { assetId: n.assetId, type: 'HALVING', detail: 'La récompense de bloc est divisée par deux', ...textColumns('game.market.halving') } });
     }
   }
 }

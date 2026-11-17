@@ -1,0 +1,457 @@
+{
+  "myRoom": "Ma chambre",
+  "facilities": {
+    "chambre-ado": {
+      "name": "Chambre d'ado",
+      "description": "Gratuite. Électricité payée par tes parents… qui te refacturent cher."
+    },
+    "garage": {
+      "name": "Garage",
+      "description": "Entre la tondeuse et le vélo jamais utilisé."
+    },
+    "cave": {
+      "name": "Cave humide",
+      "description": "Fraîche, mais un peu humide. Les composants n’adorent pas."
+    },
+    "entrepot": {
+      "name": "Entrepôt",
+      "description": "Zone industrielle, tarif pro."
+    },
+    "centrale-charbon": {
+      "name": "Centrale à charbon désaffectée",
+      "description": "Électricité bradée. Il fait 38 °C à l'intérieur."
+    },
+    "datacenter": {
+      "name": "Data-center Tier III",
+      "description": "Redondance, sécurité, badge d’accès. Le luxe."
+    },
+    "bunker-islandais": {
+      "name": "Bunker islandais",
+      "description": "Géothermie gratuite et 4 °C dehors. Le graal."
+    }
+  },
+  "banks": {
+    "neo-gratos": {
+      "description": "Gratuite. Comme le café de la machine : on ne pose pas de questions."
+    },
+    "credit-mutuel-agricole-bancaire": {
+      "description": "Intérêts sur le cash et électricité moins chère. Un conseiller qui ne répond jamais."
+    },
+    "bnp-parodibas": {
+      "description": "Assurance matériel et protection anti-piratage. Le choix raisonnable. Trop raisonnable."
+    },
+    "banque-suisse-discrete": {
+      "description": "Optimisation fiscale et coffre-fort numérique. Nous ne savons pas qui vous êtes. Le fisc, si."
+    },
+    "cryptobank-caimans": {
+      "description": "0 frais de trading, 6 % par mois, électricité bradée. Garantie des dépôts : « on verra »."
+    }
+  },
+  "pools": {
+    "bitmeme-pool": {
+      "description": "Le plus gros pool BTCN. Paiement fixe, frais salés."
+    },
+    "galactic-pplns": {
+      "description": "Paiement à la chance du pool. Moins de frais."
+    },
+    "sololoto": {
+      "description": "Tu mines seul. Tu trouves un bloc, tu touches tout. Ou rien. Probablement rien."
+    },
+    "dogepool": {
+      "description": "Wow. Such pool. Much hash."
+    },
+    "coincoin-pps": {
+      "description": "Stable comme un canard sur une mare."
+    },
+    "nid-douillet": {
+      "description": "0 % de frais ET 3 % de bonus. Paiement toutes les 6 h. Que pourrait-il arriver ?"
+    },
+    "mamie-pool": {
+      "description": "Comme mamie : lente mais fiable. Elle tricote tes parts."
+    },
+    "tricot-solo": {
+      "description": "Tout seul avec ses aiguilles."
+    },
+    "kebabminers": {
+      "description": "Salade, tomate, oignon, hashrate."
+    },
+    "sauce-blanche": {
+      "description": "5 % de bonus. Le patron est « injoignable » depuis mardi."
+    }
+  },
+  "hardware": {
+    "rgb": "Plus de RGB que de hashrate.",
+    "blower": "Turbine bruyante. Chauffe comme un grille-pain.",
+    "oldGpu": "Rescapée du minage de 2017. Sent le cramé.",
+    "kidney": "Coûte un rein. Le gauche.",
+    "degradation": "Dégradation incluse sans supplément.",
+    "asic": "Fait le bruit d’un avion au décollage. Ne fait qu’une seule chose, mais la fait bien.",
+    "cheapPsu": "Certifiée « ça devrait aller ». Extincteur non fourni.",
+    "miningBoard": "Plein de slots PCIe x1, zéro RGB. Une vraie carte de mineur.",
+    "window": "Gratuit. Ta mère n’est pas d’accord.",
+    "fryer": "Odeur de frites garantie dans tout le quartier.",
+    "woodCrate": "Trouvée derrière un supermarché.",
+    "kallax": "Montage : 3 h et une dispute.",
+    "hotAisle": "Allée chaude / allée froide. Très sérieux.",
+    "container": "Un conteneur maritime bourré de rigs. Classique."
+  },
+  "achievements": {
+    "first-trade": {
+      "name": "Premier ordre",
+      "description": "Passer son premier ordre."
+    },
+    "hyperactive": {
+      "name": "Hyperactif",
+      "description": "Passer 100 ordres dans une saison."
+    },
+    "big-volume": {
+      "name": "Gros bras",
+      "description": "Atteindre 1 000 000 $ de volume échangé dans une saison."
+    },
+    "profit-10k": {
+      "name": "Ça paye",
+      "description": "Encaisser 10 000 $ de plus-values dans une saison."
+    },
+    "big-win": {
+      "name": "Coup de maître",
+      "description": "Gagner 5 000 $ sur une seule vente."
+    },
+    "big-loss": {
+      "name": "Aïe",
+      "description": "Perdre 5 000 $ sur une seule vente."
+    },
+    "diamond-hands": {
+      "name": "Mains de diamant",
+      "description": "Garder une position à −90 % sans vendre."
+    },
+    "diamond-hands-title": {
+      "name": "Diamant pur",
+      "description": "Garder une position à −95 % de plus de 1 000 $ de coût."
+    },
+    "rug-survivor": {
+      "name": "Survivant du rug",
+      "description": "Détenir une coin au moment de son rug pull."
+    },
+    "first-100k": {
+      "name": "Six chiffres",
+      "description": "Atteindre 100 000 $ de patrimoine."
+    },
+    "first-million": {
+      "name": "Premier million",
+      "description": "Atteindre 1 000 000 $ de patrimoine."
+    },
+    "millionaire-title": {
+      "name": "Double million",
+      "description": "Atteindre 2 000 000 $ de patrimoine."
+    },
+    "gold-frame": {
+      "name": "Coffre-fort",
+      "description": "Atteindre 5 000 000 $ de patrimoine."
+    },
+    "podium": {
+      "name": "Podium",
+      "description": "Être dans le top 3 du classement (10 joueurs minimum)."
+    },
+    "broke": {
+      "name": "Fauché",
+      "description": "Tomber sous 100 $ de patrimoine."
+    },
+    "first-rig": {
+      "name": "Mineur du dimanche",
+      "description": "Monter sa première rig."
+    },
+    "industrial": {
+      "name": "Ferme industrielle",
+      "description": "Posséder 10 rigs en même temps."
+    },
+    "pyromane": {
+      "name": "Pyromane",
+      "description": "Laisser une rig prendre feu."
+    },
+    "pyro-badge": {
+      "name": "Pompier volontaire",
+      "description": "Survivre à 3 incendies dans une saison."
+    },
+    "arsonist": {
+      "name": "Incendiaire en série",
+      "description": "Cinq incendies dans une saison. Les assureurs ont ta photo."
+    },
+    "miner-10k": {
+      "name": "Ça creuse",
+      "description": "Miner pour 10 000 $ de cryptos dans une saison."
+    },
+    "shareholder": {
+      "name": "Actionnaire",
+      "description": "Détenir une action."
+    },
+    "rentier": {
+      "name": "Rentier",
+      "description": "Toucher 500 $ de dividendes dans une saison."
+    },
+    "takeover": {
+      "name": "Vendu au plus offrant",
+      "description": "Être racheté lors d’une OPA."
+    },
+    "bankrupt": {
+      "name": "Ruiné par procuration",
+      "description": "Détenir une action qui fait faillite."
+    },
+    "premium": {
+      "name": "Compte premium",
+      "description": "Ouvrir un compte dans une banque payante."
+    },
+    "offshore": {
+      "name": "Évadé fiscal",
+      "description": "Ouvrir un compte à la Banque Suisse Discrète."
+    },
+    "taxpayer": {
+      "name": "Contribuable modèle",
+      "description": "Payer 1 000 $ de taxes dans une saison."
+    },
+    "fashion": {
+      "name": "Fashion victim",
+      "description": "Posséder 5 cosmétiques."
+    }
+  },
+  "cosmetics": {
+    "frame-ink": {
+      "name": "Cadre encre",
+      "description": "Sobre, efficace, comme un relevé bancaire."
+    },
+    "frame-dotted": {
+      "name": "Pointillés",
+      "description": "À découper le long des pointillés."
+    },
+    "frame-acid": {
+      "name": "Surligneur",
+      "description": "Le jaune fluo des notes importantes."
+    },
+    "frame-tape": {
+      "name": "Ruban de chantier",
+      "description": "Zone de travaux : portefeuille en reconstruction."
+    },
+    "frame-ticker": {
+      "name": "Bandeau boursier",
+      "description": "Un cadre qui défile comme les cours."
+    },
+    "frame-gold": {
+      "name": "Lingot",
+      "description": "Réservé aux millionnaires (vraiment)."
+    },
+    "frame-flames": {
+      "name": "Flammes",
+      "description": "Souvenir de ta première rig carbonisée."
+    },
+    "frame-holo": {
+      "name": "Hologramme",
+      "description": "Le cadre des baleines. Change de couleur avec la lumière."
+    },
+    "banner-grid": {
+      "name": "Papier millimétré",
+      "description": "Pour tracer ses courbes à la main."
+    },
+    "banner-stripes": {
+      "name": "Rayures",
+      "description": "Comme un costume de trader."
+    },
+    "banner-candles": {
+      "name": "Bougies vertes",
+      "description": "Que du vert. Que du bonheur."
+    },
+    "banner-red": {
+      "name": "Lundi noir",
+      "description": "Pour ceux qui aiment souffrir."
+    },
+    "banner-tabloid": {
+      "name": "Une du journal",
+      "description": "Ton nom en première page."
+    },
+    "banner-podium": {
+      "name": "Podium",
+      "description": "Offerte aux trois premiers du classement."
+    },
+    "title-retail": {
+      "name": "Petit porteur",
+      "description": "Le titre honnête."
+    },
+    "title-hodler": {
+      "name": "HODLer",
+      "description": "Ne vend jamais. Jamais."
+    },
+    "title-exit": {
+      "name": "Exit liquidity",
+      "description": "Quelqu’un doit bien acheter au sommet."
+    },
+    "title-influencer": {
+      "name": "Influenceur crypto",
+      "description": "Code promo dans la bio."
+    },
+    "title-wolf": {
+      "name": "Loup de Wall Street",
+      "description": "Ou du moins de la rue d’à côté."
+    },
+    "title-whale": {
+      "name": "Baleine",
+      "description": "Quand tu achètes, le marché tremble."
+    },
+    "title-pyro": {
+      "name": "Pyromane",
+      "description": "A mis le feu à sa propre ferme."
+    },
+    "title-survivor": {
+      "name": "Survivant du rug",
+      "description": "Était là. A tout vu. A tout perdu."
+    },
+    "title-millionaire": {
+      "name": "Millionnaire",
+      "description": "Un million de dollars imaginaires."
+    },
+    "title-diamond": {
+      "name": "Mains de diamant",
+      "description": "−90 % et toujours là."
+    },
+    "badge-rocket": {
+      "name": "Fusée",
+      "description": "To the moon."
+    },
+    "badge-ape": {
+      "name": "Singe",
+      "description": "Ape together strong."
+    },
+    "badge-bull": {
+      "name": "Taureau",
+      "description": "Ça monte."
+    },
+    "badge-bear": {
+      "name": "Ours",
+      "description": "Ça descend."
+    },
+    "badge-paper": {
+      "name": "Mains de papier",
+      "description": "Assume."
+    },
+    "badge-casino": {
+      "name": "Machine à sous",
+      "description": "Ce n’est pas du trading, c’est du loisir."
+    },
+    "badge-whale": {
+      "name": "Baleine",
+      "description": "Gros portefeuille, gros ego."
+    },
+    "badge-crown": {
+      "name": "Couronne",
+      "description": "Le badge le plus cher du jeu. C’est tout."
+    },
+    "badge-diamond": {
+      "name": "Diamant",
+      "description": "Mains de diamant certifiées."
+    },
+    "badge-fire": {
+      "name": "Feu",
+      "description": "Ta rig a brûlé. Tu as gardé ce badge."
+    },
+    "badge-pick": {
+      "name": "Pioche",
+      "description": "Mineur confirmé."
+    },
+    "name-underline": {
+      "name": "Surligné",
+      "description": "Ton pseudo au fluo."
+    },
+    "name-strike": {
+      "name": "Raturé",
+      "description": "Comme une ligne de crédit refusée."
+    },
+    "name-glitch": {
+      "name": "Glitch",
+      "description": "Le serveur a planté pendant ton trade."
+    },
+    "name-wave": {
+      "name": "Volatilité",
+      "description": "Les lettres montent et descendent."
+    },
+    "name-gold": {
+      "name": "Plaqué or",
+      "description": "Reflet doré de millionnaire."
+    }
+  },
+  "assets": {
+    "BTCN": {
+      "description": "La crypto originelle. Créée par un inconnu qui a perdu son mot de passe depuis."
+    },
+    "ETN": {
+      "description": "Smart contracts, gas fees et promesses de mise à jour « le mois prochain »."
+    },
+    "DCC": {
+      "description": "Un chien. Deux fois. Pourquoi pas."
+    },
+    "BAGT": {
+      "description": "Adossé à la baguette tradition. Grève prévue tous les jeudis."
+    },
+    "NFTRUC": {
+      "description": "Un JPEG de singe qui s'ennuie, mais en token."
+    },
+    "STONKS": {
+      "description": "Only up. (Avertissement : pas only up.)"
+    },
+    "MAMIE": {
+      "description": "Mamie a tout mis dedans. Ne la décevez pas."
+    },
+    "TWEET": {
+      "description": "Son cours dépend d'un seul homme et de son humeur à 3 h du matin."
+    },
+    "SAFEMM": {
+      "description": "Deux fois plus safe que SafeMoon. Donc pas du tout."
+    },
+    "POMME": {
+      "description": "Vend le même téléphone chaque année, un peu plus cher. Les fans font la queue quand même."
+    },
+    "MSFTE": {
+      "description": "Votre ordinateur va redémarrer pour installer des mises à jour. Ne l'éteignez pas."
+    },
+    "TMPT": {
+      "description": "Voitures autonomes livrées « l'an prochain » depuis 2016. Le PDG tweete à 3 h du matin."
+    },
+    "MCDB": {
+      "description": "La machine à glaces est en panne. Elle l'a toujours été. Elle le sera toujours."
+    },
+    "LRMD": {
+      "description": "Tout pour la maison, sauf un vendeur disponible au rayon visserie."
+    },
+    "AMZNT": {
+      "description": "Livré demain. Le colis, pas forcément ce que vous avez commandé."
+    },
+    "NFLQ": {
+      "description": "Annule votre série préférée après une saison, puis augmente l'abonnement."
+    },
+    "NVDO": {
+      "description": "Vend des pelles pendant la ruée vers l'IA. Les pelles coûtent 40 000 $."
+    },
+    "LVMHEIN": {
+      "description": "Un sac en toile à 3 000 €. La toile est d'excellente qualité."
+    },
+    "AFRAN": {
+      "description": "Votre vol est retardé pour cause de grève, de météo, ou parce que c'est mardi."
+    },
+    "TOTFOS": {
+      "description": "Investit massivement dans le vert. La couleur du logo, surtout."
+    },
+    "BOULG": {
+      "description": "Croissants industriels « faits maison ». Dividende aussi régulier que la fournée de 6 h."
+    }
+  },
+  "sectors": {
+    "Tech": "Tech",
+    "E-commerce": "E-commerce",
+    "Médias": "Médias",
+    "Restauration": "Restauration",
+    "Distribution": "Distribution",
+    "Agroalimentaire": "Agroalimentaire",
+    "Énergie": "Énergie",
+    "Transport": "Transport",
+    "Luxe": "Luxe",
+    "Automobile": "Automobile",
+    "Semi-conducteurs": "Semi-conducteurs",
+    "Jeux vidéo": "Jeux vidéo"
+  }
+}

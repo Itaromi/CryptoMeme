@@ -34,13 +34,13 @@ export function originGuard(allowed: string) {
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
     const o = req.headers.origin;
     if (o && o !== origin) {
-      res.status(403).json({ statusCode: 403, message: 'Origine refusée' });
+      res.status(403).json({ statusCode: 403, code: 'ORIGIN_REFUSED', message: 'Origine refusée' });
       return;
     }
     // Les mutations sont en JSON : bloque les formulaires cross-site « simples »
     const ct = req.headers['content-type'];
     if (ct && !ct.startsWith('application/json')) {
-      res.status(415).json({ statusCode: 415, message: 'Content-Type application/json attendu' });
+      res.status(415).json({ statusCode: 415, code: 'JSON_REQUIRED', message: 'Content-Type application/json attendu' });
       return;
     }
     next();

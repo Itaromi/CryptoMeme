@@ -6,11 +6,13 @@ import { api } from '@/lib/api';
 import { useMe } from '@/lib/hooks';
 import { type BankView, useBanks } from '@/lib/economy';
 import { useFormat } from '@/lib/format';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useErrorMessage } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 import { BankCard } from '@/components/banks/BankCard';
 
 export default function BanksPage() {
+  const errorMessage = useErrorMessage();
   const t = useTranslations('banks');
   const tc = useTranslations('common.actions');
   const f = useFormat();

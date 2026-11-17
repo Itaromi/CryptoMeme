@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditAction, AuditService } from '../common/audit.service';
 import { AuthUser } from '../common/auth.decorators';
 import { StocksService } from './stocks.service';
+import { apiError } from '../common/errors';
 
 export const STOCK_ACTIONS = ['earnings', 'news-good', 'news-bad', 'split', 'takeover', 'takeover-success', 'takeover-fail', 'bankrupt', 'relist'] as const;
 type StockAction = (typeof STOCK_ACTIONS)[number];
@@ -39,7 +40,7 @@ export class AdminStocksService {
 
   async act(actor: AuthUser, symbol: string, body: z.infer<typeof stockActionSchema>) {
     const a = await this.prisma.asset.findUnique({ where: { symbol: symbol.toUpperCase() }, select: { id: true, kind: true } });
-    if (!a || a.kind !== 'STOCK') throw new NotFoundException('Action inconnue');
+    if (!a || a.kind !== 'STOCK') throw new NotFoundException(apiError('STOCK_UNKNOWN', 'Action inconnue'));
     const result = await this.run(a.id, body);
     await this.audit.log({ actorId: actor.id, action: AUDIT[body.action], targetType: 'Asset', targetId: a.id, reason: body.reason, payload: { ...body, result } });
     return result;
@@ -54,7 +55,7 @@ export class AdminStocksService {
       case 'news-bad':
         return this.stocks.news(id, -1);
       case 'split':
-        if (!body.ratio) throw new BadRequestException('Ratio requis');
+        if (!body.ratio) throw new BadRequestException(apiError('RATIO_REQUIRED', 'Ratio requis'));
         return this.stocks.split(id, body.ratio);
       case 'takeover':
         return this.stocks.announceTakeover(id, body.premium);

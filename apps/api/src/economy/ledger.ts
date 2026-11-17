@@ -2,6 +2,8 @@ import { BadRequestException } from '@nestjs/common';
 import { LedgerKind, Prisma } from '@prisma/client';
 import { CASH_DP, QTY_DP } from '@cryptomeme/engine';
 import { D, Decimal, money } from '../common/decimal';
+import { apiError } from '../common/errors';
+import type { ApiErrorBody } from '@cryptomeme/shared';
 
 /** Client Prisma d'une transaction interactive. */
 export type Tx = Prisma.TransactionClient;
@@ -37,8 +39,8 @@ export async function lockWallets(tx: Tx, ids: string[]) {
 export interface CashOptions {
   /** Débit strict : lève une erreur 400 si le cash ne suffit pas (au lieu de plafonner le débit). */
   strict?: boolean;
-  /** Message de l'erreur en mode strict. */
-  message?: string;
+  /** Erreur levée en mode strict (par défaut : cash insuffisant). */
+  error?: ApiErrorBody;
 }
 
 /**
@@ -51,7 +53,7 @@ export async function applyCash(tx: Tx, walletId: string, delta: Decimal, kind: 
   const w = await tx.wallet.findUniqueOrThrow({ where: { id: walletId }, select: { cash: true } });
   const cash = D(w.cash);
   const wanted = delta.toDecimalPlaces(CASH_DP, Decimal.ROUND_DOWN);
-  if (opts.strict && cash.add(wanted).lt(0)) throw new BadRequestException(opts.message ?? 'Cash insuffisant');
+  if (opts.strict && cash.add(wanted).lt(0)) throw new BadRequestException(opts.error ?? apiError('INSUFFICIENT_CASH', 'Cash insuffisant'));
   const applied = wanted.lt(0) ? Decimal.max(wanted, cash.neg()) : wanted;
   if (applied.isZero()) return applied;
   const after = cash.add(applied);

@@ -4,11 +4,14 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useFormat } from '@/lib/format';
 import { type Farm, useMiningFormat } from '@/lib/mining';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useTexts } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 
 /** Pièces en stock : installer un rack, réparer, revendre ou jeter. */
 export function FarmInventory({ farm }: { farm: Farm }) {
+  const texts = useTexts();
+  const errorMessage = texts.error;
   const t = useTranslations('mining');
   const f = useFormat();
   const m = useMiningFormat();
@@ -61,7 +64,7 @@ export function FarmInventory({ farm }: { farm: Farm }) {
                         <option value="">{t('inventory.installIn')}</option>
                         {farm.facilities.map((fac) => (
                           <option key={fac.id} value={fac.id}>
-                            {fac.name}
+                            {texts.facility(fac)}
                           </option>
                         ))}
                       </select>

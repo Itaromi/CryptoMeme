@@ -4,9 +4,11 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ALL_QUERIES, AuthShell, Field, FormError } from '@/components/AuthShell';
 import { api } from '@/lib/api';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useErrorMessage } from '@/lib/texts';
 
 export default function LoginPage() {
+  const errorMessage = useErrorMessage();
   const t = useTranslations('auth');
   const router = useRouter();
   const login = useApiMutation({

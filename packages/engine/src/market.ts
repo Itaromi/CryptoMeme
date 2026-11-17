@@ -47,6 +47,11 @@ export interface MarketState {
 export interface TickEvent {
   type: 'JUMP' | 'RUG_PULL' | 'REGIME';
   detail: string;
+  /** Variation de prix (ratio) d'un saut ou d'un rug pull */
+  move?: number;
+  /** Changement d'ambiance */
+  from?: Regime;
+  to?: Regime;
 }
 
 export interface TickResult {
@@ -99,7 +104,7 @@ export function stepMarket(
 
   // 1. Régime
   const regime = nextRegime(rng, s.regime, dt);
-  if (regime !== s.regime) events.push({ type: 'REGIME', detail: `${s.regime} → ${regime}` });
+  if (regime !== s.regime) events.push({ type: 'REGIME', detail: `${s.regime} → ${regime}`, from: s.regime, to: regime });
   s.regime = regime;
   const rs = params.regimeSensitivity;
   const r = { volMul: 1 + (REGIMES[regime].volMul - 1) * rs, drift: REGIMES[regime].drift * rs };
@@ -123,14 +128,14 @@ export function stepMarket(
   if (poissonHit(rng, params.jumpIntensity, dt)) {
     const j = gaussian(rng) * params.jumpSize;
     s.logFair += j;
-    events.push({ type: 'JUMP', detail: `${j >= 0 ? '+' : ''}${((Math.exp(j) - 1) * 100).toFixed(1)} %` });
+    events.push({ type: 'JUMP', detail: `${j >= 0 ? '+' : ''}${((Math.exp(j) - 1) * 100).toFixed(1)} %`, move: Math.exp(j) - 1 });
   }
   if (poissonHit(rng, params.rugRisk, dt)) {
     const drop = Math.log(0.05 + rng() * 0.1); // -85 % à -95 %
     s.logFair += drop;
     s.logAnchor += drop;
     s.regime = 'PANIC';
-    events.push({ type: 'RUG_PULL', detail: `${((Math.exp(drop) - 1) * 100).toFixed(0)} %` });
+    events.push({ type: 'RUG_PULL', detail: `${((Math.exp(drop) - 1) * 100).toFixed(0)} %`, move: Math.exp(drop) - 1 });
   }
 
   // 5. Les PNJ tradent contre le pool

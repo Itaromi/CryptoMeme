@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { buyWithCash, CASH_DP, liquidationValue, QTY_DP, sellForCash, SwapError, SwapResult } from '@cryptomeme/engine';
-import { MIN_ORDER_CASH, ORDER_COOLDOWN_MS, OrderInput, stockMarketStatus } from '@cryptomeme/shared';
+import { MIN_ORDER_CASH, ORDER_COOLDOWN_MS, OrderInput, param, stockMarketStatus } from '@cryptomeme/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeasonsService } from '../seasons/seasons.service';
 import { MarketGateway } from '../market/market.gateway';
@@ -10,6 +10,7 @@ import { recordCandle } from '../market/candles';
 import { D, Decimal, money } from '../common/decimal';
 import { applyAsset, applyCash, costOfSale, lockWallets } from '../economy/ledger';
 import { NetWorthService } from '../economy/net-worth.service';
+import { apiError } from '../common/errors';
 
 @Injectable()
 export class TradingService {
@@ -40,18 +41,18 @@ export class TradingService {
 
         const wallet = await tx.wallet.findUniqueOrThrow({ where: { id: walletId }, include: { bank: true } });
         if (wallet.lastOrderAt && Date.now() - wallet.lastOrderAt.getTime() < ORDER_COOLDOWN_MS) {
-          throw new ConflictException('Doucement ! Attends une seconde entre deux ordres.');
+          throw new ConflictException(apiError('ORDER_TOO_FAST', 'Doucement ! Attends une seconde entre deux ordres.'));
         }
 
         const found = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "Asset" WHERE symbol = ${symbol} FOR UPDATE`;
-        if (!found.length) throw new NotFoundException('Actif inconnu');
+        if (!found.length) throw new NotFoundException(apiError('ASSET_UNKNOWN', 'Actif inconnu'));
         const asset = await tx.asset.findUniqueOrThrow({ where: { id: found[0].id } });
         if (asset.kind === 'STOCK') {
           const company = await tx.company.findUnique({ where: { assetId: asset.id } });
-          if (company && !['LISTED', 'TAKEOVER'].includes(company.status)) throw new BadRequestException('Cette action est retirée de la cote');
-          if (!stockMarketStatus().open) throw new BadRequestException('La Bourse est fermée (ouverture de 9 h à 22 h, heure de Paris)');
+          if (company && !['LISTED', 'TAKEOVER'].includes(company.status)) throw new BadRequestException(apiError('ASSET_DELISTED', 'Cette action est retirée de la cote'));
+          if (!stockMarketStatus().open) throw new BadRequestException(apiError('MARKET_CLOSED', 'La Bourse est fermée (ouverture de 9 h à 22 h, heure de Paris)'));
         }
-        if (asset.frozen) throw new BadRequestException('Marché gelé par un administrateur');
+        if (asset.frozen) throw new BadRequestException(apiError('ASSET_FROZEN', 'Marché gelé par un administrateur'));
 
         const holding = await tx.holding.findUnique({ where: { walletId_assetId: { walletId, assetId: asset.id } } });
         const heldQty = D(holding?.quantity);
@@ -61,22 +62,25 @@ export class TradingService {
         try {
           if (isBuy) {
             const spend = D(order.amount).toDecimalPlaces(CASH_DP, Decimal.ROUND_DOWN);
-            if (spend.lt(MIN_ORDER_CASH)) throw new BadRequestException(`Ordre minimum : ${MIN_ORDER_CASH} $`);
-            if (spend.gt(D(wallet.cash))) throw new BadRequestException('Cash insuffisant');
+            if (spend.lt(MIN_ORDER_CASH)) throw new BadRequestException(apiError('MIN_ORDER', `Ordre minimum : ${MIN_ORDER_CASH} $`, { min: param.money(MIN_ORDER_CASH) }));
+            if (spend.gt(D(wallet.cash))) throw new BadRequestException(apiError('INSUFFICIENT_CASH', 'Cash insuffisant'));
             swap = buyWithCash(poolOf(asset), spend, feeBps);
           } else {
             const qty = D(order.amount).toDecimalPlaces(QTY_DP, Decimal.ROUND_DOWN);
-            if (qty.gt(heldQty)) throw new BadRequestException('Quantité insuffisante');
+            if (qty.gt(heldQty)) throw new BadRequestException(apiError('INSUFFICIENT_QTY', 'Quantité insuffisante'));
             swap = sellForCash(poolOf(asset), qty, feeBps);
           }
         } catch (e) {
-          if (e instanceof SwapError) throw new BadRequestException(e.message);
+          if (e instanceof SwapError) throw new BadRequestException(apiError(e.code, e.message));
           throw e;
         }
 
         if (swap.slippageBps > order.maxSlippageBps) {
           throw new BadRequestException(
-            `Slippage de ${(swap.slippageBps / 100).toFixed(2)} % supérieur à ta limite de ${(order.maxSlippageBps / 100).toFixed(2)} %`,
+            apiError('SLIPPAGE_TOO_HIGH', `Slippage de ${(swap.slippageBps / 100).toFixed(2)} % supérieur à ta limite de ${(order.maxSlippageBps / 100).toFixed(2)} %`, {
+              slippage: param.pct(swap.slippageBps / 10_000),
+              limit: param.pct(order.maxSlippageBps / 10_000),
+            }),
           );
         }
 

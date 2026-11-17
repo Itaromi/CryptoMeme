@@ -12,6 +12,7 @@ import {
   itemResale,
   MAX_BUY,
   repairCost,
+  RigIssue,
 } from '@cryptomeme/engine';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeasonsService } from '../seasons/seasons.service';
@@ -19,6 +20,12 @@ import { D, Decimal, money } from '../common/decimal';
 import { ModifiersService } from '../economy/modifiers.service';
 import { applyCash, lockWallets, Tx } from '../economy/ledger';
 import { facilitySpec, networkLoad, rackSpec, RIG_INCLUDE, rigStats, toSpec } from './specs';
+import { apiError } from '../common/errors';
+import { hardwareDescriptionKey } from './hardware-texts';
+import { DEFAULT_ROOM_NAME, facilityName, textColumns, textView } from '../common/texts';
+
+/** Erreur 400 tirée d'un problème de montage (moteur). */
+const rigError = (i: RigIssue) => apiError(i.code, i.message, i.params);
 
 export const CATALOG_SORTS = ['price', '-price', 'perWatt', 'perDollar'] as const;
 export interface CatalogQuery {
@@ -58,7 +65,7 @@ export class MiningService {
 
   private async ownedItem(tx: Tx, walletId: string, id: string) {
     const item = await tx.componentItem.findUnique({ where: { id }, include: { model: true, rigsInRack: true } });
-    if (!item || item.walletId !== walletId) throw new NotFoundException('Composant introuvable');
+    if (!item || item.walletId !== walletId) throw new NotFoundException(apiError('PART_NOT_FOUND', 'Composant introuvable'));
     return item;
   }
 
@@ -75,9 +82,11 @@ export class MiningService {
       await lockWallets(tx, [walletId]);
       const again = await tx.facility.count({ where: { walletId } });
       if (again) return;
-      const f = await tx.facility.create({ data: { walletId, typeId: room.id, name: 'Ma chambre' } });
+      const f = await tx.facility.create({ data: { walletId, typeId: room.id, name: DEFAULT_ROOM_NAME } });
       if (crate) await tx.componentItem.create({ data: { walletId, modelId: crate.id, purchasePrice: 0, facilityId: f.id } });
-      await tx.miningLog.create({ data: { walletId, type: 'INFO', message: 'Tu as récupéré ta chambre et une vieille caisse en bois. Ta ferme commence ici.' } });
+      await tx.miningLog.create({
+        data: { walletId, type: 'INFO', message: 'Tu as récupéré ta chambre et une vieille caisse en bois. Ta ferme commence ici.', ...textColumns('game.mining.welcome') },
+      });
     });
   }
 
@@ -118,6 +127,7 @@ export class MiningService {
         airflow: m.airflow,
         failureRate: m.failureRate,
         description: m.description,
+        descriptionKey: hardwareDescriptionKey(m.description),
         /** Algo le plus rentable et revenu brut estimé ($/jour) */
         bestAlgo: values[0]?.algo ?? null,
         usdPerDay: best,
@@ -136,10 +146,10 @@ export class MiningService {
   }
 
   async buy(userId: string, modelId: string, quantity: number) {
-    if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_BUY) throw new BadRequestException(`Quantité entre 1 et ${MAX_BUY}`);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_BUY) throw new BadRequestException(apiError('QTY_RANGE', `Quantité entre 1 et ${MAX_BUY}`, { max: MAX_BUY }));
     const wallet = await this.seasons.wallet(userId);
     const model = await this.prisma.componentModel.findUnique({ where: { id: modelId } });
-    if (!model || !model.available) throw new NotFoundException('Modèle indisponible');
+    if (!model || !model.available) throw new NotFoundException(apiError('MODEL_UNAVAILABLE', 'Modèle indisponible'));
     const { hardwareMultiplier } = await this.modifiers.current();
     // Prix réellement payé (pénurie, etc.), conservé sur chaque exemplaire
     const unit = hardwarePrice(Number(model.price), hardwareMultiplier);
@@ -159,8 +169,8 @@ export class MiningService {
     return this.prisma.$transaction(async (tx) => {
       await lockWallets(tx, [wallet.id]);
       const item = await this.ownedItem(tx, wallet.id, itemId);
-      if (item.rigId) throw new BadRequestException("Démonte d'abord la rig qui utilise ce composant");
-      if (item.rigsInRack.length) throw new BadRequestException('Ce rack contient encore des rigs');
+      if (item.rigId) throw new BadRequestException(apiError('PART_IN_RIG', "Démonte d'abord la rig qui utilise ce composant"));
+      if (item.rigsInRack.length) throw new BadRequestException(apiError('RACK_NOT_EMPTY', 'Ce rack contient encore des rigs'));
       const value = itemResale(Number(item.model.price), item.wear, item.status, hardwareMultiplier);
       await tx.componentItem.delete({ where: { id: item.id } });
       if (value > 0) await this.pay(tx, wallet.id, D(value), 'HARDWARE_SELL', `Revente ${item.model.brand} ${item.model.name}`, item.id);
@@ -173,7 +183,7 @@ export class MiningService {
     return this.prisma.$transaction(async (tx) => {
       await lockWallets(tx, [wallet.id]);
       const item = await this.ownedItem(tx, wallet.id, itemId);
-      if (item.status !== 'BROKEN') throw new BadRequestException(item.status === 'DESTROYED' ? 'Carbonisé. Irréparable.' : "Ce composant n'est pas en panne");
+      if (item.status !== 'BROKEN') throw new BadRequestException(item.status === 'DESTROYED' ? apiError('PART_DESTROYED', 'Carbonisé. Irréparable.') : apiError('PART_NOT_BROKEN', "Ce composant n'est pas en panne"));
       const cost = repairCost(Number(item.model.price));
       await this.pay(tx, wallet.id, D(cost).neg(), 'REPAIR', `Réparation ${item.model.name}`, item.id);
       await tx.componentItem.update({ where: { id: item.id }, data: { status: 'OK', wear: Math.min(item.wear, 0.9) } });
@@ -189,8 +199,8 @@ export class MiningService {
   async buyFacility(userId: string, typeId: string, name: string) {
     const wallet = await this.seasons.wallet(userId);
     const type = await this.prisma.facilityType.findUnique({ where: { id: typeId } });
-    if (!type) throw new NotFoundException('Local inconnu');
-    if (Number(type.price) === 0) throw new BadRequestException('Tu ne peux avoir qu’une seule chambre');
+    if (!type) throw new NotFoundException(apiError('FACILITY_UNKNOWN', 'Local inconnu'));
+    if (Number(type.price) === 0) throw new BadRequestException(apiError('ONE_BEDROOM_ONLY', 'Tu ne peux avoir qu’une seule chambre'));
     return this.prisma.$transaction(async (tx) => {
       await this.pay(tx, wallet.id, D(type.price).neg(), 'HARDWARE_BUY', `Achat local : ${type.name}`, type.id);
       return tx.facility.create({ data: { walletId: wallet.id, typeId: type.id, name: name.trim() || type.name } });
@@ -202,8 +212,8 @@ export class MiningService {
     return this.prisma.$transaction(async (tx) => {
       await lockWallets(tx, [wallet.id]);
       const f = await tx.facility.findUnique({ where: { id: facilityId }, include: { type: true, racks: true } });
-      if (!f || f.walletId !== wallet.id) throw new NotFoundException();
-      if (f.racks.length) throw new BadRequestException("Retire d'abord les racks de ce local");
+      if (!f || f.walletId !== wallet.id) throw new NotFoundException(apiError('NOT_FOUND', 'Introuvable'));
+      if (f.racks.length) throw new BadRequestException(apiError('FACILITY_HAS_RACKS', "Retire d'abord les racks de ce local"));
       await tx.facility.delete({ where: { id: f.id } });
       const value = facilityResale(Number(f.type.price));
       if (value > 0) await this.pay(tx, wallet.id, D(value), 'HARDWARE_SELL', `Revente local : ${f.type.name}`, f.id);
@@ -216,13 +226,13 @@ export class MiningService {
     return this.prisma.$transaction(async (tx) => {
       await lockWallets(tx, [wallet.id]);
       const item = await this.ownedItem(tx, wallet.id, itemId);
-      if (item.model.kind !== 'RACK') throw new BadRequestException("Ce n'est pas un rack");
-      if (item.status !== 'OK') throw new BadRequestException('Rack hors service');
-      if (item.rigsInRack.length) throw new BadRequestException('Démonte d’abord les rigs de ce rack');
+      if (item.model.kind !== 'RACK') throw new BadRequestException(apiError('NOT_A_RACK', "Ce n'est pas un rack"));
+      if (item.status !== 'OK') throw new BadRequestException(apiError('RACK_BROKEN', 'Rack hors service'));
+      if (item.rigsInRack.length) throw new BadRequestException(apiError('RACK_HAS_RIGS', 'Démonte d’abord les rigs de ce rack'));
       if (facilityId) {
         const f = await tx.facility.findUnique({ where: { id: facilityId }, include: { type: true, racks: true } });
-        if (!f || f.walletId !== wallet.id) throw new NotFoundException('Local introuvable');
-        if (f.racks.filter((r) => r.id !== item.id).length >= f.type.rackSlots) throw new BadRequestException(`${f.type.name} : ${f.type.rackSlots} rack(s) maximum`);
+        if (!f || f.walletId !== wallet.id) throw new NotFoundException(apiError('FACILITY_NOT_FOUND', 'Local introuvable'));
+        if (f.racks.filter((r) => r.id !== item.id).length >= f.type.rackSlots) throw new BadRequestException(apiError('FACILITY_FULL', `${f.type.name} : ${f.type.rackSlots} rack(s) maximum`, { facility: facilityName(f.type), max: f.type.rackSlots }));
       }
       await tx.componentItem.update({ where: { id: item.id }, data: { facilityId } });
       return { ok: true };
@@ -262,20 +272,20 @@ export class MiningService {
         where: { id: body.rackId },
         include: { model: true, rigsInRack: true, facility: { include: { type: true } } },
       });
-      if (!rack || rack.walletId !== wallet.id || rack.model.kind !== 'RACK') throw new NotFoundException('Rack introuvable');
-      if (!rack.facility) throw new BadRequestException("Installe d'abord ce rack dans un local");
-      if (rack.rigsInRack.length >= (rack.model.rackSlots ?? 1)) throw new BadRequestException('Rack plein');
+      if (!rack || rack.walletId !== wallet.id || rack.model.kind !== 'RACK') throw new NotFoundException(apiError('RACK_NOT_FOUND', 'Rack introuvable'));
+      if (!rack.facility) throw new BadRequestException(apiError('RACK_NOT_INSTALLED', "Installe d'abord ce rack dans un local"));
+      if (rack.rigsInRack.length >= (rack.model.rackSlots ?? 1)) throw new BadRequestException(apiError('RACK_FULL', 'Rack plein'));
 
       const ids = [...new Set(body.partIds)];
       const parts = await tx.componentItem.findMany({ where: { id: { in: ids }, walletId: wallet.id }, include: { model: true } });
-      if (parts.length !== ids.length) throw new BadRequestException('Composant introuvable');
+      if (parts.length !== ids.length) throw new BadRequestException(apiError('PART_NOT_FOUND', 'Composant introuvable'));
       for (const p of parts) {
-        if (p.rigId) throw new BadRequestException(`${p.model.name} est déjà monté dans une rig`);
-        if (p.status !== 'OK') throw new BadRequestException(`${p.model.name} est hors service`);
-        if (p.model.kind === 'RACK') throw new BadRequestException('Un rack ne se monte pas dans une rig');
+        if (p.rigId) throw new BadRequestException(apiError('PART_ALREADY_MOUNTED', `${p.model.name} est déjà monté dans une rig`, { part: p.model.name }));
+        if (p.status !== 'OK') throw new BadRequestException(apiError('PART_OUT_OF_ORDER', `${p.model.name} est hors service`, { part: p.model.name }));
+        if (p.model.kind === 'RACK') throw new BadRequestException(apiError('RACK_IN_RIG', 'Un rack ne se monte pas dans une rig'));
       }
       const stats = computeRig(parts.map(toSpec), 0, facilitySpec(rack.facility.type), rackSpec(rack.model));
-      if (!stats.valid) throw new BadRequestException(stats.errors[0]);
+      if (!stats.valid) throw new BadRequestException(rigError(stats.errors[0]));
 
       const count = await tx.rig.count({ where: { walletId: wallet.id } });
       const rig = await tx.rig.create({ data: { walletId: wallet.id, rackId: rack.id, name: body.name.trim() || `Rig #${count + 1}` } });
@@ -290,7 +300,7 @@ export class MiningService {
       // Wallet d'abord (même ordre que le tick de minage), puis relecture de la rig sous verrou
       await lockWallets(tx, [wallet.id]);
       const rig = await tx.rig.findUnique({ where: { id: rigId }, include: RIG_INCLUDE });
-      if (!rig || rig.walletId !== wallet.id) throw new NotFoundException('Rig introuvable');
+      if (!rig || rig.walletId !== wallet.id) throw new NotFoundException(apiError('RIG_NOT_FOUND', 'Rig introuvable'));
 
       const data: Prisma.RigUpdateInput = {};
       if (body.name !== undefined) data.name = body.name.trim().slice(0, 40) || rig.name;
@@ -298,18 +308,18 @@ export class MiningService {
       let pool = rig.pool;
       if (body.poolId !== undefined) {
         pool = body.poolId ? await tx.miningPool.findUnique({ where: { id: body.poolId } }) : null;
-        if (body.poolId && (!pool || !pool.active)) throw new BadRequestException('Pool indisponible');
+        if (body.poolId && (!pool || !pool.active)) throw new BadRequestException(apiError('POOL_UNAVAILABLE', 'Pool indisponible'));
         data.pool = pool ? { connect: { id: pool.id } } : { disconnect: true };
       }
       const running = body.running ?? rig.running;
       if (running) {
         const stats = rigStats({ ...rig, overclock: body.overclock ?? rig.overclock, pool });
-        if (!stats || !rig.rack.facility) throw new BadRequestException('Le rack de cette rig n’est installé nulle part');
-        if (!stats.valid) throw new BadRequestException(stats.errors[0]);
-        if (rig.parts.some((p) => p.status !== 'OK')) throw new BadRequestException('Un composant est en panne : répare-le ou remplace-le');
-        if (!pool) throw new BadRequestException('Choisis un pool avant de démarrer');
+        if (!stats || !rig.rack.facility) throw new BadRequestException(apiError('RIG_RACK_NOT_INSTALLED', 'Le rack de cette rig n’est installé nulle part'));
+        if (!stats.valid) throw new BadRequestException(rigError(stats.errors[0]));
+        if (rig.parts.some((p) => p.status !== 'OK')) throw new BadRequestException(apiError('RIG_PART_BROKEN', 'Un composant est en panne : répare-le ou remplace-le'));
+        if (!pool) throw new BadRequestException(apiError('POOL_REQUIRED', 'Choisis un pool avant de démarrer'));
         const w = await tx.wallet.findUniqueOrThrow({ where: { id: wallet.id }, select: { cash: true } });
-        if (D(w.cash).lte(0)) throw new BadRequestException("Plus de cash pour payer l'électricité");
+        if (D(w.cash).lte(0)) throw new BadRequestException(apiError('NO_CASH_FOR_POWER', "Plus de cash pour payer l'électricité"));
         await this.checkPower(tx, rig.rack.facility.id, rig.id, stats.wallPower);
       }
       if (body.running !== undefined) data.running = body.running;
@@ -323,8 +333,13 @@ export class MiningService {
     const used = others.reduce((s, r) => s + (rigStats(r)?.wallPower ?? 0), 0);
     const f = await tx.facility.findUniqueOrThrow({ where: { id: facilityId }, include: { type: true } });
     if (used + wallPower > f.type.maxPowerKw * 1000) {
+      const needed = (used + wallPower) / 1000;
       throw new BadRequestException(
-        `${f.type.name} : ${((used + wallPower) / 1000).toFixed(2)} kW demandés pour ${f.type.maxPowerKw} kW disponibles. Ça va disjoncter.`,
+        apiError('POWER_OVERLOAD', `${f.type.name} : ${needed.toFixed(2)} kW demandés pour ${f.type.maxPowerKw} kW disponibles. Ça va disjoncter.`, {
+          facility: facilityName(f.type),
+          needed: Math.round(needed * 100) / 100,
+          max: f.type.maxPowerKw,
+        }),
       );
     }
   }
@@ -334,7 +349,7 @@ export class MiningService {
     await this.prisma.$transaction(async (tx) => {
       await lockWallets(tx, [wallet.id]);
       const rig = await tx.rig.findUnique({ where: { id: rigId } });
-      if (!rig || rig.walletId !== wallet.id) throw new NotFoundException();
+      if (!rig || rig.walletId !== wallet.id) throw new NotFoundException(apiError('NOT_FOUND', 'Introuvable'));
       await tx.componentItem.updateMany({ where: { rigId }, data: { rigId: null } });
       await tx.rig.delete({ where: { id: rigId } });
     });
@@ -363,6 +378,7 @@ export class MiningService {
       })),
       pools: pools.map((p) => ({
         id: p.id,
+        slug: p.slug,
         name: p.name,
         description: p.description,
         symbol: p.asset.symbol,
@@ -461,7 +477,7 @@ export class MiningService {
       }),
       inventory: loose.map((i) => this.itemView(i, mods.hardwareMultiplier)),
       pending: balances.map((b) => ({ pool: b.pool.name, symbol: b.pool.asset.symbol, amount: b.pending.toString(), lastPaidAt: b.lastPaidAt })),
-      logs: logs.map((l) => ({ type: l.type, message: l.message, at: l.createdAt })),
+      logs: logs.map((l) => ({ type: l.type, message: l.message, text: textView(l), at: l.createdAt })),
     };
   }
 

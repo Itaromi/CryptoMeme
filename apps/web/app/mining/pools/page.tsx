@@ -5,10 +5,12 @@ import { useFormat } from '@/lib/format';
 import { ALGO_LABEL, POOL_TYPES, useMiningFormat, usePools } from '@/lib/mining';
 import { MiningNav } from '@/components/mining/MiningNav';
 import { Glyph } from '@/lib/icons';
+import { useTexts } from '@/lib/texts';
 
 export default function PoolsPage() {
   const t = useTranslations('mining');
   const f = useFormat();
+  const texts = useTexts();
   const m = useMiningFormat();
   const { data } = usePools();
   return (
@@ -69,7 +71,7 @@ export default function PoolsPage() {
                     <Glyph name={p.emoji} /> {p.symbol}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-ink-2">{p.description}</p>
+                <p className="mt-1 text-sm text-ink-2">{texts.catalog(`pools.${p.slug}.description`, p.description)}</p>
                 <dl className="num mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
                   <Fact label={t('pools.type')}>{m.poolType(p.type)}</Fact>
                   <Fact label={t('pools.fee')} className={p.feeBps < 0 ? 'text-up' : ''}>

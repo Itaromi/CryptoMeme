@@ -6,6 +6,7 @@ import { AuditService } from '../common/audit.service';
 import { AuthUser } from '../common/auth.decorators';
 import { EventsService } from './events.service';
 import { BanksService } from './banks.service';
+import { apiError } from '../common/errors';
 
 const amount = z.string().regex(/^\d+(\.\d{1,2})?$/);
 /** Paramètres libres d'un événement : n'importe quelle valeur JSON. */
@@ -64,23 +65,23 @@ export class AdminEconomyService {
   /** Déclenche un événement à la main (avec ou sans préavis). */
   async trigger(actor: AuthUser, body: z.infer<typeof triggerSchema>) {
     const type = await this.prisma.eventType.findUnique({ where: { id: body.typeId } });
-    if (!type) throw new NotFoundException();
+    if (!type) throw new NotFoundException(apiError('NOT_FOUND', 'Introuvable'));
     const params = { ...body.params };
     const bankId = typeof params.bankId === 'string' ? params.bankId : undefined;
-    if (type.slug === 'bank-run' && !bankId) throw new BadRequestException('Précise la banque (params.bankId)');
+    if (type.slug === 'bank-run' && !bankId) throw new BadRequestException(apiError('BANK_REQUIRED', 'Précise la banque (params.bankId)'));
     if (bankId && !params.bank) {
       const b = await this.prisma.bank.findUnique({ where: { id: bankId } });
-      if (!b) throw new NotFoundException('Banque inconnue');
+      if (!b) throw new NotFoundException(apiError('BANK_UNKNOWN', 'Banque inconnue'));
       params.bank = b.name;
     }
     const e = await this.events.schedule(type, params, { triggeredBy: actor.id, immediate: body.immediate });
-    if (!e) throw new BadRequestException('Aucune cible possible pour cet événement');
+    if (!e) throw new BadRequestException(apiError('NO_EVENT_TARGET', 'Aucune cible possible pour cet événement'));
     await this.audit.log({ actorId: actor.id, action: 'EVENT_TRIGGER', targetType: 'Economy', targetId: e.id, reason: body.reason, payload: { type: type.slug, immediate: body.immediate, params } });
     return { id: e.id, title: e.title, startsAt: e.startsAt };
   }
 
   async cancelEvent(actor: AuthUser, id: string, reason: string) {
-    if (!(await this.events.cancel(id))) throw new BadRequestException('Événement déjà terminé');
+    if (!(await this.events.cancel(id))) throw new BadRequestException(apiError('EVENT_ALREADY_OVER', 'Événement déjà terminé'));
     await this.audit.log({ actorId: actor.id, action: 'EVENT_CANCEL', targetType: 'Economy', targetId: id, reason, payload: {} });
     return { ok: true };
   }

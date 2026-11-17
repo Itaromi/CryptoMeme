@@ -13,5 +13,9 @@
     "SILVER": "Argent",
     "GOLD": "Or",
     "LEGENDARY": "Légendaire"
+  },
+  "secret": {
+    "name": "???",
+    "description": "Succès secret. Continue de jouer… ou de perdre."
   }
 }

@@ -69,15 +69,7 @@
       "cash": "Available cash: {cash}"
     },
     "submit": "Send for review",
-    "sent": "Request sent! A moderator will check the name. Fee and deposit are held in escrow until then.",
-    "errors": {
-      "tooShort": "At least {min} characters",
-      "tooLong": "At most {max} characters",
-      "tooSmall": "Minimum: {min}",
-      "tooBig": "Maximum: {max}",
-      "symbol": "2 to 8 letters or digits",
-      "invalid": "Invalid value"
-    }
+    "sent": "Request sent! A moderator will check the name. Fee and deposit are held in escrow until then."
   },
   "mine": {
     "title": "My creations",

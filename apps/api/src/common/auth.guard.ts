@@ -5,6 +5,7 @@ import { Role } from '@prisma/client';
 import type { Request } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser, PUBLIC_KEY, ROLES_KEY } from './auth.decorators';
+import { apiError } from './errors';
 
 export const ACCESS_COOKIE = 'cm_at';
 export const REFRESH_COOKIE = 'cm_rt';
@@ -36,25 +37,25 @@ export class AuthGuard implements CanActivate {
 
     if (!token) {
       if (isPublic) return true;
-      throw new UnauthorizedException('Non connecté');
+      throw new UnauthorizedException(apiError('UNAUTHENTICATED', 'Non connecté'));
     }
     let payload: { sub: string };
     try {
       payload = await this.jwt.verifyAsync<{ sub: string }>(token);
     } catch {
       if (isPublic) return true;
-      throw new UnauthorizedException('Session expirée');
+      throw new UnauthorizedException(apiError('SESSION_EXPIRED', 'Session expirée'));
     }
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       select: { id: true, username: true, role: true, bannedAt: true },
     });
-    if (!user) throw new UnauthorizedException();
-    if (user.bannedAt) throw new ForbiddenException('Compte suspendu');
+    if (!user) throw new UnauthorizedException(apiError('UNAUTHENTICATED', 'Non connecté'));
+    if (user.bannedAt) throw new ForbiddenException(apiError('ACCOUNT_SUSPENDED', 'Compte suspendu', { reason: 'none' }));
     req.user = { id: user.id, username: user.username, role: user.role };
 
     const roles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, targets);
-    if (roles?.length && !roles.includes(user.role)) throw new ForbiddenException('Accès refusé');
+    if (roles?.length && !roles.includes(user.role)) throw new ForbiddenException(apiError('FORBIDDEN', 'Accès refusé'));
     return true;
   }
 }

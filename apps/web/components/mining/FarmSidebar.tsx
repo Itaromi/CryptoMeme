@@ -2,6 +2,7 @@
 import { useNow, useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/format';
 import { type Farm } from '@/lib/mining';
+import { useTexts } from '@/lib/texts';
 
 /** Mise en avant des lignes du journal selon leur gravité */
 const LOG_STYLE: Record<string, string> = {
@@ -19,6 +20,7 @@ const heading = 'mb-2 border-b-2 border-ink pb-1 text-sm font-bold uppercase tra
 export function FarmSidebar({ farm }: { farm: Farm }) {
   const t = useTranslations('mining.sidebar');
   const f = useFormat();
+  const texts = useTexts();
   const now = useNow({ updateInterval: 30_000 });
   const federations = Object.entries(farm.summary.federations);
 
@@ -60,7 +62,7 @@ export function FarmSidebar({ farm }: { farm: Farm }) {
         <ul className="divide-y divide-line">
           {farm.logs.map((l, i) => (
             <li key={i} className="py-2 text-sm leading-snug">
-              <span className={LOG_STYLE[l.type] ?? ''}>{l.message}</span>
+              <span className={LOG_STYLE[l.type] ?? ''}>{texts.text(l.text, l.message)}</span>
               <span className="block text-xs text-ink-3">{f.ago(l.at, now)}</span>
             </li>
           ))}

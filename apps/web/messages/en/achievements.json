@@ -13,5 +13,9 @@
     "SILVER": "Silver",
     "GOLD": "Gold",
     "LEGENDARY": "Legendary"
+  },
+  "secret": {
+    "name": "???",
+    "description": "Secret achievement. Keep playing… or keep losing."
   }
 }

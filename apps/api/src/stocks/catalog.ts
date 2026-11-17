@@ -37,31 +37,37 @@ export const COMPANIES: CompanySeed[] = [
   { symbol: 'BOULG', name: 'Boulangerie Générale', sector: 'Agroalimentaire', ceo: 'Germaine Croûton', tier: 'MID_CAP', price: 23, emoji: 'Bread', color: '#d97706', description: "Croissants industriels « faits maison ». Dividende aussi régulier que la fournée de 6 h.", pe: 14, payout: 0.7, growth: 0.006, epsVol: 0.04, volMul: 0.6 },
 ];
 
-/** Repreneurs possibles lors d'une OPA. */
-export const ACQUIRERS = [
-  'le fonds Vautour Capital',
-  'un émir très enthousiaste',
-  'BlackRoche',
-  'Warren Buffaitte',
-  'un cousin de Bernard Arnaque',
-  'le fonds souverain de Groland',
-  'Softbank Pas Soft',
+/**
+ * Repreneurs possibles lors d'une OPA. `id` sert de clé de traduction (game.acquirers.<id>) ; `name` est stocké
+ * dans Company.offerBy et reste le repli français.
+ */
+export const ACQUIRERS: Array<{ id: string; name: string }> = [
+  { id: 'vulture', name: 'le fonds Vautour Capital' },
+  { id: 'emir', name: 'un émir très enthousiaste' },
+  { id: 'blackroche', name: 'BlackRoche' },
+  { id: 'buffaitte', name: 'Warren Buffaitte' },
+  { id: 'cousin', name: 'un cousin de Bernard Arnaque' },
+  { id: 'groland', name: 'le fonds souverain de Groland' },
+  { id: 'softbank', name: 'Softbank Pas Soft' },
 ];
 
-/** Brèves d'entreprise. {name} = société, {ceo} = PDG. Le signe donne le sens de la réaction. */
-export const NEWS: Array<{ sign: 1 | -1; text: string }> = [
-  { sign: 1, text: '{name} signe un contrat géant avec un client « très connu mais confidentiel ».' },
-  { sign: 1, text: '{ceo} annonce un plan de rachat d’actions. Les actionnaires applaudissent.' },
-  { sign: 1, text: 'Un analyste star relève sa cible sur {name} : « strong buy, voire très strong ».' },
-  { sign: 1, text: '{name} dévoile un nouveau produit. Personne ne sait à quoi il sert, mais il y a de l’IA dedans.' },
-  { sign: 1, text: '{name} intègre un indice prestigieux. Les fonds indiciels achètent sans réfléchir.' },
-  { sign: 1, text: 'Rumeur : {name} serait courtisée par un géant du secteur.' },
-  { sign: 1, text: '{ceo} promet « la meilleure année de notre histoire » sur un plateau télé.' },
-  { sign: -1, text: '{name} rappelle 2 millions de produits pour « un léger risque d’explosion ».' },
-  { sign: -1, text: 'Enquête de l’autorité de la concurrence sur {name}.' },
-  { sign: -1, text: '{ceo} vend discrètement une grosse partie de ses actions. Hasard, sûrement.' },
-  { sign: -1, text: 'Un analyste dégrade {name} : « on ne comprend plus leur stratégie ».' },
-  { sign: -1, text: 'Grève générale chez {name}. La machine à café serait en cause.' },
-  { sign: -1, text: '{name} victime d’une cyberattaque : le mot de passe était « admin1234 ».' },
-  { sign: -1, text: '{ceo} tweete quelque chose de regrettable. Le service com’ démissionne.' },
+/**
+ * Brèves d'entreprise. {name} = société, {ceo} = PDG. Le signe donne le sens de la réaction.
+ * `id` sert de clé de traduction (game.news.<id>) ; `text` est le repli français.
+ */
+export const NEWS: Array<{ id: string; sign: 1 | -1; text: string }> = [
+  { id: 'bigContract', sign: 1, text: '{name} signe un contrat géant avec un client « très connu mais confidentiel ».' },
+  { id: 'buyback', sign: 1, text: '{ceo} annonce un plan de rachat d’actions. Les actionnaires applaudissent.' },
+  { id: 'upgrade', sign: 1, text: 'Un analyste star relève sa cible sur {name} : « strong buy, voire très strong ».' },
+  { id: 'newProduct', sign: 1, text: '{name} dévoile un nouveau produit. Personne ne sait à quoi il sert, mais il y a de l’IA dedans.' },
+  { id: 'index', sign: 1, text: '{name} intègre un indice prestigieux. Les fonds indiciels achètent sans réfléchir.' },
+  { id: 'courted', sign: 1, text: 'Rumeur : {name} serait courtisée par un géant du secteur.' },
+  { id: 'bestYear', sign: 1, text: '{ceo} promet « la meilleure année de notre histoire » sur un plateau télé.' },
+  { id: 'recall', sign: -1, text: '{name} rappelle 2 millions de produits pour « un léger risque d’explosion ».' },
+  { id: 'antitrust', sign: -1, text: 'Enquête de l’autorité de la concurrence sur {name}.' },
+  { id: 'insiderSale', sign: -1, text: '{ceo} vend discrètement une grosse partie de ses actions. Hasard, sûrement.' },
+  { id: 'downgrade', sign: -1, text: 'Un analyste dégrade {name} : « on ne comprend plus leur stratégie ».' },
+  { id: 'strike', sign: -1, text: 'Grève générale chez {name}. La machine à café serait en cause.' },
+  { id: 'cyberattack', sign: -1, text: '{name} victime d’une cyberattaque : le mot de passe était « admin1234 ».' },
+  { id: 'badTweet', sign: -1, text: '{ceo} tweete quelque chose de regrettable. Le service com’ démissionne.' },
 ];

@@ -12,11 +12,15 @@ import { D, money } from '../common/decimal';
 import { applyAsset, applyCash } from './ledger';
 import { stateJson, stateOf } from '../market/asset-state';
 import { NotificationInput, NotificationsService } from './notifications';
+import { type GameText, param, type TextParams } from '@cryptomeme/shared';
+import { eventTitle, textColumns } from '../common/texts';
 import { ModifiersService } from './modifiers.service';
 
 /** Paramètres d'un événement (colonne JSON, éditable en admin) : lus via num / str / les schémas ci-dessous. */
 type Params = Record<string, unknown>;
-type Result = { affected: number; total: number; detail?: string };
+/** Bilan d'un événement (colonne JSON) : `detail` est le repli français de `detailText`. */
+type Result = { affected: number; total: number; detail?: string; detailText?: GameText };
+type Event = GameEvent & { type: EventType };
 const ref = (e: GameEvent) => ({ type: 'GameEvent', id: e.id });
 const between = (a: number, b: number) => a + mathRng() * (b - a);
 
@@ -34,15 +38,35 @@ const str = (p: Params, key: string): string | undefined => {
 const bracketsSchema = z.array(z.tuple([z.number(), z.number()])).min(1);
 const tiersSchema = z.array(z.enum(AssetTier)).optional();
 
+/** Valeur de « {clé} » dans un texte d'événement (`mult` et `ambient` sont des alias). */
+const paramValue = (p: Params, k: string) => (k === 'mult' ? (p.elecMultiplier ?? p.hardwareMultiplier ?? p.failureMultiplier) : k === 'ambient' ? p.ambientDelta : p[k]);
+
 /** Remplit « {clé} » avec les paramètres de l'événement. */
 export function fill(template: string, p: Params) {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => {
-    const v = k === 'mult' ? (p.elecMultiplier ?? p.hardwareMultiplier ?? p.failureMultiplier) : k === 'ambient' ? p.ambientDelta : p[k];
+    const v = paramValue(p, k);
     if (v === undefined) return `{${k}}`;
     if (typeof v === 'number') return v.toLocaleString('fr-FR');
     return typeof v === 'string' || typeof v === 'boolean' ? String(v) : JSON.stringify(v);
   });
 }
+
+/**
+ * Paramètres d'affichage d'un événement (titre, description, notifications) : nombres et textes seulement,
+ * plus les alias `mult` et `ambient`. Le site les injecte dans game.events.<slug>.
+ */
+export function eventTextParams(p: Params): Record<string, string | number> {
+  const out: Record<string, string | number> = {};
+  for (const [k, v] of Object.entries(p)) if (typeof v === 'number' || typeof v === 'string') out[k] = v;
+  for (const k of ['mult', 'ambient']) {
+    const v = paramValue(p, k);
+    if (typeof v === 'number') out[k] = v;
+  }
+  return out;
+}
+
+/** Titre traduisible d'un événement, en paramètre de texte. */
+const titleOf = (e: Event) => eventTitle({ slug: e.type.slug, title: e.title }, eventTextParams(e.params as Params));
 
 @Injectable()
 export class EventsService {
@@ -184,6 +208,7 @@ export class EventsService {
     } catch (err) {
       this.log.error(`Événement ${e.type.slug} : ${(err as Error).message}`);
       result.detail = 'Erreur pendant l’exécution';
+      result.detailText = { key: 'game.eventResult.error' };
     }
     const duration = e.type.durationMinutes;
     await this.prisma.gameEvent.update({
@@ -203,8 +228,11 @@ export class EventsService {
     });
   }
 
-  /** Applique une variation de cash à chaque wallet + notification. */
-  private async cashEach(e: GameEvent, items: Array<{ walletId: string; userId: string; delta: number; body: string }>, kind: 'TAX' | 'EVENT' = 'EVENT') {
+  /**
+   * Applique une variation de cash à chaque wallet + notification. `body` est le corps français (« {amount} » =
+   * montant appliqué) ; `params` complète le texte traduisible game.notif.events.<slug>.
+   */
+  private async cashEach(e: Event, items: Array<{ walletId: string; userId: string; delta: number; body: string; params?: TextParams }>, kind: 'TAX' | 'EVENT' = 'EVENT') {
     const notes: NotificationInput[] = [];
     let total = 0;
     let affected = 0;
@@ -214,13 +242,21 @@ export class EventsService {
       if (applied.isZero()) continue;
       affected++;
       total += Number(applied);
-      notes.push({ userId: it.userId, type: 'EVENT', title: e.title, body: it.body.replace('{amount}', `${money(applied.abs())} $`), amount: applied.toString(), link: '/events' });
+      notes.push({
+        userId: it.userId,
+        type: 'EVENT',
+        title: e.title,
+        body: it.body.replace('{amount}', `${money(applied.abs())} $`),
+        text: { key: `game.notif.events.${e.type.slug}`, params: { ...it.params, event: titleOf(e), amount: param.money(applied.abs()) } },
+        amount: applied.toString(),
+        link: '/events',
+      });
     }
     await this.notify.push(notes);
     return { affected, total };
   }
 
-  private async nudgeMarket(assetIds: string[] | 'ALL', logMove: number, regime: MarketState['regime'], detail: string) {
+  private async nudgeMarket(e: Event, assetIds: string[] | 'ALL', logMove: number, regime: MarketState['regime']) {
     const assets = await this.prisma.asset.findMany({ where: assetIds === 'ALL' ? { frozen: false } : { id: { in: assetIds } }, select: { id: true } });
     for (const { id } of assets) {
       await this.prisma.$transaction(async (tx) => {
@@ -229,14 +265,14 @@ export class EventsService {
         const s = stateOf(a);
         const next = { ...s, logFair: s.logFair + logMove, logAnchor: s.logAnchor + logMove * 0.6, regime };
         await tx.asset.update({ where: { id }, data: { state: stateJson(next) } });
-        await tx.marketEvent.create({ data: { assetId: id, type: 'EVENT', detail } });
+        await tx.marketEvent.create({ data: { assetId: id, type: 'EVENT', detail: e.title, ...textColumns('game.market.event', { event: titleOf(e) }) } });
       });
     }
     return assets.length;
   }
 
   // ─── Effets ───────────────────────────────────────────────────────
-  private readonly handlers: Record<string, (e: GameEvent, p: Params) => Promise<Result>> = {
+  private readonly handlers: Record<string, (e: Event, p: Params) => Promise<Result>> = {
     'flat-tax': async (e, p) => {
       const since = new Date(Date.now() - num(p, 'windowHours', 24) * 3_600_000);
       const rate = num(p, 'rate');
@@ -277,7 +313,9 @@ export class EventsService {
       const ws = await this.wallets({ bank: { taxShield: { gt: 0 } } });
       return this.cashEach(
         e,
-        ws.filter(() => mathRng() < chance).map((w) => ({ walletId: w.id, userId: w.user.id, delta: -Number(w.cash) * (rate / 100), body: `Contrôle fiscal chez ${w.bank.name} : amende de {amount}.` })),
+        ws
+          .filter(() => mathRng() < chance)
+          .map((w) => ({ walletId: w.id, userId: w.user.id, delta: -Number(w.cash) * (rate / 100), body: `Contrôle fiscal chez ${w.bank.name} : amende de {amount}.`, params: { bank: w.bank.name } })),
         'TAX',
       );
     },
@@ -301,7 +339,13 @@ export class EventsService {
         ws.map((w) => {
           const pct = between(min, max) / 100;
           const covered = w.bank.hackShield > 0 ? ` (${Math.round(w.bank.hackShield * 100)} % couverts par ta banque)` : '';
-          return { walletId: w.id, userId: w.user.id, delta: -Number(w.cash) * pct * (1 - w.bank.hackShield), body: `Piratage de ${str(p, 'bank')} : tu perds {amount}${covered}.` };
+          return {
+            walletId: w.id,
+            userId: w.user.id,
+            delta: -Number(w.cash) * pct * (1 - w.bank.hackShield),
+            body: `Piratage de ${str(p, 'bank')} : tu perds {amount}${covered}.`,
+            params: { bank: str(p, 'bank') ?? w.bank.name, shield: Math.round(w.bank.hackShield * 100) },
+          };
         }),
       );
     },
@@ -313,10 +357,16 @@ export class EventsService {
       const guarantee = Number(ws[0]?.bank.depositGuarantee ?? Infinity);
       const res = await this.cashEach(
         e,
-        ws.map((w) => ({ walletId: w.id, userId: w.user.id, delta: -Math.max(0, Number(w.cash) - guarantee) * (rate / 100), body: `${str(p, 'bank')} a fait faillite : tu perds {amount} au-delà de la garantie des dépôts.` })),
+        ws.map((w) => ({
+          walletId: w.id,
+          userId: w.user.id,
+          delta: -Math.max(0, Number(w.cash) - guarantee) * (rate / 100),
+          body: `${str(p, 'bank')} a fait faillite : tu perds {amount} au-delà de la garantie des dépôts.`,
+          params: { bank: str(p, 'bank') ?? w.bank.name },
+        })),
       );
       await this.prisma.wallet.updateMany({ where: { id: { in: ws.map((w) => w.id) } }, data: { bankId: free.id, bankSince: new Date(0), bankAccrued: 0 } });
-      return { ...res, affected: ws.length, detail: `${ws.length} clients transférés à ${free.name}` };
+      return { ...res, affected: ws.length, detail: `${ws.length} clients transférés à ${free.name}`, detailText: { key: 'game.eventResult.bankRun', params: { count: ws.length, bank: free.name } } };
     },
 
     'wallet-hack': async (e, p) => {
@@ -332,7 +382,15 @@ export class EventsService {
         const applied = await this.prisma.$transaction((tx) => applyAsset(tx, w.id, h.assetId, qty.neg(), 'EVENT', e.title, ref(e)));
         const usd = Number(applied.abs()) * Number(h.asset.price);
         total -= usd;
-        notes.push({ userId: w.user.id, type: 'EVENT', title: e.title, body: `Un hacker t'a volé ${applied.abs().toFixed(4)} ${h.asset.symbol} (~${money(usd)} $).`, amount: (-usd).toFixed(2), link: '/portfolio' });
+        notes.push({
+          userId: w.user.id,
+          type: 'EVENT',
+          title: e.title,
+          body: `Un hacker t'a volé ${applied.abs().toFixed(4)} ${h.asset.symbol} (~${money(usd)} $).`,
+          text: { key: 'game.notif.events.wallet-hack', params: { event: titleOf(e), qty: param.qty(applied.abs()), symbol: h.asset.symbol, amount: param.money(usd) } },
+          amount: (-usd).toFixed(2),
+          link: '/portfolio',
+        });
       }
       await this.notify.push(notes);
       return { affected: notes.length, total };
@@ -344,7 +402,17 @@ export class EventsService {
       const qty = D(usd).div(D(asset.price)).toDecimalPlaces(8);
       const ws = await this.wallets();
       for (const w of ws) await this.prisma.$transaction((tx) => applyAsset(tx, w.id, asset.id, qty, 'EVENT', e.title, ref(e)));
-      await this.notify.push(ws.map((w) => ({ userId: w.user.id, type: 'EVENT', title: e.title, body: `Tu reçois ${qty.toFixed(4)} ${asset.symbol} gratuitement.`, amount: usd, link: `/market/${asset.symbol}` })));
+      await this.notify.push(
+        ws.map((w) => ({
+          userId: w.user.id,
+          type: 'EVENT',
+          title: e.title,
+          body: `Tu reçois ${qty.toFixed(4)} ${asset.symbol} gratuitement.`,
+          text: { key: 'game.notif.events.airdrop', params: { event: titleOf(e), qty: param.qty(qty), symbol: asset.symbol, amount: param.money(usd) } },
+          amount: usd,
+          link: `/market/${asset.symbol}`,
+        })),
+      );
       return { affected: ws.length, total: usd * ws.length };
     },
 
@@ -363,15 +431,15 @@ export class EventsService {
         e,
         ws.map((w) => {
           const q = Number(holders.find((h) => h.walletId === w.id)?.quantity ?? 0);
-          return { walletId: w.id, userId: w.user.id, delta: q * Number(asset.price) * (rate / 100), body: `Dividende exceptionnel sur ${asset.symbol} : +{amount}.` };
+          return { walletId: w.id, userId: w.user.id, delta: q * Number(asset.price) * (rate / 100), body: `Dividende exceptionnel sur ${asset.symbol} : +{amount}.`, params: { symbol: asset.symbol } };
         }),
       );
     },
 
-    'bull-run': async (e, p) => ({ affected: await this.nudgeMarket('ALL', Math.log(1 + num(p, 'pct') / 100), 'HYPE', e.title), total: 0 }),
-    crash: async (e, p) => ({ affected: await this.nudgeMarket('ALL', Math.log(1 - num(p, 'pct') / 100), 'PANIC', e.title), total: 0 }),
-    'elon-tweet': async (e, p) => ({ affected: await this.nudgeMarket(this.targetAsset(p), Math.log(1 + num(p, 'pct') / 100), 'HYPE', e.title), total: 0 }),
-    'rug-pull': async (e, p) => ({ affected: await this.nudgeMarket(this.targetAsset(p), Math.log(1 - num(p, 'pct') / 100), 'PANIC', e.title), total: 0 }),
+    'bull-run': async (e, p) => ({ affected: await this.nudgeMarket(e, 'ALL', Math.log(1 + num(p, 'pct') / 100), 'HYPE'), total: 0 }),
+    crash: async (e, p) => ({ affected: await this.nudgeMarket(e, 'ALL', Math.log(1 - num(p, 'pct') / 100), 'PANIC'), total: 0 }),
+    'elon-tweet': async (e, p) => ({ affected: await this.nudgeMarket(e, this.targetAsset(p), Math.log(1 + num(p, 'pct') / 100), 'HYPE'), total: 0 }),
+    'rug-pull': async (e, p) => ({ affected: await this.nudgeMarket(e, this.targetAsset(p), Math.log(1 - num(p, 'pct') / 100), 'PANIC'), total: 0 }),
   };
 
   /** Actif ciblé par l'événement (choisi à la programmation). */
@@ -395,6 +463,8 @@ export class EventsService {
       status: e.status,
       title: e.title,
       description: e.description,
+      /** Clé de l'objet { title, description } des messages du site (repli : title et description ci-dessus) */
+      text: { key: `game.events.${e.type.slug}`, params: eventTextParams(e.params as Params) },
       startsAt: e.startsAt,
       endsAt: e.endsAt,
       result: e.result,

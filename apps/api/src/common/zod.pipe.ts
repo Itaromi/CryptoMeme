@@ -1,4 +1,5 @@
 import { BadRequestException, PipeTransform } from '@nestjs/common';
+import { issueError } from '@cryptomeme/shared';
 import { z } from 'zod';
 
 /** Valide (et transforme) un corps de requête, des paramètres de requête… avec un schéma Zod. */
@@ -7,9 +8,12 @@ export class ZodPipe<T> implements PipeTransform<unknown, T> {
   transform(value: unknown): T {
     const r = this.schema.safeParse(value);
     if (!r.success) {
+      const first = r.error.issues[0];
+      const field = first?.path.join('.');
       throw new BadRequestException({
-        message: r.error.issues[0]?.message ?? 'Requête invalide',
-        issues: r.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+        ...(first ? issueError(first) : { code: 'BAD_REQUEST' }),
+        message: field ? `Requête invalide (${field})` : 'Requête invalide',
+        issues: r.error.issues.map((i) => ({ path: i.path.join('.'), ...issueError(i) })),
       });
     }
     return r.data;

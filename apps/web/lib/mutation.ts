@@ -23,5 +23,4 @@ export function useApiMutation<TVars = void, TData = unknown>({ mutationFn, inva
   });
 }
 
-/** Message d'erreur à afficher (celui renvoyé par l'API, sinon celui de l'exception). */
-export const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e));
+// Message d'erreur à afficher : useErrorMessage (lib/texts.ts), qui traduit le code renvoyé par l'API.

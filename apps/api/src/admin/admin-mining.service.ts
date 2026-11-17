@@ -4,6 +4,7 @@ import { reasonSchema } from '@cryptomeme/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit.service';
 import { AuthUser } from '../common/auth.decorators';
+import { apiError } from '../common/errors';
 
 export const networkSchema = z.object({
   blockReward: z.string().regex(/^\d+(\.\d+)?$/).optional(),
@@ -62,7 +63,7 @@ export class AdminMiningService {
   async updateNetwork(actor: AuthUser, symbol: string, data: Changes<typeof networkSchema>, reason: string) {
     await this.prisma.$transaction(async (tx) => {
       const asset = await tx.asset.findUnique({ where: { symbol: symbol.toUpperCase() } });
-      if (!asset) throw new NotFoundException();
+      if (!asset) throw new NotFoundException(apiError('NOT_FOUND', 'Introuvable'));
       await tx.miningNetwork.update({ where: { assetId: asset.id }, data });
       await this.audit.log({ actorId: actor.id, action: 'MINING_NETWORK_UPDATE', targetType: 'Mining', targetId: asset.symbol, reason, payload: data }, tx);
     });

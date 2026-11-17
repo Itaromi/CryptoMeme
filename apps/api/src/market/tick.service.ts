@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { mathRng, stepMarket } from '@cryptomeme/engine';
+import { mathRng, stepMarket, type TickEvent } from '@cryptomeme/engine';
 import { TICK_MS, stockMarketStatus } from '@cryptomeme/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { MarketGateway } from './market.gateway';
@@ -8,6 +8,17 @@ import { MarketService, poolOf } from './market.service';
 import { recordCandle } from './candles';
 import { LeaseService } from '../common/lease.service';
 import { paramsOf, stateJson, stateOf, StoredState } from './asset-state';
+import { param } from '@cryptomeme/shared';
+import { textColumns } from '../common/texts';
+
+/** Texte traduisible d'un événement du moteur de marché (saut, rug pull, changement d'ambiance). */
+function tickText(e: TickEvent) {
+  if (e.type === 'REGIME' && e.from && e.to) {
+    return textColumns('game.market.regime', { from: param.t(`common.regime.${e.from}`, e.from), to: param.t(`common.regime.${e.to}`, e.to) });
+  }
+  if (e.move !== undefined) return textColumns(e.type === 'JUMP' ? 'game.market.jump' : 'game.market.rugPull', { move: param.pct(e.move) });
+  return {};
+}
 
 /** Fait vivre le marché : à chaque tick, les PNJ tradent contre chaque pool. */
 @Injectable()
@@ -69,7 +80,14 @@ export class TickService {
       }
       if (opening) {
         const gap = price.div(a.price).toNumber() - 1;
-        await tx.marketEvent.create({ data: { assetId: id, type: 'OPEN', detail: `Ouverture : ${gap >= 0 ? '+' : ''}${(gap * 100).toFixed(1).replace('.', ',')} % par rapport à la clôture` } });
+        await tx.marketEvent.create({
+          data: {
+            assetId: id,
+            type: 'OPEN',
+            detail: `Ouverture : ${gap >= 0 ? '+' : ''}${(gap * 100).toFixed(1).replace('.', ',')} % par rapport à la clôture`,
+            ...textColumns('game.market.open', { gap: param.pct(gap) }),
+          },
+        });
       }
       await tx.asset.update({
         where: { id },
@@ -84,7 +102,7 @@ export class TickService {
       await recordCandle(tx, id, price.toString(), volume.toFixed(8));
       for (const e of r.events) {
         if (e.type === 'REGIME' && a.tier === 'BLUE_CHIP') continue;
-        await tx.marketEvent.create({ data: { assetId: id, type: e.type, detail: e.detail } });
+        await tx.marketEvent.create({ data: { assetId: id, type: e.type, detail: e.detail, ...tickText(e) } });
       }
     });
   }

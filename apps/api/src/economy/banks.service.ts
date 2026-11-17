@@ -7,6 +7,8 @@ import { LeaseService } from '../common/lease.service';
 import { D, Decimal, money } from '../common/decimal';
 import { applyCash, lockWallets, Tx } from './ledger';
 import { NotificationsService } from './notifications';
+import { apiError } from '../common/errors';
+import { param, type TextRef } from '@cryptomeme/shared';
 
 const HOUR = 3_600_000;
 const SWITCH_COOLDOWN_MS = 24 * HOUR;
@@ -63,17 +65,17 @@ export class BanksService {
   async switchBank(userId: string, bankId: string) {
     const { id: walletId } = await this.seasons.wallet(userId);
     const bank = await this.prisma.bank.findUnique({ where: { id: bankId } });
-    if (!bank || !bank.available) throw new NotFoundException('Banque indisponible');
+    if (!bank || !bank.available) throw new NotFoundException(apiError('BANK_UNAVAILABLE', 'Banque indisponible'));
     return this.prisma.$transaction(async (tx) => {
       // Vérifications sous verrou du wallet : deux changements simultanés ne passent pas tous les deux
       await lockWallets(tx, [walletId]);
       const wallet = await tx.wallet.findUniqueOrThrow({ where: { id: walletId } });
-      if (bank.id === wallet.bankId) throw new BadRequestException('Tu es déjà client de cette banque');
-      if (Date.now() - wallet.bankSince.getTime() < SWITCH_COOLDOWN_MS) throw new BadRequestException('Un seul changement de banque par 24 h');
-      if (D(wallet.netWorth).lt(D(bank.minNetWorth))) throw new BadRequestException(`Patrimoine minimum requis : ${money(bank.minNetWorth)} $`);
+      if (bank.id === wallet.bankId) throw new BadRequestException(apiError('BANK_ALREADY_CLIENT', 'Tu es déjà client de cette banque'));
+      if (Date.now() - wallet.bankSince.getTime() < SWITCH_COOLDOWN_MS) throw new BadRequestException(apiError('BANK_SWITCH_COOLDOWN', 'Un seul changement de banque par 24 h'));
+      if (D(wallet.netWorth).lt(D(bank.minNetWorth))) throw new BadRequestException(apiError('BANK_MIN_NET_WORTH', `Patrimoine minimum requis : ${money(bank.minNetWorth)} $`, { min: param.money(bank.minNetWorth) }));
       const fee = D(bank.openingFee);
       if (fee.gt(0)) {
-        await applyCash(tx, walletId, fee.neg(), 'BANK_SWITCH', `Ouverture de compte : ${bank.name}`, { type: 'Bank', id: bank.id }, { strict: true, message: `Frais d'ouverture : ${money(fee)} $ en cash` });
+        await applyCash(tx, walletId, fee.neg(), 'BANK_SWITCH', `Ouverture de compte : ${bank.name}`, { type: 'Bank', id: bank.id }, { strict: true, error: apiError('BANK_OPENING_FEE', `Frais d'ouverture : ${money(fee)} $ en cash`, { fee: param.money(fee) }) });
       }
       await tx.wallet.update({ where: { id: walletId }, data: { bankId: bank.id, bankSince: new Date(), bankAccrued: 0 } });
       return { ok: true, bank: bank.name };
@@ -114,7 +116,16 @@ export class BanksService {
           if (settle.lt(0) && cash.lt(settle.neg())) {
             await tx.wallet.update({ where: { id }, data: { bankId: free.id, bankSince: new Date(), bankAccrued: 0 } });
             await this.notify.push(
-              [{ userId: w.userId, type: 'BANK', title: 'Compte clôturé', body: `${w.bank.name} a fermé ton compte faute de provision. Retour à ${free.name}.`, link: '/banks' }],
+              [
+                {
+                  userId: w.userId,
+                  type: 'BANK',
+                  title: 'Compte clôturé',
+                  body: `${w.bank.name} a fermé ton compte faute de provision. Retour à ${free.name}.`,
+                  text: { key: 'game.notif.bankClosed', params: { bank: w.bank.name, free: free.name } },
+                  link: '/banks',
+                },
+              ],
               tx,
             );
             return;
@@ -133,13 +144,25 @@ export class BanksService {
   }
 
   /** Remboursement par l'assurance de la banque (pannes, incendies). Appelé par le tick de minage. */
-  async insure(tx: Tx, walletId: string, userId: string | null, loss: number, what: string) {
+  async insure(tx: Tx, walletId: string, userId: string | null, loss: number, what: TextRef) {
     const w = await tx.wallet.findUniqueOrThrow({ where: { id: walletId }, include: { bank: true } });
     if (w.bank.insuranceRate <= 0 || loss <= 0) return 0;
     const refund = D(loss * w.bank.insuranceRate);
-    const applied = await applyCash(tx, walletId, refund, 'INSURANCE', `Assurance ${w.bank.name} : ${what}`);
+    const applied = await applyCash(tx, walletId, refund, 'INSURANCE', `Assurance ${w.bank.name} : ${what.fallback}`);
     if (userId && applied.gt(0)) {
-      await this.notify.push([{ userId, type: 'INSURANCE', title: 'Assurance', body: `${w.bank.name} te rembourse ${money(applied)} $ (${what}).`, amount: applied.toString() }], tx);
+      await this.notify.push(
+        [
+          {
+            userId,
+            type: 'INSURANCE',
+            title: 'Assurance',
+            body: `${w.bank.name} te rembourse ${money(applied)} $ (${what.fallback}).`,
+            text: { key: 'game.notif.insurance', params: { bank: w.bank.name, amount: param.money(applied), what } },
+            amount: applied.toString(),
+          },
+        ],
+        tx,
+      );
     }
     return Number(applied);
   }

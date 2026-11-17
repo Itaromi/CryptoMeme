@@ -7,7 +7,8 @@ import { Check, X } from '@phosphor-icons/react';
 import { api } from '@/lib/api';
 import { useFormat } from '@/lib/format';
 import { ALGO_LABEL, type Item, type Kind, type RigStatsView, tempTone, useMiningFormat } from '@/lib/mining';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useTexts } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 
 interface Preview extends RigStatsView {
@@ -18,6 +19,8 @@ const ORDER: Kind[] = ['MOTHERBOARD', 'CPU', 'GPU', 'ASIC', 'PSU', 'COOLING'];
 
 /** Monte une rig dans un rack à partir de l'inventaire, avec un aperçu en direct (erreurs de configuration renvoyées par l'API). */
 export function RigBuilder({ rackId, inventory, onDone }: { rackId: string; inventory: Item[]; onDone: () => void }) {
+  const texts = useTexts();
+  const errorMessage = texts.error;
   const t = useTranslations('mining');
   const tc = useTranslations('common.actions');
   const f = useFormat();
@@ -105,7 +108,12 @@ export function RigBuilder({ rackId, inventory, onDone }: { rackId: string; inve
           <>
             {p.errors.length > 0 ? (
               <ul className="space-y-1 text-down">
-                {p.errors.map((e) => <li key={e} className="flex items-start gap-1.5"><X weight="bold" className="mt-1 shrink-0" />{e}</li>)}
+                {p.errors.map((e) => (
+                  <li key={e.code} className="flex items-start gap-1.5">
+                    <X weight="bold" className="mt-1 shrink-0" />
+                    {texts.translate(`errors.${e.code}`, e.params, e.message)}
+                  </li>
+                ))}
               </ul>
             ) : (
               <p className="font-semibold text-up"><Check weight="bold" className="mr-1 inline align-[-0.15em]" />

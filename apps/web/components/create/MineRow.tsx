@@ -5,7 +5,8 @@ import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useFormat } from '@/lib/format';
 import { Glyph } from '@/lib/icons';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useErrorMessage } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 import { Stat } from '@/components/ui/Stat';
 import { PAYOUT_MAX_PCT } from './CreateForm';
@@ -19,6 +20,7 @@ const STATUS_CLS: Record<CreationStatus, string> = {
 
 /** Une de mes créations : statut, chiffres clés et réglage (dividende ou commission). */
 export function MineRow({ c, cfg }: { c: MyCreation; cfg?: CreationConfig }) {
+  const errorMessage = useErrorMessage();
   const t = useTranslations('create.mine');
   const tc = useTranslations('common.actions');
   const f = useFormat();

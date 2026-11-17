@@ -1,7 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { WS_EVENTS } from '@cryptomeme/shared';
+import { type GameText, WS_EVENTS } from '@cryptomeme/shared';
 import { api } from './api';
 import { getSocket } from './hooks';
 import { queryKeys } from './queryKeys';
@@ -13,9 +13,11 @@ export interface GameEventView {
   status: 'SCHEDULED' | 'ACTIVE' | 'DONE' | 'CANCELLED';
   title: string;
   description: string;
+  /** Objet { title, description } des messages (repli : title et description ci-dessus) */
+  text: GameText | null;
   startsAt: string;
   endsAt: string | null;
-  result: { affected: number; total: number; detail?: string } | null;
+  result: { affected: number; total: number; detail?: string; detailText?: GameText } | null;
   byAdmin: boolean;
 }
 
@@ -46,6 +48,8 @@ export interface NotificationView {
   type: string;
   title: string;
   body: string;
+  /** Objet { title, body } des messages (null : notification antérieure aux clés) */
+  text: GameText | null;
   amount: string | null;
   link: string | null;
   readAt: string | null;
@@ -87,6 +91,7 @@ export interface MarketEventView {
   emoji: string;
   type: string;
   detail: string;
+  text: GameText | null;
   at: string;
 }
 

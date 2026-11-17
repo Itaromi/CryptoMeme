@@ -1,6 +1,6 @@
 'use client';
 import { useTranslations } from 'next-intl';
-import { errorMessage } from '@/lib/mutation';
+import { useErrorMessage } from '@/lib/texts';
 
 /** Retour d'une action du back-office : l'erreur renvoyée par l'API, sinon le message de réussite. */
 export function Feedback({
@@ -17,6 +17,7 @@ export function Feedback({
   className?: string;
 }) {
   const t = useTranslations('admin.feedback');
+  const errorMessage = useErrorMessage();
   if (m.isError) return <span className={`${className} text-down`}>{errorMessage(m.error)}</span>;
   if (m.isSuccess) return <span className={className}>{success ?? t(saved ? 'saved' : 'done')}</span>;
   return null;

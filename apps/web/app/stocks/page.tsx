@@ -9,12 +9,14 @@ import { LivePrice } from '@/components/LivePrice';
 import { Spark } from '@/components/Spark';
 import { SortTh } from '@/components/market/SortTh';
 import { Glyph } from '@/lib/icons';
+import { useTexts } from '@/lib/texts';
 
 type SortKey = 'change24h' | 'marketCap' | 'yield' | 'earnings';
 
 export default function StocksPage() {
   const t = useTranslations('stocks');
   const f = useFormat();
+  const texts = useTexts();
   const { data, isLoading } = useStocks();
   const { data: live } = useAssets();
   const clock = useMarketClock();
@@ -98,7 +100,7 @@ export default function StocksPage() {
                         <span>
                           <span className="block font-semibold group-hover:underline">{s.name}</span>
                           <span className="text-xs text-ink-2">
-                            {s.symbol} · {c.sector}
+                            {s.symbol} · {texts.sector(c.sector)}
                             {c.status !== 'LISTED' && (
                               <span className={`ml-1 px-1 font-bold ${c.status === 'TAKEOVER' ? 'bg-acid text-ink' : 'bg-ink text-paper'}`}>{t(`status.${c.status}`)}</span>
                             )}
@@ -161,7 +163,7 @@ export default function StocksPage() {
                       {f.pct(r.reaction)}
                     </span>
                   </p>
-                  <p className="text-sm text-ink-2">{r.headline}</p>
+                  <p className="text-sm text-ink-2">{texts.headline(r)}</p>
                 </li>
               ))}
             </ul>

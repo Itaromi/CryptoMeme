@@ -7,7 +7,8 @@ import { api } from '@/lib/api';
 import { useMe, usePortfolio } from '@/lib/hooks';
 import { useFormat } from '@/lib/format';
 import { type CosmeticKind, type Equipped, type Look, RARITY_CLS, type ShopItem, useShop, withItem } from '@/lib/meta';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useTexts } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 import { Avatar, Name } from '@/components/PlayerTag';
 import { Glyph } from '@/lib/icons';
@@ -27,6 +28,8 @@ interface EquipVars {
 }
 
 export default function ShopPage() {
+  const texts = useTexts();
+  const errorMessage = texts.error;
   const t = useTranslations('shop');
   const tc = useTranslations('common.actions');
   const f = useFormat();
@@ -90,10 +93,10 @@ export default function ShopPage() {
               <Name username={you} look={shown} />
               <span className="ml-2 inline-flex gap-1 align-middle text-xl">{shown.badges.map((b) => <Glyph key={b.name} name={b.icon} />)}</span>
             </p>
-            <p className="text-sm uppercase tracking-widest text-ink-2">{shown.title ?? t('noTitle')}</p>
+            <p className="text-sm uppercase tracking-widest text-ink-2">{texts.lookTitle(shown) ?? t('noTitle')}</p>
           </div>
         </div>
-        <p className="mt-2 text-xs text-ink-3">{preview ? t('previewing', { name: preview.name }) : t('hoverHint')}</p>
+        <p className="mt-2 text-xs text-ink-3">{preview ? t('previewing', { name: texts.cosmetic(preview) }) : t('hoverHint')}</p>
 
         {me && data && (
           <div className="mt-8">
@@ -137,10 +140,10 @@ export default function ShopPage() {
               <li key={i.slug} className="flex flex-col" onMouseEnter={() => setPreview(i)} onMouseLeave={() => setPreview(null)} onFocus={() => setPreview(i)}>
                 <Preview item={i} base={look} username={you} />
                 <div className="mt-3 flex items-baseline justify-between gap-2">
-                  <h3 className="text-lg font-bold">{i.name}</h3>
+                  <h3 className="text-lg font-bold">{texts.cosmetic(i)}</h3>
                   <span className={`px-1.5 text-xs font-bold uppercase tracking-wider ${RARITY_CLS[i.rarity]}`}>{t(`rarity.${i.rarity}`)}</span>
                 </div>
-                <p className="flex-1 text-sm text-ink-2">{i.description}</p>
+                <p className="flex-1 text-sm text-ink-2">{texts.catalog(`cosmetics.${i.slug}.description`, i.description)}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   {i.owned ? (
                     <button className={`btn py-1.5 text-sm ${equipped ? 'bg-ink text-paper' : 'bg-paper'}`} disabled={equip.isPending} onClick={() => toggle(i)}>
@@ -149,7 +152,7 @@ export default function ShopPage() {
                   ) : !i.price ? (
                     // ni possédé ni en vente : se débloque par un succès
                     <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
-                      <Lock weight="bold" /> {t('unlockedBy', { achievement: i.unlockedBy ?? t('secret') })}
+                      <Lock weight="bold" /> {t('unlockedBy', { achievement: i.unlockedBy ? texts.catalog(`achievements.${i.unlockedBy.slug}.name`, i.unlockedBy.name) : t('secret') })}
                     </span>
                   ) : confirm === i.slug ? (
                     <>
@@ -182,10 +185,11 @@ function lookOf(eq: Equipped | null | undefined, bySlug: Map<string, ShopItem>):
     frame: get(eq?.frame)?.data.style ?? null,
     banner: get(eq?.banner)?.data.style ?? null,
     title: get(eq?.title)?.data.text ?? null,
+    titleSlug: eq?.title ?? null,
     nameEffect: get(eq?.nameEffect)?.data.style ?? null,
     badges: (eq?.badges ?? []).flatMap((b) => {
       const i = get(b);
-      return i ? [{ icon: i.data.icon ?? '', name: i.name }] : [];
+      return i ? [{ slug: i.slug, icon: i.data.icon ?? '', name: i.name }] : [];
     }),
   };
 }

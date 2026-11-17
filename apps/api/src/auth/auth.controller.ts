@@ -9,6 +9,7 @@ import { AuthService, REFRESH_TTL_MS } from './auth.service';
 import { ZodPipe } from '../common/zod.pipe';
 import { AuthUser, CurrentUser, Public } from '../common/auth.decorators';
 import { ACCESS_COOKIE, readCookie, REFRESH_COOKIE } from '../common/auth.guard';
+import { requestLocale } from '../common/locale';
 
 const tokenSchema = z.object({ token: z.string().min(10) });
 const forgotSchema = z.object({ email: z.string().email() });
@@ -35,7 +36,7 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('register')
   async register(@Body(new ZodPipe(registerSchema)) body: RegisterInput, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    this.setCookies(res, await this.auth.register(body, this.meta(req)));
+    this.setCookies(res, await this.auth.register(body, this.meta(req), requestLocale(req)));
     return { ok: true };
   }
 
@@ -82,8 +83,8 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 300_000 } })
   @HttpCode(200)
   @Post('resend-verification')
-  async resend(@CurrentUser() u: AuthUser) {
-    await this.auth.resendVerification(u.id);
+  async resend(@CurrentUser() u: AuthUser, @Req() req: Request) {
+    await this.auth.resendVerification(u.id, requestLocale(req));
     return { ok: true };
   }
 
@@ -91,8 +92,8 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 300_000 } })
   @HttpCode(200)
   @Post('forgot-password')
-  async forgot(@Body(new ZodPipe(forgotSchema)) body: z.infer<typeof forgotSchema>) {
-    await this.auth.forgotPassword(body.email);
+  async forgot(@Body(new ZodPipe(forgotSchema)) body: z.infer<typeof forgotSchema>, @Req() req: Request) {
+    await this.auth.forgotPassword(body.email, requestLocale(req));
     return { ok: true };
   }
 
@@ -100,8 +101,8 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 300_000 } })
   @HttpCode(200)
   @Post('reset-password')
-  async reset(@Body(new ZodPipe(resetSchema)) body: z.infer<typeof resetSchema>) {
-    await this.auth.resetPassword(body.token, body.password);
+  async reset(@Body(new ZodPipe(resetSchema)) body: z.infer<typeof resetSchema>, @Req() req: Request) {
+    await this.auth.resetPassword(body.token, body.password, requestLocale(req));
     return { ok: true };
   }
 }

@@ -14,7 +14,7 @@ import {
   reportEarnings,
   splitRatio,
 } from '@cryptomeme/engine';
-import { QUARTER_MS, stockMarketStatus } from '@cryptomeme/shared';
+import { param, QUARTER_MS, stockMarketStatus, type TextParam } from '@cryptomeme/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeasonsService } from '../seasons/seasons.service';
 import { LeaseService } from '../common/lease.service';
@@ -24,6 +24,8 @@ import { applyAsset, applyCash, lockWallets, Tx } from '../economy/ledger';
 import { stateJson, stateOf } from '../market/asset-state';
 import { NotificationInput, NotificationsService } from '../economy/notifications';
 import { ACQUIRERS, NEWS } from './catalog';
+import { apiError } from '../common/errors';
+import { textColumns } from '../common/texts';
 
 type WithCompany = Asset & { company: Company };
 
@@ -51,6 +53,14 @@ class HoldersChanged extends Error {}
 const fmt = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: n < 1 ? 4 : 2 });
 const holdersStr = (n: number) => `${n} actionnaire${n > 1 ? 's' : ''} payé${n > 1 ? 's' : ''}`;
 const pctStr = (x: number) => `${x >= 0 ? '+' : ''}${(x * 100).toFixed(1).replace('.', ',')} %`;
+
+/** Repreneur d'une OPA en paramètre de texte (traduit s'il vient du catalogue, sinon tel quel). */
+function acquirer(name: string | null): TextParam {
+  const a = ACQUIRERS.find((x) => x.name === name);
+  return a ? param.t(`game.acquirers.${a.id}`, a.name) : (name ?? '?');
+}
+/** Verdict de résultats en paramètre de texte. */
+const verdict = (v: string): TextParam => param.t(`game.verdict.${v}`, VERDICT_LABEL[v] ?? v);
 
 /**
  * Vie des sociétés cotées : résultats trimestriels, dividendes, brèves, OPA, faillites, splits, réintroductions.
@@ -117,7 +127,7 @@ export class StocksService {
   private async lockAsset(tx: Tx, assetId: string): Promise<WithCompany> {
     await tx.$queryRaw`SELECT id FROM "Asset" WHERE id = ${assetId} FOR UPDATE`;
     const a = await tx.asset.findUniqueOrThrow({ where: { id: assetId }, include: { company: true } });
-    if (!a.company) throw new BadRequestException("Ce n'est pas une action");
+    if (!a.company) throw new BadRequestException(apiError('NOT_A_STOCK', "Ce n'est pas une action"));
     return a as WithCompany;
   }
 
@@ -161,6 +171,7 @@ export class StocksService {
       };
       const quarter = c.quarter + 1;
       const headline = `T${quarter} : BPA ${fmt(r.actual)} $ pour ${fmt(r.consensus)} $ attendus. ${VERDICT_LABEL[r.verdict]}.`;
+      const headlineParams = { quarter, actual: param.price(r.actual), consensus: param.price(r.consensus), verdict: verdict(r.verdict) };
       await tx.asset.update({ where: { id: a.id }, data: { state: stateJson(state) } });
       await tx.company.update({
         where: { assetId: a.id },
@@ -190,13 +201,21 @@ export class StocksService {
       if (r.dividend > 0) {
         await tx.dividend.create({ data: { assetId: a.id, perShare: r.dividend.toFixed(8), recordAt: new Date(Date.now() + DIVIDEND_DELAY) } });
       }
-      await tx.marketEvent.create({ data: { assetId: a.id, type: 'EARNINGS', detail: `${headline} ${pctStr(Math.exp(jump) - 1)}` } });
-      return { a, r, headline, jump };
+      await tx.marketEvent.create({
+        data: {
+          assetId: a.id,
+          type: 'EARNINGS',
+          detail: `${headline} ${pctStr(Math.exp(jump) - 1)}`,
+          ...textColumns('game.market.earnings', { ...headlineParams, reaction: param.pct(Math.exp(jump) - 1) }),
+        },
+      });
+      return { a, r, headline, headlineParams, jump };
     });
     await this.notifyHolders(assetId, () => ({
       type: 'STOCK',
       title: `Résultats ${out.a.name}`,
       body: `${out.headline}${out.r.dividend > 0 ? ` Dividende de ${fmt(out.r.dividend)} $ par action dans 6 h.` : ' Pas de dividende ce trimestre.'}`,
+      text: { key: 'game.notif.earnings', params: { ...out.headlineParams, name: out.a.name, dividend: out.r.dividend > 0 ? param.price(out.r.dividend) : 'none' } },
       link: `/market/${out.a.symbol}`,
     }));
     return { headline: out.headline, verdict: out.r.verdict, reaction: Math.exp(out.jump) - 1, dividend: out.r.dividend };
@@ -237,6 +256,10 @@ export class StocksService {
         type: 'STOCK',
         title: `Dividende ${asset.name}`,
         body: `${fmt(paid.qty.toNumber())} actions × ${fmt(perShare.toNumber())} $ : +${money(paid.applied)} $.`,
+        text: {
+          key: 'game.notif.dividend',
+          params: { name: asset.name, qty: param.qty(paid.qty), perShare: param.price(perShare), amount: param.money(paid.applied) },
+        },
         amount: paid.applied.toString(),
         link: '/portfolio',
       });
@@ -262,7 +285,14 @@ export class StocksService {
         },
       });
       await tx.dividend.update({ where: { id: d.id }, data: { total: money(total), holders: agg._count } });
-      await tx.marketEvent.create({ data: { assetId: a.id, type: 'DIVIDEND', detail: `Détachement d'un dividende de ${fmt(Number(d.perShare))} $ (${holdersStr(agg._count)})` } });
+      await tx.marketEvent.create({
+        data: {
+          assetId: a.id,
+          type: 'DIVIDEND',
+          detail: `Détachement d'un dividende de ${fmt(Number(d.perShare))} $ (${holdersStr(agg._count)})`,
+          ...textColumns('game.market.dividend', { perShare: param.price(d.perShare), holders: agg._count }),
+        },
+      });
       return { total, holders: agg._count };
     });
     return { paid: Number(done?.total ?? 0), holders: done?.holders ?? 0 };
@@ -278,7 +308,7 @@ export class StocksService {
       const s = stateOf(a);
       await tx.asset.update({ where: { id: a.id }, data: { state: stateJson({ ...s, logFair: s.logFair + move, logAnchor: s.logAnchor + move * 0.3 }) } });
       const text = n.text.replace('{name}', a.name).replace('{ceo}', a.company.ceo);
-      await tx.marketEvent.create({ data: { assetId: a.id, type: 'NEWS', detail: text } });
+      await tx.marketEvent.create({ data: { assetId: a.id, type: 'NEWS', detail: text, ...textColumns(`game.news.${n.id}`, { name: a.name, ceo: a.company.ceo }) } });
       return { text, move: Math.exp(move) - 1 };
     });
   }
@@ -287,10 +317,10 @@ export class StocksService {
   async announceTakeover(assetId: string, premium?: number) {
     const out = await this.prisma.$transaction(async (tx) => {
       const a = await this.lockAsset(tx, assetId);
-      if (a.company.status !== 'LISTED') throw new BadRequestException('Une OPA est déjà en cours ou la société est retirée de la cote');
+      if (a.company.status !== 'LISTED') throw new BadRequestException(apiError('TAKEOVER_NOT_ALLOWED', 'Une OPA est déjà en cours ou la société est retirée de la cote'));
       const prem = premium ?? 0.25 + mathRng() * 0.35;
       const offer = D(a.price).mul(1 + prem);
-      const by = pick(mathRng, ACQUIRERS) ?? ACQUIRERS[0];
+      const by = (pick(mathRng, ACQUIRERS) ?? ACQUIRERS[0]).name;
       const s = stateOf(a);
       const target = Math.log(offer.toNumber() * 0.96);
       await tx.asset.update({ where: { id: a.id }, data: { state: stateJson({ ...s, logFair: target, logAnchor: target }) } });
@@ -299,10 +329,17 @@ export class StocksService {
         data: { status: 'TAKEOVER', statusSince: new Date(), offerPrice: offer.toString(), offerBy: by, offerEndsAt: new Date(Date.now() + 24 * HOUR), preOfferLogFair: s.logFair },
       });
       const detail = `OPA de ${by} sur ${a.name} à ${fmt(offer.toNumber())} $ par action (${pctStr(prem)}). Verdict dans 24 h.`;
-      await tx.marketEvent.create({ data: { assetId: a.id, type: 'TAKEOVER', detail } });
-      return { a, detail };
+      const params = { by: acquirer(by), name: a.name, offer: param.price(offer), premium: param.pct(prem) };
+      await tx.marketEvent.create({ data: { assetId: a.id, type: 'TAKEOVER', detail, ...textColumns('game.market.takeoverOffer', params) } });
+      return { a, detail, params };
     });
-    await this.notifyHolders(assetId, () => ({ type: 'STOCK', title: `OPA sur ${out.a.name}`, body: `${out.detail} Si elle réussit, tes actions seront rachetées à ce prix.`, link: `/market/${out.a.symbol}` }));
+    await this.notifyHolders(assetId, () => ({
+      type: 'STOCK',
+      title: `OPA sur ${out.a.name}`,
+      body: `${out.detail} Si elle réussit, tes actions seront rachetées à ce prix.`,
+      text: { key: 'game.notif.takeoverOffer', params: out.params },
+      link: `/market/${out.a.symbol}`,
+    }));
     return { detail: out.detail };
   }
 
@@ -310,30 +347,39 @@ export class StocksService {
     if (!success) {
       const out = await this.prisma.$transaction(async (tx) => {
         const a = await this.lockAsset(tx, assetId);
-        if (a.company.status !== 'TAKEOVER') throw new BadRequestException("Pas d'OPA en cours");
+        if (a.company.status !== 'TAKEOVER') throw new BadRequestException(apiError('NO_TAKEOVER', "Pas d'OPA en cours"));
         const s = stateOf(a);
         const back = a.company.preOfferLogFair ?? Math.log(fundamentalValue(a.company));
         await tx.asset.update({ where: { id: a.id }, data: { state: stateJson({ ...s, logFair: back, logAnchor: Math.log(fundamentalValue(a.company)) }) } });
         await tx.company.update({ where: { assetId: a.id }, data: { status: 'LISTED', statusSince: new Date(), offerPrice: null, offerBy: null, offerEndsAt: null, preOfferLogFair: null } });
         const detail = `L'OPA de ${a.company.offerBy} sur ${a.name} échoue : les régulateurs disent non.`;
-        await tx.marketEvent.create({ data: { assetId: a.id, type: 'TAKEOVER', detail } });
-        return { a, detail };
+        const params = { by: acquirer(a.company.offerBy), name: a.name };
+        await tx.marketEvent.create({ data: { assetId: a.id, type: 'TAKEOVER', detail, ...textColumns('game.market.takeoverFailed', params) } });
+        return { a, detail, params };
       });
-      await this.notifyHolders(assetId, () => ({ type: 'STOCK', title: `OPA ratée sur ${out.a.name}`, body: `${out.detail} Le cours retombe.`, link: `/market/${out.a.symbol}` }));
+      await this.notifyHolders(assetId, () => ({
+        type: 'STOCK',
+        title: `OPA ratée sur ${out.a.name}`,
+        body: `${out.detail} Le cours retombe.`,
+        text: { key: 'game.notif.takeoverFailed', params: out.params },
+        link: `/market/${out.a.symbol}`,
+      }));
       return { success, detail: out.detail };
     }
 
     // Succès : on gèle d'abord le titre (plus aucun ordre possible), puis on rachète les actionnaires un par un
     const a = await this.prisma.$transaction(async (tx) => {
       const a = await this.lockAsset(tx, assetId);
-      if (a.company.status !== 'TAKEOVER' || !a.company.offerPrice) throw new BadRequestException("Pas d'OPA en cours");
+      if (a.company.status !== 'TAKEOVER' || !a.company.offerPrice) throw new BadRequestException(apiError('NO_TAKEOVER', "Pas d'OPA en cours"));
       await tx.asset.update({ where: { id: a.id }, data: { frozen: true, price: a.company.offerPrice } });
       await tx.company.update({ where: { assetId: a.id }, data: { status: 'ACQUIRED', statusSince: new Date() } });
       return a;
     });
     const { count, total } = await this.settleDelisted(a.id);
     const detail = `${a.company.offerBy} rachète ${a.name}. Retrait de la cote, ${holdersStr(count)} (${money(total)} $).`;
-    await this.prisma.marketEvent.create({ data: { assetId: a.id, type: 'TAKEOVER', detail } });
+    await this.prisma.marketEvent.create({
+      data: { assetId: a.id, type: 'TAKEOVER', detail, ...textColumns('game.market.takeoverDone', { by: acquirer(a.company.offerBy), name: a.name, holders: count, total: param.money(total) }) },
+    });
     return { success, detail };
   }
 
@@ -341,7 +387,7 @@ export class StocksService {
   async bankrupt(assetId: string) {
     const a = await this.prisma.$transaction(async (tx) => {
       const a = await this.lockAsset(tx, assetId);
-      if (!['LISTED', 'TAKEOVER'].includes(a.company.status)) throw new BadRequestException('Déjà retirée de la cote');
+      if (!['LISTED', 'TAKEOVER'].includes(a.company.status)) throw new BadRequestException(apiError('ALREADY_DELISTED', 'Déjà retirée de la cote'));
       const quote = D(a.quoteReserve).mul(0.001);
       await tx.asset.update({ where: { id: a.id }, data: { frozen: true, quoteReserve: quote.toString(), price: quote.div(D(a.baseReserve)).toString() } });
       await tx.company.update({ where: { assetId: a.id }, data: { status: 'BANKRUPT', statusSince: new Date(), offerPrice: null, offerBy: null, offerEndsAt: null } });
@@ -351,7 +397,7 @@ export class StocksService {
     // Valeur perdue estimée au cours d'avant la faillite
     const { count } = await this.settleDelisted(a.id, Number(a.price));
     const detail = `${a.name} dépose le bilan. ${a.company.ceo} est introuvable. Action rayée de la cote.`;
-    await this.prisma.marketEvent.create({ data: { assetId: a.id, type: 'BANKRUPTCY', detail } });
+    await this.prisma.marketEvent.create({ data: { assetId: a.id, type: 'BANKRUPTCY', detail, ...textColumns('game.market.bankruptcy', { name: a.name, ceo: a.company.ceo }) } });
     return { detail, holders: count };
   }
 
@@ -390,10 +436,26 @@ export class StocksService {
         total = total.add(done.paid);
         const q = done.qty.toNumber();
         if (offer) {
-          notes.push({ userId: h.wallet.userId, type: 'STOCK', title: `OPA réussie sur ${a.name}`, body: `Tes ${fmt(q)} actions sont rachetées à ${fmt(offer.toNumber())} $ : +${money(done.paid)} $.`, amount: done.paid.toString(), link: '/portfolio' });
+          notes.push({
+            userId: h.wallet.userId,
+            type: 'STOCK',
+            title: `OPA réussie sur ${a.name}`,
+            body: `Tes ${fmt(q)} actions sont rachetées à ${fmt(offer.toNumber())} $ : +${money(done.paid)} $.`,
+            text: { key: 'game.notif.takeoverSold', params: { name: a.name, qty: param.qty(q), offer: param.price(offer), amount: param.money(done.paid) } },
+            amount: done.paid.toString(),
+            link: '/portfolio',
+          });
         } else {
           const lost = q * (lossPrice ?? Number(a.price));
-          notes.push({ userId: h.wallet.userId, type: 'STOCK', title: `${a.name} fait faillite`, body: `Tes ${fmt(q)} actions ne valent plus rien (environ ${money(lost)} $ partis en fumée).`, amount: (-lost).toFixed(2), link: '/portfolio' });
+          notes.push({
+            userId: h.wallet.userId,
+            type: 'STOCK',
+            title: `${a.name} fait faillite`,
+            body: `Tes ${fmt(q)} actions ne valent plus rien (environ ${money(lost)} $ partis en fumée).`,
+            text: { key: 'game.notif.bankrupt', params: { name: a.name, qty: param.qty(q), amount: param.money(lost) } },
+            amount: (-lost).toFixed(2),
+            link: '/portfolio',
+          });
         }
       } catch (e) {
         this.log.error(`Solde ${a.symbol} / wallet ${h.walletId} : ${(e as Error).message}`);
@@ -411,7 +473,13 @@ export class StocksService {
       const walletIds = (await this.prisma.holding.findMany({ where: { assetId, quantity: { gt: 0 } }, select: { walletId: true } })).map((h) => h.walletId);
       try {
         const out = await this.prisma.$transaction((tx) => this.splitTx(tx, assetId, ratio, walletIds), { timeout: 30_000 });
-        await this.notifyHolders(assetId, (q) => ({ type: 'STOCK', title: `Split ${out.a.name}`, body: `${out.detail} Tu as maintenant ${fmt(q.toNumber())} actions.`, link: '/portfolio' }));
+        await this.notifyHolders(assetId, (q) => ({
+          type: 'STOCK',
+          title: `Split ${out.a.name}`,
+          body: `${out.detail} Tu as maintenant ${fmt(q.toNumber())} actions.`,
+          text: { key: 'game.notif.split', params: { ...out.params, name: out.a.name, qty: param.qty(q) } },
+          link: '/portfolio',
+        }));
         return { detail: out.detail };
       } catch (e) {
         if (e instanceof HoldersChanged && attempt < 3) continue;
@@ -454,8 +522,9 @@ export class StocksService {
     await tx.$executeRaw`UPDATE "Candle" SET o = o / ${ratio}, h = h / ${ratio}, l = l / ${ratio}, c = c / ${ratio}, v = v * ${ratio} WHERE "assetId" = ${a.id}`;
     for (const h of hs) await applyAsset(tx, h.walletId, a.id, D(h.quantity).mul(ratio - 1), 'SPLIT', `Split ${ratio}:1 ${a.symbol}`, { type: 'Asset', id: a.id });
     const detail = `Split ${ratio} pour 1 : chaque action ${a.symbol} devient ${ratio} actions à ${fmt(D(a.price).div(r).toNumber())} $.`;
-    await tx.marketEvent.create({ data: { assetId: a.id, type: 'SPLIT', detail } });
-    return { a, detail };
+    const params = { ratio, symbol: a.symbol, price: param.price(D(a.price).div(r)) };
+    await tx.marketEvent.create({ data: { assetId: a.id, type: 'SPLIT', detail, ...textColumns('game.market.split', params) } });
+    return { a, detail, params };
   }
 
   // ─── Réintroduction en bourse ─────────────────────────────────────
@@ -464,10 +533,10 @@ export class StocksService {
     await this.settleDelisted(assetId);
     const season = await this.seasons.active();
     const left = await this.prisma.holding.count({ where: { assetId, quantity: { gt: 0 }, wallet: { seasonId: season.id } } });
-    if (left) throw new BadRequestException(`${left} actionnaire(s) encore à solder avant la réintroduction`);
+    if (left) throw new BadRequestException(apiError('HOLDERS_LEFT', `${left} actionnaire(s) encore à solder avant la réintroduction`, { count: left }));
     return this.prisma.$transaction(async (tx) => {
       const a = await this.lockAsset(tx, assetId);
-      if (!['ACQUIRED', 'BANKRUPT'].includes(a.company.status)) throw new BadRequestException('La société est déjà cotée');
+      if (!['ACQUIRED', 'BANKRUPT'].includes(a.company.status)) throw new BadRequestException(apiError('ALREADY_LISTED', 'La société est déjà cotée'));
       const price = Number(a.company.ipoPrice) * (0.6 + mathRng() * 0.6);
       const liq = LIQUIDITY[a.tier] ?? 500_000;
       const c = a.company;
@@ -493,7 +562,7 @@ export class StocksService {
         },
       });
       const detail = `${a.name} fait son retour en bourse à ${fmt(price)} $. Nouvelle direction, mêmes promesses.`;
-      await tx.marketEvent.create({ data: { assetId: a.id, type: 'IPO', detail } });
+      await tx.marketEvent.create({ data: { assetId: a.id, type: 'IPO', detail, ...textColumns('game.market.relist', { name: a.name, price: param.price(price) }) } });
       return { detail };
     });
   }
@@ -520,7 +589,7 @@ export class StocksService {
       consensus: c.consensus,
       status: c.status,
       statusSince: c.statusSince,
-      offer: c.offerPrice ? { price: c.offerPrice.toString(), by: c.offerBy, endsAt: c.offerEndsAt } : null,
+      offer: c.offerPrice ? { price: c.offerPrice.toString(), by: c.offerBy, byText: acquirer(c.offerBy), endsAt: c.offerEndsAt } : null,
     };
   }
 
@@ -534,13 +603,13 @@ export class StocksService {
     return {
       market: stockMarketStatus(),
       stocks: rows,
-      recentReports: reports.map((r) => ({ symbol: r.company.asset.symbol, name: r.company.asset.name, emoji: r.company.asset.emoji, quarter: r.quarter, verdict: r.verdict, surprise: r.surprise, reaction: r.reaction, headline: r.headline, at: r.createdAt })),
+      recentReports: reports.map((r) => ({ symbol: r.company.asset.symbol, name: r.company.asset.name, emoji: r.company.asset.emoji, quarter: r.quarter, consensus: r.consensus, actual: r.actual, verdict: r.verdict, surprise: r.surprise, reaction: r.reaction, headline: r.headline, at: r.createdAt })),
     };
   }
 
   async detail(symbol: string) {
     const a = await this.prisma.asset.findUnique({ where: { symbol: symbol.toUpperCase() }, include: { company: true } });
-    if (!a?.company) throw new NotFoundException('Action inconnue');
+    if (!a?.company) throw new NotFoundException(apiError('STOCK_UNKNOWN', 'Action inconnue'));
     const [reports, dividends] = await Promise.all([
       this.prisma.earningsReport.findMany({ where: { assetId: a.id }, orderBy: { createdAt: 'desc' }, take: 8 }),
       this.prisma.dividend.findMany({ where: { assetId: a.id }, orderBy: { createdAt: 'desc' }, take: 8 }),

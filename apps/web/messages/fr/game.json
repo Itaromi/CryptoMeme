@@ -1,0 +1,241 @@
+{
+  "market": {
+    "open": "Ouverture : {gap} par rapport à la clôture",
+    "regime": "{from} → {to}",
+    "jump": "{move}",
+    "rugPull": "{move}",
+    "event": "{event}",
+    "earnings": "T{quarter} : BPA {actual} pour {consensus} attendus. {verdict}. {reaction}",
+    "dividend": "Détachement d’un dividende de {perShare} ({holders, plural, one {# actionnaire payé} other {# actionnaires payés}})",
+    "takeoverOffer": "OPA de {by} sur {name} à {offer} par action ({premium}). Verdict dans 24 h.",
+    "takeoverFailed": "L’OPA de {by} sur {name} échoue : les régulateurs disent non.",
+    "takeoverDone": "{by} rachète {name}. Retrait de la cote, {holders, plural, one {# actionnaire payé} other {# actionnaires payés}} ({total}).",
+    "bankruptcy": "{name} dépose le bilan. {ceo} est introuvable. Action rayée de la cote.",
+    "split": "Split {ratio} pour 1 : chaque action {symbol} devient {ratio} actions à {price}.",
+    "relist": "{name} fait son retour en bourse à {price}. Nouvelle direction, mêmes promesses.",
+    "ipo": "{name} fait son entrée sur le marché à {price} (création d’un joueur)",
+    "poolScam": "{pool} part avec la caisse",
+    "halving": "La récompense de bloc est divisée par deux"
+  },
+  "headline": "T{quarter} : BPA {actual} pour {consensus} attendus. {verdict}.",
+  "verdict": {
+    "BLOWOUT": "Explosion des attentes",
+    "BEAT": "Au-dessus des attentes",
+    "INLINE": "Conforme aux attentes",
+    "MISS": "Déception",
+    "DISASTER": "Catastrophe"
+  },
+  "news": {
+    "bigContract": "{name} signe un contrat géant avec un client « très connu mais confidentiel ».",
+    "buyback": "{ceo} annonce un plan de rachat d’actions. Les actionnaires applaudissent.",
+    "upgrade": "Un analyste star relève sa cible sur {name} : « strong buy, voire très strong ».",
+    "newProduct": "{name} dévoile un nouveau produit. Personne ne sait à quoi il sert, mais il y a de l’IA dedans.",
+    "index": "{name} intègre un indice prestigieux. Les fonds indiciels achètent sans réfléchir.",
+    "courted": "Rumeur : {name} serait courtisée par un géant du secteur.",
+    "bestYear": "{ceo} promet « la meilleure année de notre histoire » sur un plateau télé.",
+    "recall": "{name} rappelle 2 millions de produits pour « un léger risque d’explosion ».",
+    "antitrust": "Enquête de l’autorité de la concurrence sur {name}.",
+    "insiderSale": "{ceo} vend discrètement une grosse partie de ses actions. Hasard, sûrement.",
+    "downgrade": "Un analyste dégrade {name} : « on ne comprend plus leur stratégie ».",
+    "strike": "Grève générale chez {name}. La machine à café serait en cause.",
+    "cyberattack": "{name} victime d’une cyberattaque : le mot de passe était « admin1234 ».",
+    "badTweet": "{ceo} tweete quelque chose de regrettable. Le service com’ démissionne."
+  },
+  "acquirers": {
+    "vulture": "le fonds Vautour Capital",
+    "emir": "un émir très enthousiaste",
+    "blackroche": "BlackRoche",
+    "buffaitte": "Warren Buffaitte",
+    "cousin": "un cousin de Bernard Arnaque",
+    "groland": "le fonds souverain de Groland",
+    "softbank": "Softbank Pas Soft"
+  },
+  "notif": {
+    "earnings": {
+      "title": "Résultats {name}",
+      "body": "T{quarter} : BPA {actual} pour {consensus} attendus. {verdict}. {dividend, select, none {Pas de dividende ce trimestre.} other {Dividende de {dividend} par action dans 6 h.}}"
+    },
+    "dividend": {
+      "title": "Dividende {name}",
+      "body": "{qty} actions × {perShare} : +{amount}."
+    },
+    "takeoverOffer": {
+      "title": "OPA sur {name}",
+      "body": "OPA de {by} sur {name} à {offer} par action ({premium}). Verdict dans 24 h. Si elle réussit, tes actions seront rachetées à ce prix."
+    },
+    "takeoverFailed": {
+      "title": "OPA ratée sur {name}",
+      "body": "L’OPA de {by} sur {name} échoue : les régulateurs disent non. Le cours retombe."
+    },
+    "takeoverSold": {
+      "title": "OPA réussie sur {name}",
+      "body": "Tes {qty} actions sont rachetées à {offer} : +{amount}."
+    },
+    "bankrupt": {
+      "title": "{name} fait faillite",
+      "body": "Tes {qty} actions ne valent plus rien (environ {amount} partis en fumée)."
+    },
+    "split": {
+      "title": "Split {name}",
+      "body": "Split {ratio} pour 1 : chaque action {symbol} devient {ratio} actions à {price}. Tu as maintenant {qty} actions."
+    },
+    "bankClosed": {
+      "title": "Compte clôturé",
+      "body": "{bank} a fermé ton compte faute de provision. Retour à {free}."
+    },
+    "insurance": {
+      "title": "Assurance",
+      "body": "{bank} te rembourse {amount} ({what})."
+    },
+    "achievement": {
+      "title": "Succès débloqué : {name}",
+      "body": "{description}{reward, select, none {} other { Récompense : {reward}.}}"
+    },
+    "creationRejected": {
+      "title": "Création refusée : {name}",
+      "body": "Motif : {note}. Frais et dépôt remboursés."
+    },
+    "creationLive": {
+      "title": "{name} est en ligne !",
+      "body": "{kind, select, POOL {Ton pool accepte maintenant les mineurs. Tu touches sa commission.} CRYPTO {Ta crypto est cotée. Ta part arrive en {days} jours, les royalties dès le premier trade.} other {Ton entreprise est cotée. Ta part arrive en {days} jours, les royalties dès le premier trade.}}"
+    },
+    "events": {
+      "flat-tax": {
+        "title": "{event}",
+        "body": "Flat tax sur tes plus-values : −{amount}."
+      },
+      "wealth-tax": {
+        "title": "{event}",
+        "body": "Impôt sur la fortune : −{amount}."
+      },
+      "tax-audit": {
+        "title": "{event}",
+        "body": "Contrôle fiscal chez {bank} : amende de {amount}."
+      },
+      "tax-refund": {
+        "title": "{event}",
+        "body": "Le fisc te rembourse {amount}. Ne t’habitue pas."
+      },
+      "bank-hack": {
+        "title": "{event}",
+        "body": "Piratage de {bank} : tu perds {amount}{shield, plural, =0 {} other { (# % couverts par ta banque)}}."
+      },
+      "bank-run": {
+        "title": "{event}",
+        "body": "{bank} a fait faillite : tu perds {amount} au-delà de la garantie des dépôts."
+      },
+      "wallet-hack": {
+        "title": "{event}",
+        "body": "Un hacker t’a volé {qty} {symbol} (~{amount})."
+      },
+      "airdrop": {
+        "title": "{event}",
+        "body": "Tu reçois {qty} {symbol} gratuitement."
+      },
+      "inheritance": {
+        "title": "{event}",
+        "body": "Un oncle d’Amérique que tu n’as jamais vu te lègue {amount}."
+      },
+      "exceptional-dividend": {
+        "title": "{event}",
+        "body": "Dividende exceptionnel sur {symbol} : +{amount}."
+      }
+    }
+  },
+  "insurance": {
+    "fire": "incendie de {rig}",
+    "break": "panne {part}"
+  },
+  "mining": {
+    "welcome": "Tu as récupéré ta chambre et une vieille caisse en bois. Ta ferme commence ici.",
+    "breaker": "Disjoncteur ! {facility} dépasse {max, number} kW. Toutes ses rigs sont coupées.",
+    "powerCut": "Coupure de courant : plus assez de cash pour payer l’électricité. Toutes tes rigs sont à l’arrêt.",
+    "block": "BLOC TROUVÉ ! {rig} remporte {qty} {symbol} en solo.",
+    "fire": "INCENDIE dans {rig} ({temp, number} °C). Tous les composants sont carbonisés.",
+    "break": "{part} a lâché dans {rig}{worn, select, yes { (usure totale)} other {}}. Rig arrêtée.",
+    "scam": "EXIT SCAM : {pool} a disparu avec tes {qty} {symbol} en attente. Le site affiche maintenant une page « En maintenance ».",
+    "payout": "{pool} a (pour une fois) payé {qty} {symbol}."
+  },
+  "events": {
+    "flat-tax": {
+      "title": "Flat tax",
+      "description": "L’État prélève {rate, number} % des plus-values réalisées ces dernières 24 h. Vendre avant ou après ? À toi de voir."
+    },
+    "wealth-tax": {
+      "title": "Impôt sur les riches",
+      "description": "Taxe progressive sur le patrimoine : 2 % au-delà de 50 k$, 5 % au-delà de 200 k$, 10 % au-delà de 1 M$. Payée en cash."
+    },
+    "tax-audit": {
+      "title": "Contrôle fiscal",
+      "description": "Le fisc s’intéresse aux clients des banques « discrètes ». Un sur deux écope d’une amende de {rate, number} % de son cash."
+    },
+    "tax-refund": {
+      "title": "Remboursement d’impôts",
+      "description": "Erreur de calcul à Bercy : {rate, number} % des taxes payées cette semaine sont remboursées."
+    },
+    "bank-hack": {
+      "title": "Piratage bancaire",
+      "description": "{bank} s’est fait pirater. Ses clients perdent entre {min, number} et {max, number} % de leur cash (moins la protection de la banque)."
+    },
+    "wallet-hack": {
+      "title": "Vol de wallet",
+      "description": "Un hacker vide {rate, number} % d’une crypto chez {count, plural, one {# joueur} other {# joueurs}} au hasard. Fallait pas cliquer sur ce lien."
+    },
+    "bank-run": {
+      "title": "Faillite bancaire",
+      "description": "{bank} fait faillite. Les dépôts au-delà de la garantie perdent {rate, number} %. Les clients sont transférés à la banque gratuite."
+    },
+    "airdrop": {
+      "title": "Airdrop surprise",
+      "description": "Distribution gratuite de {symbol} : environ {usd, number} $ pour chaque joueur actif."
+    },
+    "inheritance": {
+      "title": "Héritage d’un oncle d’Amérique",
+      "description": "{count, plural, one {# joueur} other {# joueurs}} au hasard héritent de {min, number} à {max, number} $. Condoléances et félicitations."
+    },
+    "exceptional-dividend": {
+      "title": "Dividende exceptionnel",
+      "description": "Les détenteurs de {symbol} reçoivent {rate, number} % de la valeur de leur position en cash."
+    },
+    "bull-run": {
+      "title": "Bull run",
+      "description": "Euphorie générale : tout le marché passe en mode hype (+{pct, number} % de valeur juste)."
+    },
+    "crash": {
+      "title": "Krach",
+      "description": "Panique sur les marchés : tout chute (−{pct, number} % de valeur juste)."
+    },
+    "elon-tweet": {
+      "title": "Elon a tweeté",
+      "description": "Un tweet à 3 h du matin fait bondir {symbol} de {pct, number} %."
+    },
+    "rug-pull": {
+      "title": "Rug pull organisé",
+      "description": "Les devs de {symbol} sont partis avec la caisse. −{pct, number} %."
+    },
+    "heat-wave": {
+      "title": "Canicule",
+      "description": "+{ambient, number} °C dans tous les locaux pendant 12 h. Les rigs mal refroidies vont souffrir."
+    },
+    "energy-crisis": {
+      "title": "Crise énergétique",
+      "description": "L’électricité coûte {mult, number}× plus cher pendant 24 h."
+    },
+    "gpu-shortage": {
+      "title": "Pénurie de GPU",
+      "description": "Le matériel coûte {mult, number}× plus cher (achat et revente) pendant 24 h. Bonne nouvelle pour ceux qui en ont déjà."
+    },
+    "green-subsidy": {
+      "title": "Subvention minage vert",
+      "description": "L’électricité est à moitié prix pendant 12 h. Allumez tout !"
+    },
+    "solar-storm": {
+      "title": "Tempête solaire",
+      "description": "Les composants tombent {mult, number}× plus souvent en panne pendant 4 h."
+    }
+  },
+  "eventResult": {
+    "bankRun": "{count, plural, one {# client transféré} other {# clients transférés}} à {bank}",
+    "error": "Erreur pendant l’exécution"
+  }
+}

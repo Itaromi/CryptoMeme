@@ -2,11 +2,13 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useErrorMessage } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 
 /** Bio du joueur, modifiable sur son propre profil. */
 export function Bio({ bio, editable, username }: { bio: string | null; editable: boolean; username: string }) {
+  const errorMessage = useErrorMessage();
   const t = useTranslations('profile.bio');
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(bio ?? '');

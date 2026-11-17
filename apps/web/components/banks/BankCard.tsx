@@ -2,6 +2,7 @@
 import { useTranslations } from 'next-intl';
 import { type BankView } from '@/lib/economy';
 import { type Format, useFormat } from '@/lib/format';
+import { useTexts } from '@/lib/texts';
 
 type Tone = 'good' | 'bad' | '';
 type Perk = { key: string; label: string; value: string; tone: Tone };
@@ -46,6 +47,7 @@ export function BankCard({ bank: b, current, children }: { bank: BankView; curre
   const t = useTranslations('banks');
   const tp = useTranslations('banks.perks');
   const f = useFormat();
+  const texts = useTexts();
   const conditions = [
     Number(b.openingFee) ? t('openingFee', { fee: f.money(b.openingFee) }) : t('noOpeningFee'),
     Number(b.minNetWorth) ? t('minNetWorth', { amount: f.money(b.minNetWorth) }) : null,
@@ -58,7 +60,7 @@ export function BankCard({ bank: b, current, children }: { bank: BankView; curre
         <h2 className="display text-3xl font-bold">{b.name}</h2>
         {current && <span className="bg-ink px-1.5 text-xs font-bold uppercase tracking-widest text-paper">{t('yourBank')}</span>}
       </div>
-      <p className="mt-1 text-ink-2">{b.description}</p>
+      <p className="mt-1 text-ink-2">{texts.catalog(`banks.${b.slug}.description`, b.description)}</p>
       <p className="num mt-4 text-2xl font-semibold">{Number(b.monthlyFee) ? t('monthlyFee', { fee: f.money(b.monthlyFee) }) : t('free')}</p>
       <p className="num text-sm text-ink-2">{conditions.join(' · ')}</p>
       <dl className="num mt-4 flex-1 space-y-1.5 text-sm">

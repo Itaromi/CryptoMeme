@@ -3,7 +3,7 @@ import { Interval } from '@nestjs/schedule';
 import { AssetTier, Creation, Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { DEFAULT_PARAMS, STOCK_PARAMS, initialState } from '@cryptomeme/engine';
-import { CREATION, CreationInput, QUARTER_MS, SECTORS } from '@cryptomeme/shared';
+import { CREATION, CreationInput, param, QUARTER_MS, SECTORS } from '@cryptomeme/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeasonsService } from '../seasons/seasons.service';
 import { LeaseService } from '../common/lease.service';
@@ -12,6 +12,8 @@ import { applyAsset, applyCash, lockWallets, Tx } from '../economy/ledger';
 import { NotificationsService } from '../economy/notifications';
 import { paramsJson, stateJson } from '../market/asset-state';
 import { AuditService } from '../common/audit.service';
+import { apiError } from '../common/errors';
+import { textColumns } from '../common/texts';
 
 const DAY = 86_400_000;
 const KIND_LABEL = { CRYPTO: 'ta crypto', COMPANY: 'ton entreprise', POOL: 'ton pool de minage' } as const;
@@ -55,21 +57,21 @@ export class CreationsService {
     const total = D(cost.fee).add(deposit);
 
     const live = await this.prisma.creation.count({ where: { userId, kind: input.kind, status: { in: ['PENDING', 'APPROVED'] } } });
-    if (live >= CREATION.maxPerKind) throw new BadRequestException(`Maximum ${CREATION.maxPerKind} créations de ce type par joueur`);
+    if (live >= CREATION.maxPerKind) throw new BadRequestException(apiError('CREATION_LIMIT', `Maximum ${CREATION.maxPerKind} créations de ce type par joueur`, { max: CREATION.maxPerKind }));
 
     let params: Prisma.InputJsonObject;
     let symbol: string | null = null;
     if (input.kind === 'POOL') {
       const net = await this.prisma.miningNetwork.findFirst({ where: { asset: { symbol: input.network } } });
-      if (!net) throw new BadRequestException('Réseau de minage inconnu');
-      if (await this.prisma.miningPool.findFirst({ where: { name: { equals: input.name, mode: 'insensitive' } } })) throw new BadRequestException('Un pool porte déjà ce nom');
+      if (!net) throw new BadRequestException(apiError('NETWORK_UNKNOWN', 'Réseau de minage inconnu'));
+      if (await this.prisma.miningPool.findFirst({ where: { name: { equals: input.name, mode: 'insensitive' } } })) throw new BadRequestException(apiError('POOL_NAME_TAKEN', 'Un pool porte déjà ce nom'));
       params = { network: input.network, poolType: input.poolType, feeBps: input.feeBps };
     } else {
       symbol = input.symbol;
       const taken =
         (await this.prisma.asset.findUnique({ where: { symbol } })) ||
         (await this.prisma.creation.findFirst({ where: { symbol, status: 'PENDING' } }));
-      if (taken) throw new BadRequestException('Ce symbole est déjà pris');
+      if (taken) throw new BadRequestException(apiError('SYMBOL_TAKEN', 'Ce symbole est déjà pris'));
       params = input.kind === 'CRYPTO' ? { price: input.price } : { price: input.price, sector: input.sector, payout: input.payout };
     }
 
@@ -77,7 +79,13 @@ export class CreationsService {
     return this.prisma.$transaction(async (tx) => {
       await lockWallets(tx, [walletId]);
       const w = await tx.wallet.findUniqueOrThrow({ where: { id: walletId }, select: { cash: true } });
-      if (D(w.cash).lt(total)) throw new BadRequestException(`Il te faut ${money(total)} $ (frais ${money(D(cost.fee))} $ + dépôt ${money(D(deposit))} $)`);
+      if (D(w.cash).lt(total)) throw new BadRequestException(
+          apiError('CREATION_FUNDS', `Il te faut ${money(total)} $ (frais ${money(D(cost.fee))} $ + dépôt ${money(D(deposit))} $)`, {
+            total: param.money(total),
+            fee: param.money(cost.fee),
+            deposit: param.money(deposit),
+          }),
+        );
       const c = await tx.creation.create({
         data: {
           kind: input.kind,
@@ -112,20 +120,30 @@ export class CreationsService {
   async reject(id: string, actorId: string, note: string) {
     const c = await this.prisma.$transaction(async (tx) => {
       const claimed = await tx.creation.updateMany({ where: { id, status: 'PENDING' }, data: { status: 'REJECTED', reviewNote: note, reviewedBy: actorId, decidedAt: new Date() } });
-      if (!claimed.count) throw new BadRequestException('Demande introuvable ou déjà traitée');
+      if (!claimed.count) throw new BadRequestException(apiError('REQUEST_NOT_FOUND', 'Demande introuvable ou déjà traitée'));
       const c = await tx.creation.findUniqueOrThrow({ where: { id } });
       await applyCash(tx, c.walletId, D(c.fee).add(D(c.deposit)), 'CREATION_REFUND', `Création refusée : ${c.name}`, { type: 'Creation', id: c.id });
       await this.audit.log({ actorId, action: 'CREATION_REJECT', targetType: 'Creation', targetId: id, reason: note }, tx);
       return c;
     });
-    await this.notify.push([{ userId: c.userId, type: 'CREATION', title: `Création refusée : ${c.name}`, body: `Motif : ${note}. Frais et dépôt remboursés.`, amount: D(c.fee).add(D(c.deposit)).toString(), link: '/create' }]);
+    await this.notify.push([
+      {
+        userId: c.userId,
+        type: 'CREATION',
+        title: `Création refusée : ${c.name}`,
+        body: `Motif : ${note}. Frais et dépôt remboursés.`,
+        text: { key: 'game.notif.creationRejected', params: { name: c.name, note } },
+        amount: D(c.fee).add(D(c.deposit)).toString(),
+        link: '/create',
+      },
+    ]);
     return { ok: true };
   }
 
   async approve(id: string, actorId: string, note?: string) {
     const c = await this.prisma.$transaction(async (tx) => {
       const claimed = await tx.creation.updateMany({ where: { id, status: 'PENDING' }, data: { status: 'APPROVED', reviewNote: note, reviewedBy: actorId, decidedAt: new Date() } });
-      if (!claimed.count) throw new BadRequestException('Demande introuvable ou déjà traitée');
+      if (!claimed.count) throw new BadRequestException(apiError('REQUEST_NOT_FOUND', 'Demande introuvable ou déjà traitée'));
       const c = await tx.creation.findUniqueOrThrow({ where: { id } });
       if (c.kind === 'POOL') await this.launchPool(tx, c);
       else await this.launchAsset(tx, c);
@@ -138,6 +156,7 @@ export class CreationsService {
         type: 'CREATION',
         title: `${c.name} est en ligne !`,
         body: c.kind === 'POOL' ? 'Ton pool accepte maintenant les mineurs. Tu touches sa commission.' : `${KIND_LABEL[c.kind]} est cotée. Ta part arrive en ${CREATION.vestDays} jours, les royalties dès le premier trade.`,
+        text: { key: 'game.notif.creationLive', params: { name: c.name, kind: c.kind, days: CREATION.vestDays } },
         link: c.kind === 'POOL' ? '/mining/pools' : `/market/${c.symbol}`,
       },
     ]);
@@ -198,7 +217,9 @@ export class CreationsService {
       await tx.company.update({ where: { assetId: asset.id }, data: { ceo: `@${u.username}` } });
     }
     await tx.creation.update({ where: { id: c.id }, data: { assetId: asset.id } });
-    await tx.marketEvent.create({ data: { assetId: asset.id, type: 'IPO', detail: `${c.name} fait son entrée sur le marché à ${p.price} $ (création d'un joueur)` } });
+    await tx.marketEvent.create({
+      data: { assetId: asset.id, type: 'IPO', detail: `${c.name} fait son entrée sur le marché à ${p.price} $ (création d'un joueur)`, ...textColumns('game.market.ipo', { name: c.name, price: param.price(p.price) }) },
+    });
   }
 
   private async launchPool(tx: Tx, c: Creation) {
@@ -221,15 +242,15 @@ export class CreationsService {
   // ─── Gestion par le créateur ──────────────────────────────────────
   private async own(userId: string, id: string) {
     const c = await this.prisma.creation.findUnique({ where: { id } });
-    if (!c) throw new NotFoundException('Création introuvable');
-    if (c.userId !== userId) throw new ForbiddenException('Ce n’est pas ta création');
-    if (c.status !== 'APPROVED') throw new BadRequestException('Création pas encore en ligne');
+    if (!c) throw new NotFoundException(apiError('CREATION_NOT_FOUND', 'Création introuvable'));
+    if (c.userId !== userId) throw new ForbiddenException(apiError('CREATION_NOT_YOURS', 'Ce n’est pas ta création'));
+    if (c.status !== 'APPROVED') throw new BadRequestException(apiError('CREATION_NOT_LIVE', 'Création pas encore en ligne'));
     return c;
   }
 
   async setPayout(userId: string, id: string, payout: number) {
     const c = await this.own(userId, id);
-    if (c.kind !== 'COMPANY' || !c.assetId) throw new BadRequestException('Seule une entreprise verse des dividendes');
+    if (c.kind !== 'COMPANY' || !c.assetId) throw new BadRequestException(apiError('DIVIDEND_COMPANY_ONLY', 'Seule une entreprise verse des dividendes'));
     // Plus on distribue, moins on réinvestit : croissance attendue plus faible
     await this.prisma.company.update({ where: { assetId: c.assetId }, data: { payout, growth: 0.02 - payout * 0.015 } });
     return { ok: true };
@@ -237,7 +258,7 @@ export class CreationsService {
 
   async setPoolFee(userId: string, id: string, feeBps: number) {
     const c = await this.own(userId, id);
-    if (c.kind !== 'POOL' || !c.poolId) throw new BadRequestException('Pas un pool');
+    if (c.kind !== 'POOL' || !c.poolId) throw new BadRequestException(apiError('NOT_A_POOL', 'Pas un pool'));
     await this.prisma.miningPool.update({ where: { id: c.poolId }, data: { feeBps } });
     return { ok: true };
   }

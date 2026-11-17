@@ -5,10 +5,12 @@ import { useMe } from '@/lib/hooks';
 import { useFormat } from '@/lib/format';
 import { TIER_CLS, useAchievements } from '@/lib/meta';
 import { Glyph } from '@/lib/icons';
+import { useTexts } from '@/lib/texts';
 
 export default function AchievementsPage() {
   const t = useTranslations('achievements');
   const f = useFormat();
+  const texts = useTexts();
   const { data } = useAchievements();
   const { data: me } = useMe();
   const got = data?.items.filter((i) => i.unlockedAt).length ?? 0;
@@ -38,10 +40,10 @@ export default function AchievementsPage() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-baseline gap-x-2">
-                  <strong className={`text-lg ${done ? 'text-ink' : ''}`}>{a.name}</strong>
+                  <strong className={`text-lg ${done ? 'text-ink' : ''}`}>{a.secret ? t('secret.name') : texts.catalog(`achievements.${a.slug}.name`, a.name)}</strong>
                   <span className="text-xs font-semibold uppercase tracking-wider">{t(`tier.${a.tier}`)}</span>
                 </p>
-                <p className="text-sm">{a.description}</p>
+                <p className="text-sm">{a.secret ? t('secret.description') : texts.catalog(`achievements.${a.slug}.description`, a.description)}</p>
                 <p className="mt-1 text-xs text-ink-3">
                   {a.unlockedAt ? t('unlockedOn', { date: f.date(a.unlockedAt) }) : t('notYet')}
                   {' · '}

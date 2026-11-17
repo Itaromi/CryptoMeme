@@ -1,7 +1,7 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
 import { useNow } from 'next-intl';
-import { stockMarketStatus } from '@cryptomeme/shared';
+import { stockMarketStatus, type TextParam } from '@cryptomeme/shared';
 import { api } from './api';
 import type { AssetRow } from './hooks';
 import { queryKeys } from './queryKeys';
@@ -24,7 +24,7 @@ export interface CompanyView {
   consensus: number;
   status: CompanyStatus;
   statusSince: string;
-  offer: { price: string; by: string; endsAt: string } | null;
+  offer: { price: string; by: string; byText: TextParam; endsAt: string } | null;
 }
 
 export interface StockRow extends AssetRow {
@@ -48,7 +48,7 @@ export type Verdict = 'BLOWOUT' | 'BEAT' | 'INLINE' | 'MISS' | 'DISASTER';
 export interface StocksResponse {
   market: { open: boolean; nextChangeAt: number };
   stocks: StockRow[];
-  recentReports: Array<Pick<ReportView, 'quarter' | 'verdict' | 'surprise' | 'reaction' | 'headline' | 'at'> & { symbol: string; name: string; emoji: string }>;
+  recentReports: Array<Pick<ReportView, 'quarter' | 'consensus' | 'actual' | 'verdict' | 'surprise' | 'reaction' | 'headline' | 'at'> & { symbol: string; name: string; emoji: string }>;
 }
 
 export interface StockDetail extends CompanyView {

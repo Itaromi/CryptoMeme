@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import type { Locale } from '../common/locale';
+import { MAIL_TEXTS } from './mail.texts';
 
 export interface MailContent {
   subject: string;
@@ -17,8 +19,9 @@ export interface MailContent {
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 /** Gabarit HTML sobre aux couleurs du jeu (tables + styles en ligne pour les clients mail). */
-function render(m: MailContent) {
-  const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(m.subject)}</title></head>
+function render(m: MailContent, locale: Locale) {
+  const l = MAIL_TEXTS[locale];
+  const html = `<!doctype html><html lang="${l.lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(m.subject)}</title></head>
 <body style="margin:0;background:#f5f1e3;font-family:Helvetica,Arial,sans-serif;color:#22201a">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f1e3;padding:32px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fbf8ee;border:2px solid #22201a">
@@ -27,12 +30,12 @@ function render(m: MailContent) {
 <h1 style="margin:0 0 16px;font-size:24px;line-height:1.2">${esc(m.heading)}</h1>
 ${m.paragraphs.map((p) => `<p style="margin:0 0 14px;font-size:16px;line-height:1.5">${esc(p)}</p>`).join('')}
 ${m.cta ? `<p style="margin:24px 0"><a href="${esc(m.cta.url)}" style="display:inline-block;background:#e4ef3a;color:#22201a;border:2px solid #22201a;padding:12px 20px;font-weight:700;text-decoration:none">${esc(m.cta.label)}</a></p>
-<p style="margin:0 0 14px;font-size:13px;color:#6b6656;word-break:break-all">Ou copie ce lien : ${esc(m.cta.url)}</p>` : ''}
+<p style="margin:0 0 14px;font-size:13px;color:#6b6656;word-break:break-all">${esc(l.copyLink)} ${esc(m.cta.url)}</p>` : ''}
 ${m.footnote ? `<p style="margin:20px 0 0;font-size:13px;color:#6b6656">${esc(m.footnote)}</p>` : ''}
 </td></tr>
-<tr><td style="padding:16px 28px;border-top:1px solid #d9d3bf;font-size:12px;color:#6b6656">Jeu de trading 100 % fictif. Aucun argent réel n'est en jeu. Si tu n'es pas à l'origine de cette demande, ignore cet e-mail.</td></tr>
+<tr><td style="padding:16px 28px;border-top:1px solid #d9d3bf;font-size:12px;color:#6b6656">${esc(l.footer)}</td></tr>
 </table></td></tr></table></body></html>`;
-  const text = [m.heading, '', ...m.paragraphs, ...(m.cta ? ['', `${m.cta.label} : ${m.cta.url}`] : []), ...(m.footnote ? ['', m.footnote] : [])].join('\n');
+  const text = [m.heading, '', ...m.paragraphs, ...(m.cta ? ['', `${m.cta.label}${locale === 'fr' ? ' :' : ':'} ${m.cta.url}`] : []), ...(m.footnote ? ['', m.footnote] : [])].join('\n');
   return { html, text };
 }
 
@@ -60,8 +63,8 @@ export class MailService {
     this.log.log(`Transport e-mail : ${this.resendKey ? 'Resend' : 'SMTP'}`);
   }
 
-  async send(to: string, content: MailContent) {
-    const { html, text } = render(content);
+  async send(to: string, content: MailContent, locale: Locale = 'fr') {
+    const { html, text } = render(content, locale);
     const from = this.config.get<string>('MAIL_FROM', 'CryptoMeme <no-reply@cryptomeme.local>');
     try {
       if (this.resendKey) {

@@ -2,9 +2,11 @@
 import { useTranslations } from 'next-intl';
 import { AuthShell, Field, FormError } from '@/components/AuthShell';
 import { api } from '@/lib/api';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useErrorMessage } from '@/lib/texts';
 
 export default function ForgotPage() {
+  const errorMessage = useErrorMessage();
   const t = useTranslations('auth.forgot');
   const tf = useTranslations('auth.fields');
   const forgot = useApiMutation({

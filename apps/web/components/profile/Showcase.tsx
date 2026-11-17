@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { TIER_CLS, useAchievements } from '@/lib/meta';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useTexts } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 import { Glyph } from '@/lib/icons';
 import type { Profile } from './types';
@@ -13,6 +14,8 @@ const MAX_FEATURED = 4;
 
 /** Vitrine de succès (le joueur choisit jusqu’à 4 succès à afficher). */
 export function Showcase({ data, isMe }: { data: Profile; isMe: boolean }) {
+  const texts = useTexts();
+  const errorMessage = texts.error;
   const t = useTranslations('profile.showcase');
   const tc = useTranslations('common.actions');
   const [editing, setEditing] = useState(false);
@@ -55,7 +58,7 @@ export function Showcase({ data, isMe }: { data: Profile; isMe: boolean }) {
                   onClick={() => setPick(on ? pick.filter((x) => x !== u.slug) : [...pick, u.slug].slice(-MAX_FEATURED))}
                   className={`border-2 border-ink px-2 py-1 text-sm ${on ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
                 >
-                  <Glyph name={u.icon} /> {u.name}
+                  <Glyph name={u.icon} /> {texts.catalog(`achievements.${u.slug}.name`, u.name)}
                 </button>
               );
             })}
@@ -81,8 +84,8 @@ export function Showcase({ data, isMe }: { data: Profile; isMe: boolean }) {
           {a.featured.map((f) => (
             <li key={f.slug} className={`border-2 border-ink p-4 ${TIER_CLS[f.tier]}`}>
               <span className="block text-4xl" aria-hidden><Glyph name={f.icon} /></span>
-              <p className="mt-2 font-bold">{f.name}</p>
-              <p className="text-sm opacity-80">{f.description}</p>
+              <p className="mt-2 font-bold">{texts.catalog(`achievements.${f.slug}.name`, f.name)}</p>
+              <p className="text-sm opacity-80">{texts.catalog(`achievements.${f.slug}.description`, f.description)}</p>
             </li>
           ))}
         </ul>

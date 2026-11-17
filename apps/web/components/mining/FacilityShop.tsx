@@ -4,7 +4,8 @@ import { api } from '@/lib/api';
 import { useMe } from '@/lib/hooks';
 import { useFormat } from '@/lib/format';
 import { type FacilityType, useFacilityTypes, useFarm } from '@/lib/mining';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useTexts } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 
 /** Onglet « Locaux » de la boutique : les types de local à acheter. */
@@ -28,6 +29,8 @@ export function FacilityShop() {
 }
 
 function FacilityCard({ type, canBuy, cash, owned }: { type: FacilityType; canBuy: boolean; cash: number; owned: number }) {
+  const texts = useTexts();
+  const errorMessage = texts.error;
   const t = useTranslations('mining.facilities');
   const f = useFormat();
   const buy = useApiMutation({
@@ -39,10 +42,10 @@ function FacilityCard({ type, canBuy, cash, owned }: { type: FacilityType; canBu
   return (
     <article className="border-t-2 border-ink pt-4">
       <div className="flex items-baseline justify-between gap-4">
-        <h3 className="display text-3xl font-bold">{type.name}</h3>
+        <h3 className="display text-3xl font-bold">{texts.catalog(`facilities.${type.slug}.name`, type.name)}</h3>
         <span className="num text-xl font-semibold">{price ? f.money(type.price) : t('free')}</span>
       </div>
-      <p className="mt-1 text-ink-2">{type.description}</p>
+      <p className="mt-1 text-ink-2">{texts.catalog(`facilities.${type.slug}.description`, type.description)}</p>
       <dl className="num mt-3 grid grid-cols-4 gap-2 text-sm">
         <Spec label={t('elec')}>{t('elecPrice', { price: f.number(type.elecPrice) })}</Spec>
         <Spec label={t('power')}>{f.number(type.maxPowerKw)} kW</Spec>

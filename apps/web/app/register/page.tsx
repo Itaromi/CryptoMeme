@@ -7,9 +7,12 @@ import { type RegisterInput, registerSchema, STARTING_CASH } from '@cryptomeme/s
 import { ALL_QUERIES, AuthShell, Field, FormError } from '@/components/AuthShell';
 import { api } from '@/lib/api';
 import { useFormat } from '@/lib/format';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useTexts } from '@/lib/texts';
 
 export default function RegisterPage() {
+  const texts = useTexts();
+  const errorMessage = texts.error;
   const t = useTranslations('auth');
   const f = useFormat();
   const router = useRouter();
@@ -24,7 +27,7 @@ export default function RegisterPage() {
   function submit(form: FormData) {
     const parsed = registerSchema.safeParse(Object.fromEntries(form));
     if (!parsed.success) {
-      setFieldErrors(Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message])));
+      setFieldErrors(Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), texts.issue(i)])));
       return;
     }
     setFieldErrors({});

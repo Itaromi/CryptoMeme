@@ -8,6 +8,7 @@ import { useNotifications } from '@/lib/economy';
 import { tone, useFormat } from '@/lib/format';
 import { useApiMutation } from '@/lib/mutation';
 import { queryKeys } from '@/lib/queryKeys';
+import { useTexts } from '@/lib/texts';
 
 /** Délai avant de rafraîchir la liste après lecture : les nouvelles restent surlignées le temps d'y jeter un œil. */
 const UNREAD_HIGHLIGHT_MS = 4000;
@@ -15,6 +16,7 @@ const UNREAD_HIGHLIGHT_MS = 4000;
 export function NotificationBell() {
   const t = useTranslations('notifications');
   const f = useFormat();
+  const texts = useTexts();
   const now = useNow({ updateInterval: 30_000 });
   const { data } = useNotifications(true);
   const qc = useQueryClient();
@@ -68,11 +70,11 @@ export function NotificationBell() {
           ) : (
             <ul className="max-h-[60vh] divide-y divide-line overflow-y-auto">
               {data.items.map((n) => {
-                // titre et texte des notifications : rédigés par l'API, affichés tels quels
+                // titre et texte traduits depuis la clé de l'API (repli : textes français stockés)
                 const body = (
                   <>
                     <span className="flex justify-between gap-3">
-                      <strong className="text-sm">{n.title}</strong>
+                      <strong className="text-sm">{texts.text(n.text, n.title, 'title')}</strong>
                       {n.amount && (
                         <span className={`num text-sm font-semibold ${tone(Number(n.amount))}`}>
                           {Number(n.amount) > 0 ? '+' : ''}
@@ -80,7 +82,7 @@ export function NotificationBell() {
                         </span>
                       )}
                     </span>
-                    <span className="block text-sm text-ink-2">{n.body}</span>
+                    <span className="block text-sm text-ink-2">{texts.text(n.text, n.body, 'body')}</span>
                     <span className="text-xs text-ink-3">{f.ago(n.createdAt, now)}</span>
                   </>
                 );

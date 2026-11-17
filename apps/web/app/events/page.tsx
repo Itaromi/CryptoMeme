@@ -2,11 +2,13 @@
 import { useNow, useTranslations } from 'next-intl';
 import { type GameEventView, MOOD_STYLE, useEvents } from '@/lib/economy';
 import { useFormat } from '@/lib/format';
+import { useTexts } from '@/lib/texts';
 
-/** Titres et descriptions des événements viennent de l'API : affichés tels quels. */
+/** Titres et descriptions des événements : traduits depuis la clé de l'API (repli : textes stockés). */
 export default function EventsPage() {
   const t = useTranslations('events.page');
   const f = useFormat();
+  const texts = useTexts();
   const { data } = useEvents();
   const now = useNow({ updateInterval: 1000 });
   const live = [...(data?.upcoming ?? []), ...(data?.active ?? [])];
@@ -31,8 +33,8 @@ export default function EventsPage() {
                       ? t('remaining', { time: f.countdown(e.endsAt, now) })
                       : t('ongoing')}
                 </p>
-                <h3 className="display mt-2 text-4xl font-bold">{e.title}</h3>
-                <p className="mt-2 text-lg">{e.description}</p>
+                <h3 className="display mt-2 text-4xl font-bold">{texts.text(e.text, e.title, 'title')}</h3>
+                <p className="mt-2 text-lg">{texts.text(e.text, e.description, 'description')}</p>
               </article>
             ))}
           </div>
@@ -53,6 +55,7 @@ export default function EventsPage() {
 function HistoryItem({ e }: { e: GameEventView }) {
   const t = useTranslations('events');
   const f = useFormat();
+  const texts = useTexts();
   const now = useNow({ updateInterval: 30_000 });
   const r = e.result;
   return (
@@ -60,9 +63,9 @@ function HistoryItem({ e }: { e: GameEventView }) {
       <span className="text-sm text-ink-2">{f.ago(e.startsAt, now)}</span>
       <span>
         <span role="img" aria-label={t(`mood.${e.mood}`)} title={t(`mood.${e.mood}`)} className={`mr-2 inline-block size-2.5 ${MOOD_STYLE[e.mood].bg} border border-ink`} />
-        <strong className={e.status === 'CANCELLED' ? 'line-through' : ''}>{e.title}</strong>
+        <strong className={e.status === 'CANCELLED' ? 'line-through' : ''}>{texts.text(e.text, e.title, 'title')}</strong>
         {e.byAdmin && <span className="ml-2 text-xs text-ink-3">{t('page.byAdmin')}</span>}
-        <span className="block text-sm text-ink-2">{e.description}</span>
+        <span className="block text-sm text-ink-2">{texts.text(e.text, e.description, 'description')}</span>
       </span>
       <span className="num text-right text-sm">
         {e.status === 'CANCELLED' ? (
@@ -71,7 +74,7 @@ function HistoryItem({ e }: { e: GameEventView }) {
           <>
             {t('page.affected', { count: r.affected })}
             {!!r.total && <span className={`block font-semibold ${r.total > 0 ? 'text-up' : 'text-down'}`}>{r.total > 0 ? '+' : ''}{f.money(r.total)}</span>}
-            {r.detail && <span className="block text-xs text-ink-2">{r.detail}</span>}
+            {r.detail && <span className="block text-xs text-ink-2">{texts.text(r.detailText, r.detail)}</span>}
           </>
         ) : null}
       </span>

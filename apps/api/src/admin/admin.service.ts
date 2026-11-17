@@ -10,6 +10,7 @@ import { AuthUser } from '../common/auth.decorators';
 import { D, money } from '../common/decimal';
 import { applyCash } from '../economy/ledger';
 import { paramsJson, paramsOf } from '../market/asset-state';
+import { apiError } from '../common/errors';
 
 export type AssetUpdate = z.infer<typeof adminAssetParamsSchema> & ReasonBody;
 
@@ -87,7 +88,7 @@ export class AdminService {
       where: { id },
       select: { id: true, email: true, username: true, role: true, bannedAt: true, banReason: true, emailVerifiedAt: true, createdAt: true, lastLoginAt: true },
     });
-    if (!user) throw new NotFoundException();
+    if (!user) throw new NotFoundException(apiError('NOT_FOUND', 'Introuvable'));
     const season = await this.seasons.active();
     const wallet = await this.prisma.wallet.findUnique({ where: { userId_seasonId: { userId: id, seasonId: season.id } } });
     const [ledger, sessions] = await Promise.all([
@@ -103,7 +104,7 @@ export class AdminService {
   }
 
   async ban(actor: AuthUser, id: string, reason: string) {
-    if (id === actor.id) throw new BadRequestException('Impossible de se bannir soi-même');
+    if (id === actor.id) throw new BadRequestException(apiError('CANNOT_BAN_SELF', 'Impossible de se bannir soi-même'));
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id }, data: { bannedAt: new Date(), banReason: reason } });
       await tx.refreshToken.updateMany({ where: { userId: id, revokedAt: null }, data: { revokedAt: new Date() } });
@@ -132,7 +133,7 @@ export class AdminService {
   async adjustCash(actor: AuthUser, userId: string, amount: string, reason: string) {
     const wallet = await this.seasons.wallet(userId);
     const after = await this.prisma.$transaction(async (tx) => {
-      await applyCash(tx, wallet.id, D(amount), 'ADMIN_ADJUST', reason, { type: 'Admin', id: actor.id }, { strict: true, message: 'Le solde deviendrait négatif' });
+      await applyCash(tx, wallet.id, D(amount), 'ADMIN_ADJUST', reason, { type: 'Admin', id: actor.id }, { strict: true, error: apiError('NEGATIVE_BALANCE', 'Le solde deviendrait négatif') });
       await this.audit.log({ actorId: actor.id, action: 'CASH_ADJUST', targetType: 'User', targetId: userId, reason, payload: { amount } }, tx);
       return (await tx.wallet.findUniqueOrThrow({ where: { id: wallet.id }, select: { cash: true } })).cash;
     });
@@ -161,7 +162,7 @@ export class AdminService {
     const { frozen, reason, ...changes } = body;
     await this.prisma.$transaction(async (tx) => {
       const asset = await tx.asset.findUnique({ where: { symbol: symbol.toUpperCase() } });
-      if (!asset) throw new NotFoundException();
+      if (!asset) throw new NotFoundException(apiError('NOT_FOUND', 'Introuvable'));
       const defined = Object.fromEntries(Object.entries(changes).filter(([, v]) => v !== undefined));
       await tx.asset.update({
         where: { id: asset.id },

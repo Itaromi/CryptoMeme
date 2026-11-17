@@ -1,0 +1,457 @@
+{
+  "myRoom": "My bedroom",
+  "facilities": {
+    "chambre-ado": {
+      "name": "Teenage bedroom",
+      "description": "Free. Electricity paid by your parents… who bill you dearly for it."
+    },
+    "garage": {
+      "name": "Garage",
+      "description": "Between the lawnmower and the bike nobody ever rides."
+    },
+    "cave": {
+      "name": "Damp cellar",
+      "description": "Cool, but a bit damp. The parts aren’t fans."
+    },
+    "entrepot": {
+      "name": "Warehouse",
+      "description": "Industrial zone, business rates."
+    },
+    "centrale-charbon": {
+      "name": "Abandoned coal plant",
+      "description": "Dirt-cheap electricity. It’s 38 °C inside."
+    },
+    "datacenter": {
+      "name": "Tier III data center",
+      "description": "Redundancy, security, access badge. Pure luxury."
+    },
+    "bunker-islandais": {
+      "name": "Icelandic bunker",
+      "description": "Free geothermal power and 4 °C outside. The holy grail."
+    }
+  },
+  "banks": {
+    "neo-gratos": {
+      "description": "Free. Like the vending machine coffee: no questions asked."
+    },
+    "credit-mutuel-agricole-bancaire": {
+      "description": "Interest on cash and cheaper electricity. An advisor who never picks up."
+    },
+    "bnp-parodibas": {
+      "description": "Hardware insurance and anti-hacking protection. The sensible choice. Too sensible."
+    },
+    "banque-suisse-discrete": {
+      "description": "Tax optimization and a digital vault. We don’t know who you are. The taxman does."
+    },
+    "cryptobank-caimans": {
+      "description": "Zero trading fees, 6% a month, dirt-cheap electricity. Deposit guarantee: “we’ll see”."
+    }
+  },
+  "pools": {
+    "bitmeme-pool": {
+      "description": "The biggest BTCN pool. Fixed payouts, hefty fees."
+    },
+    "galactic-pplns": {
+      "description": "Paid by the pool’s luck. Lower fees."
+    },
+    "sololoto": {
+      "description": "You mine alone. Find a block, take it all. Or nothing. Probably nothing."
+    },
+    "dogepool": {
+      "description": "Wow. Such pool. Much hash."
+    },
+    "coincoin-pps": {
+      "description": "Steady as a duck on a pond."
+    },
+    "nid-douillet": {
+      "description": "0% fees AND a 3% bonus. Paid every 6 h. What could possibly go wrong?"
+    },
+    "mamie-pool": {
+      "description": "Like grandma: slow but reliable. She knits your shares."
+    },
+    "tricot-solo": {
+      "description": "All alone with her knitting needles."
+    },
+    "kebabminers": {
+      "description": "Lettuce, tomato, onion, hashrate."
+    },
+    "sauce-blanche": {
+      "description": "5% bonus. The boss has been “unreachable” since Tuesday."
+    }
+  },
+  "hardware": {
+    "rgb": "More RGB than hashrate.",
+    "blower": "Noisy blower fan. Runs as hot as a toaster.",
+    "oldGpu": "A survivor of the 2017 mining craze. Smells burnt.",
+    "kidney": "Costs a kidney. The left one.",
+    "degradation": "Degradation included at no extra cost.",
+    "asic": "Sounds like a plane taking off. Does only one thing, but does it well.",
+    "cheapPsu": "Certified “should be fine”. Fire extinguisher not included.",
+    "miningBoard": "Lots of PCIe x1 slots, zero RGB. A real miner’s board.",
+    "window": "Free. Your mom disagrees.",
+    "fryer": "Guaranteed smell of fries all over the neighborhood.",
+    "woodCrate": "Found behind a supermarket.",
+    "kallax": "Assembly: 3 h and an argument.",
+    "hotAisle": "Hot aisle / cold aisle. Very serious.",
+    "container": "A shipping container stuffed with rigs. A classic."
+  },
+  "achievements": {
+    "first-trade": {
+      "name": "First order",
+      "description": "Place your first order."
+    },
+    "hyperactive": {
+      "name": "Hyperactive",
+      "description": "Place 100 orders in one season."
+    },
+    "big-volume": {
+      "name": "Heavy lifter",
+      "description": "Reach $1,000,000 of traded volume in one season."
+    },
+    "profit-10k": {
+      "name": "It pays off",
+      "description": "Cash in $10,000 of capital gains in one season."
+    },
+    "big-win": {
+      "name": "Masterstroke",
+      "description": "Make $5,000 on a single sale."
+    },
+    "big-loss": {
+      "name": "Ouch",
+      "description": "Lose $5,000 on a single sale."
+    },
+    "diamond-hands": {
+      "name": "Diamond hands",
+      "description": "Hold a position at −90% without selling."
+    },
+    "diamond-hands-title": {
+      "name": "Pure diamond",
+      "description": "Hold a position at −95% with a cost above $1,000."
+    },
+    "rug-survivor": {
+      "name": "Rug survivor",
+      "description": "Hold a coin when it gets rug pulled."
+    },
+    "first-100k": {
+      "name": "Six figures",
+      "description": "Reach a net worth of $100,000."
+    },
+    "first-million": {
+      "name": "First million",
+      "description": "Reach a net worth of $1,000,000."
+    },
+    "millionaire-title": {
+      "name": "Double million",
+      "description": "Reach a net worth of $2,000,000."
+    },
+    "gold-frame": {
+      "name": "Vault",
+      "description": "Reach a net worth of $5,000,000."
+    },
+    "podium": {
+      "name": "Podium",
+      "description": "Be in the top 3 of the leaderboard (at least 10 players)."
+    },
+    "broke": {
+      "name": "Broke",
+      "description": "Fall below $100 of net worth."
+    },
+    "first-rig": {
+      "name": "Sunday miner",
+      "description": "Build your first rig."
+    },
+    "industrial": {
+      "name": "Industrial farm",
+      "description": "Own 10 rigs at the same time."
+    },
+    "pyromane": {
+      "name": "Pyromaniac",
+      "description": "Let a rig catch fire."
+    },
+    "pyro-badge": {
+      "name": "Volunteer firefighter",
+      "description": "Survive 3 fires in one season."
+    },
+    "arsonist": {
+      "name": "Serial arsonist",
+      "description": "Five fires in one season. The insurers have your photo."
+    },
+    "miner-10k": {
+      "name": "Digging deep",
+      "description": "Mine $10,000 worth of crypto in one season."
+    },
+    "shareholder": {
+      "name": "Shareholder",
+      "description": "Own a stock."
+    },
+    "rentier": {
+      "name": "Living off dividends",
+      "description": "Collect $500 of dividends in one season."
+    },
+    "takeover": {
+      "name": "Sold to the highest bidder",
+      "description": "Get bought out in a takeover."
+    },
+    "bankrupt": {
+      "name": "Ruined by proxy",
+      "description": "Own a stock that goes bankrupt."
+    },
+    "premium": {
+      "name": "Premium account",
+      "description": "Open an account at a paid bank."
+    },
+    "offshore": {
+      "name": "Tax exile",
+      "description": "Open an account at the Banque Suisse Discrète."
+    },
+    "taxpayer": {
+      "name": "Model taxpayer",
+      "description": "Pay $1,000 of taxes in one season."
+    },
+    "fashion": {
+      "name": "Fashion victim",
+      "description": "Own 5 cosmetics."
+    }
+  },
+  "cosmetics": {
+    "frame-ink": {
+      "name": "Ink frame",
+      "description": "Sober, efficient, like a bank statement."
+    },
+    "frame-dotted": {
+      "name": "Dotted line",
+      "description": "Cut along the dotted line."
+    },
+    "frame-acid": {
+      "name": "Highlighter",
+      "description": "The neon yellow of important notes."
+    },
+    "frame-tape": {
+      "name": "Caution tape",
+      "description": "Work zone: portfolio under reconstruction."
+    },
+    "frame-ticker": {
+      "name": "Stock ticker",
+      "description": "A frame that scrolls like the prices."
+    },
+    "frame-gold": {
+      "name": "Gold bar",
+      "description": "For millionaires only (really)."
+    },
+    "frame-flames": {
+      "name": "Flames",
+      "description": "A souvenir of your first burnt rig."
+    },
+    "frame-holo": {
+      "name": "Hologram",
+      "description": "The whales’ frame. Changes color with the light."
+    },
+    "banner-grid": {
+      "name": "Graph paper",
+      "description": "For drawing your charts by hand."
+    },
+    "banner-stripes": {
+      "name": "Pinstripes",
+      "description": "Like a trader’s suit."
+    },
+    "banner-candles": {
+      "name": "Green candles",
+      "description": "Nothing but green. Nothing but joy."
+    },
+    "banner-red": {
+      "name": "Black Monday",
+      "description": "For those who like to suffer."
+    },
+    "banner-tabloid": {
+      "name": "Front page",
+      "description": "Your name on the front page."
+    },
+    "banner-podium": {
+      "name": "Podium",
+      "description": "Given to the top three of the leaderboard."
+    },
+    "title-retail": {
+      "name": "Retail investor",
+      "description": "The honest title."
+    },
+    "title-hodler": {
+      "name": "HODLer",
+      "description": "Never sells. Never."
+    },
+    "title-exit": {
+      "name": "Exit liquidity",
+      "description": "Someone has to buy the top."
+    },
+    "title-influencer": {
+      "name": "Crypto influencer",
+      "description": "Promo code in bio."
+    },
+    "title-wolf": {
+      "name": "Wolf of Wall Street",
+      "description": "Or at least of the street next door."
+    },
+    "title-whale": {
+      "name": "Whale",
+      "description": "When you buy, the market shakes."
+    },
+    "title-pyro": {
+      "name": "Pyromaniac",
+      "description": "Set fire to their own farm."
+    },
+    "title-survivor": {
+      "name": "Rug survivor",
+      "description": "Was there. Saw it all. Lost it all."
+    },
+    "title-millionaire": {
+      "name": "Millionaire",
+      "description": "A million imaginary dollars."
+    },
+    "title-diamond": {
+      "name": "Diamond hands",
+      "description": "−90% and still here."
+    },
+    "badge-rocket": {
+      "name": "Rocket",
+      "description": "To the moon."
+    },
+    "badge-ape": {
+      "name": "Ape",
+      "description": "Ape together strong."
+    },
+    "badge-bull": {
+      "name": "Bull",
+      "description": "Going up."
+    },
+    "badge-bear": {
+      "name": "Bear",
+      "description": "Going down."
+    },
+    "badge-paper": {
+      "name": "Paper hands",
+      "description": "Own it."
+    },
+    "badge-casino": {
+      "name": "Slot machine",
+      "description": "It’s not trading, it’s entertainment."
+    },
+    "badge-whale": {
+      "name": "Whale",
+      "description": "Big wallet, big ego."
+    },
+    "badge-crown": {
+      "name": "Crown",
+      "description": "The most expensive badge in the game. That’s it."
+    },
+    "badge-diamond": {
+      "name": "Diamond",
+      "description": "Certified diamond hands."
+    },
+    "badge-fire": {
+      "name": "Fire",
+      "description": "Your rig burned. You kept this badge."
+    },
+    "badge-pick": {
+      "name": "Pickaxe",
+      "description": "Seasoned miner."
+    },
+    "name-underline": {
+      "name": "Highlighted",
+      "description": "Your username in neon."
+    },
+    "name-strike": {
+      "name": "Struck through",
+      "description": "Like a rejected credit line."
+    },
+    "name-glitch": {
+      "name": "Glitch",
+      "description": "The server crashed during your trade."
+    },
+    "name-wave": {
+      "name": "Volatility",
+      "description": "The letters go up and down."
+    },
+    "name-gold": {
+      "name": "Gold-plated",
+      "description": "A millionaire’s golden sheen."
+    }
+  },
+  "assets": {
+    "BTCN": {
+      "description": "The original crypto. Created by a stranger who has since lost their password."
+    },
+    "ETN": {
+      "description": "Smart contracts, gas fees and promises of an update “next month”."
+    },
+    "DCC": {
+      "description": "A dog. Twice. Why not."
+    },
+    "BAGT": {
+      "description": "Backed by the traditional baguette. Strike scheduled every Thursday."
+    },
+    "NFTRUC": {
+      "description": "A JPEG of a bored ape, but as a token."
+    },
+    "STONKS": {
+      "description": "Only up. (Disclaimer: not only up.)"
+    },
+    "MAMIE": {
+      "description": "Grandma put everything into it. Don’t let her down."
+    },
+    "TWEET": {
+      "description": "Its price depends on a single man and his mood at 3 am."
+    },
+    "SAFEMM": {
+      "description": "Twice as safe as SafeMoon. So not at all."
+    },
+    "POMME": {
+      "description": "Sells the same phone every year, a little pricier. Fans queue up anyway."
+    },
+    "MSFTE": {
+      "description": "Your computer will restart to install updates. Do not turn it off."
+    },
+    "TMPT": {
+      "description": "Self-driving cars delivered “next year” since 2016. The CEO tweets at 3 am."
+    },
+    "MCDB": {
+      "description": "The ice cream machine is broken. It always has been. It always will be."
+    },
+    "LRMD": {
+      "description": "Everything for the home, except a salesperson in the screws aisle."
+    },
+    "AMZNT": {
+      "description": "Delivered tomorrow. The parcel, not necessarily what you ordered."
+    },
+    "NFLQ": {
+      "description": "Cancels your favorite show after one season, then raises the price."
+    },
+    "NVDO": {
+      "description": "Sells shovels during the AI gold rush. The shovels cost $40,000."
+    },
+    "LVMHEIN": {
+      "description": "A canvas bag for €3,000. The canvas is of excellent quality."
+    },
+    "AFRAN": {
+      "description": "Your flight is delayed due to a strike, the weather, or because it’s Tuesday."
+    },
+    "TOTFOS": {
+      "description": "Investing massively in green. The color of the logo, mostly."
+    },
+    "BOULG": {
+      "description": "Factory croissants “made in-house”. A dividend as regular as the 6 am batch."
+    }
+  },
+  "sectors": {
+    "Tech": "Tech",
+    "E-commerce": "E-commerce",
+    "Médias": "Media",
+    "Restauration": "Restaurants",
+    "Distribution": "Retail",
+    "Agroalimentaire": "Food industry",
+    "Énergie": "Energy",
+    "Transport": "Transport",
+    "Luxe": "Luxury",
+    "Automobile": "Automotive",
+    "Semi-conducteurs": "Semiconductors",
+    "Jeux vidéo": "Video games"
+  }
+}

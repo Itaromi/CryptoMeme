@@ -48,7 +48,7 @@ export interface FacilitySpec {
 
 export interface RigStats {
   valid: boolean;
-  errors: string[];
+  errors: RigIssue[];
   /** Consommation des composants (W) */
   power: number;
   /** Consommation à la prise, pertes de l'alimentation incluses (W) */
@@ -66,12 +66,31 @@ export interface RigStats {
   elecCostPerDay: number;
 }
 
+/** Problème de montage d'une rig : code d'erreur stable de l'API (traduit par le site), repli français et paramètres. */
+export interface RigIssue {
+  code:
+    | 'RACK_IN_RIG'
+    | 'RIG_ONE_ASIC'
+    | 'RIG_ASIC_ALONE'
+    | 'RIG_ONE_MOBO'
+    | 'RIG_ONE_CPU'
+    | 'RIG_ONE_COOLING'
+    | 'RIG_SOCKET'
+    | 'RIG_TOO_MANY_GPUS'
+    | 'RIG_ONE_PSU'
+    | 'RIG_MAX_ONE_COOLING'
+    | 'RIG_PSU_TOO_WEAK';
+  message: string;
+  params?: Record<string, string | number>;
+}
+
 export const MAX_OVERCLOCK = 3;
 const OC_HASH = 0.12; // +12 % de hashrate par cran
 const OC_POWER = 0.22; // +22 % de conso par cran
 
 export function computeRig(parts: ComponentSpec[], overclock: number, facility: FacilitySpec, rack: RackSpec): RigStats {
-  const errors: string[] = [];
+  const errors: RigIssue[] = [];
+  const fail = (code: RigIssue['code'], message: string, params?: RigIssue['params']) => errors.push(params ? { code, message, params } : { code, message });
   const by = (k: ComponentKind) => parts.filter((p) => p.kind === k);
   const mobos = by('MOTHERBOARD');
   const cpus = by('CPU');
@@ -79,21 +98,21 @@ export function computeRig(parts: ComponentSpec[], overclock: number, facility: 
   const asics = by('ASIC');
   const psus = by('PSU');
   const coolers = by('COOLING');
-  if (by('RACK').length) errors.push("Un rack ne fait pas partie d'une rig");
+  if (by('RACK').length) fail('RACK_IN_RIG', "Un rack ne fait pas partie d'une rig");
 
   if (asics.length) {
-    if (asics.length > 1) errors.push('Un seul ASIC par rig');
-    if (mobos.length || cpus.length || gpus.length) errors.push("Un ASIC tourne seul : pas de carte mère, CPU ni GPU");
+    if (asics.length > 1) fail('RIG_ONE_ASIC', 'Un seul ASIC par rig');
+    if (mobos.length || cpus.length || gpus.length) fail('RIG_ASIC_ALONE', 'Un ASIC tourne seul : pas de carte mère, CPU ni GPU');
   } else {
-    if (mobos.length !== 1) errors.push('Il faut exactement une carte mère');
-    if (cpus.length !== 1) errors.push('Il faut exactement un CPU');
-    if (coolers.length !== 1) errors.push('Il faut exactement un refroidissement');
+    if (mobos.length !== 1) fail('RIG_ONE_MOBO', 'Il faut exactement une carte mère');
+    if (cpus.length !== 1) fail('RIG_ONE_CPU', 'Il faut exactement un CPU');
+    if (coolers.length !== 1) fail('RIG_ONE_COOLING', 'Il faut exactement un refroidissement');
     const mobo = mobos[0];
-    if (mobo && cpus[0] && mobo.socket !== cpus[0].socket) errors.push(`CPU incompatible (socket ${cpus[0].socket} ≠ ${mobo.socket})`);
-    if (mobo && gpus.length > (mobo.gpuSlots ?? 0)) errors.push(`Trop de GPU : ${gpus.length} pour ${mobo.gpuSlots} slots`);
+    if (mobo && cpus[0] && mobo.socket !== cpus[0].socket) fail('RIG_SOCKET', `CPU incompatible (socket ${cpus[0].socket} ≠ ${mobo.socket})`, { cpu: cpus[0].socket ?? '?', mobo: mobo.socket ?? '?' });
+    if (mobo && gpus.length > (mobo.gpuSlots ?? 0)) fail('RIG_TOO_MANY_GPUS', `Trop de GPU : ${gpus.length} pour ${mobo.gpuSlots} slots`, { gpus: gpus.length, slots: mobo.gpuSlots ?? 0 });
   }
-  if (psus.length !== 1) errors.push('Il faut exactement une alimentation');
-  if (coolers.length > 1) errors.push('Un seul refroidissement par rig');
+  if (psus.length !== 1) fail('RIG_ONE_PSU', 'Il faut exactement une alimentation');
+  if (coolers.length > 1) fail('RIG_MAX_ONE_COOLING', 'Un seul refroidissement par rig');
 
   const oc = Math.max(0, Math.min(MAX_OVERCLOCK, Math.round(overclock)));
   const consumers = parts.filter((p) => p.kind !== 'PSU' && p.kind !== 'RACK' && !p.broken);
@@ -102,7 +121,7 @@ export function computeRig(parts: ComponentSpec[], overclock: number, facility: 
   const efficiency = psu?.efficiency ?? 0.8;
   const wallPower = power / efficiency;
   const psuCapacity = psu?.watts ?? 0;
-  if (psu && power > psuCapacity) errors.push(`Alimentation trop faible : ${Math.round(power)} W demandés pour ${psuCapacity} W`);
+  if (psu && power > psuCapacity) fail('RIG_PSU_TOO_WEAK', `Alimentation trop faible : ${Math.round(power)} W demandés pour ${psuCapacity} W`, { needed: Math.round(power), capacity: psuCapacity });
 
   const coolingCapacity =
     (coolers.reduce((s, c) => s + (c.coolingW ?? 0), 0) + asics.reduce((s, a) => s + (a.coolingW ?? 0), 0)) * rack.airflow;

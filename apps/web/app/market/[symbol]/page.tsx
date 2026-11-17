@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { use, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { type MarketTrade, WS_EVENTS } from '@cryptomeme/shared';
+import { type GameText, type MarketTrade, WS_EVENTS } from '@cryptomeme/shared';
 import { api } from '@/lib/api';
 import { getSocket, useAssets, useMe, usePortfolio } from '@/lib/hooks';
 import { queryKeys } from '@/lib/queryKeys';
@@ -18,6 +18,7 @@ import { RecentTrades } from '@/components/market/RecentTrades';
 import { AssetEvents } from '@/components/market/AssetEvents';
 import { TradePanel } from '@/components/market/TradePanel';
 import { regimeCls, useAssetLabels } from '@/components/market/labels';
+import { useTexts } from '@/lib/texts';
 
 interface Detail {
   symbol: string;
@@ -38,13 +39,14 @@ interface Detail {
   holders: number;
   creator: string | null;
   trades: MarketTrade[];
-  events: Array<{ type: string; detail: string; at: string }>;
+  events: Array<{ type: string; detail: string; text: GameText | null; at: string }>;
 }
 
 export default function AssetPage({ params }: { params: Promise<{ symbol: string }> }) {
   const symbol = use(params).symbol.toUpperCase();
   const t = useTranslations('market.asset');
   const f = useFormat();
+  const texts = useTexts();
   const labels = useAssetLabels();
   const { data, error } = useQuery({
     queryKey: queryKeys.asset(symbol),
@@ -92,7 +94,7 @@ export default function AssetPage({ params }: { params: Promise<{ symbol: string
           </span>
           <div>
             <p className="text-sm font-semibold uppercase tracking-widest text-ink-2">
-              {data.symbol} · {isStock ? (company?.sector ?? t('stockFallback')) : labels.tier(data.tier)}
+              {data.symbol} · {isStock ? (company ? texts.sector(company.sector) : t('stockFallback')) : labels.tier(data.tier)}
               {data.frozen && <span className="ml-2 bg-down px-1.5 text-paper">{t('frozenBadge')}</span>}
             </p>
             <h1 className="display text-[clamp(2.5rem,6vw,5rem)] font-extrabold">{data.name}</h1>
@@ -119,7 +121,7 @@ export default function AssetPage({ params }: { params: Promise<{ symbol: string
             </Stat>
           </dl>
 
-          <p className="max-w-2xl text-xl leading-relaxed">{data.description}</p>
+          <p className="max-w-2xl text-xl leading-relaxed">{texts.catalog(`assets.${data.symbol}.description`, data.description)}</p>
           {data.creator && (
             <p className="-mt-6 text-sm text-ink-2">
               {t.rich('createdBy', {

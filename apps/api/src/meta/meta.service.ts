@@ -10,6 +10,9 @@ import { applyCash, lockWallets } from '../economy/ledger';
 import { NotificationInput, NotificationsService } from '../economy/notifications';
 import { WalletStatsService } from '../players/wallet-stats.service';
 import { AVATARS } from './catalog';
+import { apiError } from '../common/errors';
+import { param } from '@cryptomeme/shared';
+import { achievementName, cosmeticName } from '../common/texts';
 
 const slug = z.string().min(1).max(60);
 export const buyCosmeticSchema = z.object({ slug });
@@ -32,8 +35,10 @@ export interface Look {
   frame: string | null;
   banner: string | null;
   title: string | null;
+  /** Slug du titre équipé (le site traduit le titre par slug, `title` est le repli) */
+  titleSlug: string | null;
   nameEffect: string | null;
-  badges: Array<{ icon: string; name: string }>;
+  badges: Array<{ slug: string; icon: string; name: string }>;
 }
 
 @Injectable()
@@ -72,10 +77,11 @@ export class MetaService {
           frame: style(u.frame),
           banner: style(u.banner),
           title: u.title ? ((map.get(u.title)?.data as { text?: string })?.text ?? null) : null,
+          titleSlug: u.title && map.has(u.title) ? u.title : null,
           nameEffect: style(u.nameEffect),
           badges: u.badges.flatMap((b) => {
             const c = map.get(b);
-            return c ? [{ icon: (c.data as { icon: string }).icon, name: c.name }] : [];
+            return c ? [{ slug: b, icon: (c.data as { icon: string }).icon, name: c.name }] : [];
           }),
         },
       ]),
@@ -89,7 +95,7 @@ export class MetaService {
     const [items, owned, achievements] = await Promise.all([
       this.prisma.cosmetic.findMany({ where: { available: true }, orderBy: [{ kind: 'asc' }, { sortOrder: 'asc' }] }),
       userId ? this.prisma.userCosmetic.findMany({ where: { userId }, select: { cosmeticId: true } }) : [],
-      this.prisma.achievement.findMany({ where: { rewardSlug: { not: null } }, select: { rewardSlug: true, name: true, hidden: true } }),
+      this.prisma.achievement.findMany({ where: { rewardSlug: { not: null } }, select: { rewardSlug: true, slug: true, name: true, hidden: true } }),
     ]);
     const mine = new Set(owned.map((o) => o.cosmeticId));
     const user = userId ? await this.prisma.user.findUnique({ where: { id: userId }, select: { avatar: true, frame: true, banner: true, title: true, nameEffect: true, badges: true, showcase: true } }) : null;
@@ -107,7 +113,8 @@ export class MetaService {
           price: c.price?.toString() ?? null,
           data: c.data,
           owned: mine.has(c.id),
-          unlockedBy: ach ? (ach.hidden ? 'Succès secret' : ach.name) : null,
+          // Succès qui offre l'objet (null s'il est secret : le site affiche « succès secret »)
+          unlockedBy: ach && !ach.hidden ? { slug: ach.slug, name: ach.name } : null,
         };
       }),
     };
@@ -115,13 +122,13 @@ export class MetaService {
 
   async buy(userId: string, slug: string) {
     const c = await this.prisma.cosmetic.findUnique({ where: { slug } });
-    if (!c || !c.available) throw new NotFoundException('Objet introuvable');
-    if (!c.price) throw new BadRequestException('Cet objet ne s’achète pas : il se mérite (succès).');
+    if (!c || !c.available) throw new NotFoundException(apiError('ITEM_NOT_FOUND', 'Objet introuvable'));
+    if (!c.price) throw new BadRequestException(apiError('ITEM_NOT_FOR_SALE', 'Cet objet ne s’achète pas : il se mérite (succès).'));
     const { id: walletId } = await this.seasons.wallet(userId);
     const price = D(c.price);
     await this.prisma.$transaction(async (tx) => {
       await lockWallets(tx, [walletId]);
-      if (await tx.userCosmetic.findUnique({ where: { userId_cosmeticId: { userId, cosmeticId: c.id } } })) throw new ConflictException('Tu possèdes déjà cet objet');
+      if (await tx.userCosmetic.findUnique({ where: { userId_cosmeticId: { userId, cosmeticId: c.id } } })) throw new ConflictException(apiError('ITEM_ALREADY_OWNED', 'Tu possèdes déjà cet objet'));
       await applyCash(tx, walletId, price.neg(), 'SHOP', `Boutique : ${c.name}`, { type: 'Cosmetic', id: c.id }, { strict: true });
       await tx.userCosmetic.create({ data: { userId, cosmeticId: c.id, source: 'SHOP' } });
     });
@@ -134,24 +141,24 @@ export class MetaService {
     const has = (slug: string, kind: CosmeticKind) => owned.some((o) => o.cosmetic.slug === slug && o.cosmetic.kind === kind);
     const data: Prisma.UserUpdateInput = {};
     if (body.avatar !== undefined) {
-      if (!AVATARS.includes(body.avatar)) throw new BadRequestException('Avatar inconnu');
+      if (!AVATARS.includes(body.avatar)) throw new BadRequestException(apiError('AVATAR_UNKNOWN', 'Avatar inconnu'));
       data.avatar = body.avatar;
     }
     for (const key of ['frame', 'banner', 'title', 'nameEffect'] as const) {
       const v = body[key];
       if (v === undefined) continue;
-      if (v !== null && !has(v, SLOT[key])) throw new BadRequestException('Tu ne possèdes pas cet objet');
+      if (v !== null && !has(v, SLOT[key])) throw new BadRequestException(apiError('ITEM_NOT_OWNED', 'Tu ne possèdes pas cet objet'));
       data[key] = v;
     }
     if (body.badges) {
       const badges = [...new Set(body.badges)].slice(0, 3);
-      if (badges.some((b) => !has(b, 'BADGE'))) throw new BadRequestException('Tu ne possèdes pas ce badge');
+      if (badges.some((b) => !has(b, 'BADGE'))) throw new BadRequestException(apiError('BADGE_NOT_OWNED', 'Tu ne possèdes pas ce badge'));
       data.badges = badges;
     }
     if (body.showcase) {
       const show = [...new Set(body.showcase)].slice(0, 4);
       const mine = await this.prisma.userAchievement.findMany({ where: { userId, achievement: { slug: { in: show } } }, select: { achievement: { select: { slug: true } } } });
-      if (mine.length !== show.length) throw new BadRequestException('Succès non débloqué');
+      if (mine.length !== show.length) throw new BadRequestException(apiError('ACHIEVEMENT_LOCKED', 'Succès non débloqué'));
       data.showcase = show;
     }
     await this.prisma.user.update({ where: { id: userId }, data });
@@ -175,6 +182,8 @@ export class MetaService {
         const secret = a.hidden && !got;
         return {
           slug: a.slug,
+          // Succès secret non débloqué : nom et description masqués (le site affiche son propre texte)
+          secret,
           name: secret ? '???' : a.name,
           description: secret ? 'Succès secret. Continue de jouer… ou de perdre.' : a.description,
           icon: secret ? 'Spiral' : a.icon,
@@ -206,6 +215,14 @@ export class MetaService {
         type: 'ACHIEVEMENT',
         title: `Succès débloqué : ${a.name}`,
         body: `${a.description}${reward ? ` Récompense : ${reward.name}.` : ''}`,
+        text: {
+          key: 'game.notif.achievement',
+          params: {
+            name: achievementName(a),
+            description: param.t(`catalog.achievements.${a.slug}.description`, a.description),
+            reward: reward ? cosmeticName(reward) : 'none',
+          },
+        },
         link: '/achievements',
       });
     }

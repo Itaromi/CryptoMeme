@@ -7,6 +7,8 @@ import { SeasonsService } from '../seasons/seasons.service';
 import { D } from '../common/decimal';
 import { INTERVALS, Interval } from './candles';
 import { regimeOf } from './asset-state';
+import { apiError } from '../common/errors';
+import { textView } from '../common/texts';
 
 export interface DayStats {
   open: number;
@@ -80,7 +82,7 @@ export class MarketService {
 
   async bySymbol(symbol: string) {
     const a = await this.prisma.asset.findUnique({ where: { symbol: symbol.toUpperCase() } });
-    if (!a) throw new NotFoundException('Actif inconnu');
+    if (!a) throw new NotFoundException(apiError('ASSET_UNKNOWN', 'Actif inconnu'));
     return a;
   }
 
@@ -112,7 +114,7 @@ export class MarketService {
         by: t.wallet?.user.username ?? null,
         at: t.createdAt,
       })),
-      events: events.map((e) => ({ type: e.type, detail: e.detail, at: e.createdAt })),
+      events: events.map((e) => ({ type: e.type, detail: e.detail, text: textView(e), at: e.createdAt })),
     };
   }
 
@@ -123,11 +125,11 @@ export class MarketService {
       take: 20,
       include: { asset: { select: { symbol: true, emoji: true } } },
     });
-    return ev.map((e) => ({ symbol: e.asset.symbol, emoji: e.asset.emoji, type: e.type, detail: e.detail, at: e.createdAt }));
+    return ev.map((e) => ({ symbol: e.asset.symbol, emoji: e.asset.emoji, type: e.type, detail: e.detail, text: textView(e), at: e.createdAt }));
   }
 
   async candles(symbol: string, interval: Interval, limit = 300): Promise<Candle[]> {
-    if (!(interval in INTERVALS)) throw new BadRequestException('Intervalle invalide');
+    if (!(interval in INTERVALS)) throw new BadRequestException(apiError('INTERVAL_INVALID', 'Intervalle invalide'));
     const a = await this.bySymbol(symbol);
     const rows = await this.prisma.candle.findMany({
       where: { assetId: a.id, interval },
@@ -165,7 +167,7 @@ export class MarketService {
         slippageBps: Math.round(swap.slippageBps),
       };
     } catch (e) {
-      if (e instanceof SwapError) throw new BadRequestException(e.message);
+      if (e instanceof SwapError) throw new BadRequestException(apiError(e.code, e.message));
       throw e;
     }
   }

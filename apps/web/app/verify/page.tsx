@@ -5,10 +5,12 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { AuthShell } from '@/components/AuthShell';
 import { api } from '@/lib/api';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useErrorMessage } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 
 function Verify() {
+  const errorMessage = useErrorMessage();
   const t = useTranslations('auth.verify');
   const token = useSearchParams().get('token');
   const verify = useApiMutation({

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export * from './i18n';
+
 // ─── Constantes de jeu ──────────────────────────────────────────────
 export const STARTING_CASH = '10000.00';
 export const TICK_MS = 5_000;
@@ -74,7 +76,7 @@ const symbolRe = /^[A-Z0-9]{2,8}$/;
 const hex = /^#[0-9a-fA-F]{6}$/;
 const baseCreation = {
   name: z.string().trim().min(3).max(40),
-  emoji: z.string().refine(isIconName, 'Icône inconnue'),
+  emoji: z.string().refine(isIconName, 'ICON_UNKNOWN'),
   color: z.string().regex(hex),
   description: z.string().trim().min(10).max(280),
 };
@@ -82,17 +84,17 @@ export const creationSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('CRYPTO'),
     ...baseCreation,
-    symbol: z.string().trim().toUpperCase().regex(symbolRe, '2 à 8 lettres ou chiffres'),
+    symbol: z.string().trim().toUpperCase().regex(symbolRe, 'SYMBOL_FORMAT'),
     price: z.number().min(0.000001).max(1000),
     deposit: z.number().min(CREATION.CRYPTO.minDeposit).max(CREATION.CRYPTO.maxDeposit),
   }),
   z.object({
     kind: z.literal('COMPANY'),
     ...baseCreation,
-    symbol: z.string().trim().toUpperCase().regex(symbolRe, '2 à 8 lettres ou chiffres'),
+    symbol: z.string().trim().toUpperCase().regex(symbolRe, 'SYMBOL_FORMAT'),
     price: z.number().min(1).max(1000),
     deposit: z.number().min(CREATION.COMPANY.minDeposit).max(CREATION.COMPANY.maxDeposit),
-    sector: z.string().refine((s) => s in SECTORS, 'Secteur inconnu'),
+    sector: z.string().refine((s) => s in SECTORS, 'SECTOR_UNKNOWN'),
     payout: z.number().min(0).max(0.8),
   }),
   z.object({
@@ -117,33 +119,33 @@ export const WS_EVENTS = {
 // ─── Auth ───────────────────────────────────────────────────────────
 export const usernameSchema = z
   .string()
-  .min(3, '3 caractères minimum')
-  .max(20, '20 caractères maximum')
-  .regex(/^[a-zA-Z0-9_]+$/, 'Lettres, chiffres et _ uniquement');
+  .min(3, 'USERNAME_MIN')
+  .max(20, 'USERNAME_MAX')
+  .regex(/^[a-zA-Z0-9_]+$/, 'USERNAME_CHARS');
 
 export const registerSchema = z.object({
-  email: z.string().email('Email invalide').max(254),
+  email: z.string().email('EMAIL_INVALID').max(254),
   username: usernameSchema,
   password: z
     .string()
-    .min(8, '8 caractères minimum')
+    .min(8, 'PASSWORD_MIN')
     .max(128)
-    .regex(/[A-Za-z]/, 'Au moins une lettre')
-    .regex(/[0-9]/, 'Au moins un chiffre'),
+    .regex(/[A-Za-z]/, 'PASSWORD_LETTER')
+    .regex(/[0-9]/, 'PASSWORD_DIGIT'),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
 
 export const loginSchema = z.object({
-  email: z.string().email('Email invalide'),
-  password: z.string().min(1, 'Mot de passe requis'),
+  email: z.string().email('EMAIL_INVALID'),
+  password: z.string().min(1, 'PASSWORD_REQUIRED'),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
 // ─── Trading ────────────────────────────────────────────────────────
 const positiveDecimal = z
   .string()
-  .regex(/^\d+(\.\d+)?$/, 'Montant invalide')
-  .refine((v) => Number(v) > 0, 'Doit être positif');
+  .regex(/^\d+(\.\d+)?$/, 'AMOUNT_INVALID')
+  .refine((v) => Number(v) > 0, 'AMOUNT_POSITIVE');
 
 export const orderSchema = z.object({
   symbol: z.string().min(1).max(12),

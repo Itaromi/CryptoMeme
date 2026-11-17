@@ -16,6 +16,9 @@ import frProfile from './fr/profile.json';
 import frCreate from './fr/create.json';
 import frAdmin from './fr/admin.json';
 import frNotifications from './fr/notifications.json';
+import frErrors from './fr/errors.json';
+import frGame from './fr/game.json';
+import frCatalog from './fr/catalog.json';
 import enCommon from './en/common.json';
 import enAuth from './en/auth.json';
 import enHome from './en/home.json';
@@ -32,6 +35,10 @@ import enProfile from './en/profile.json';
 import enCreate from './en/create.json';
 import enAdmin from './en/admin.json';
 import enNotifications from './en/notifications.json';
+import enErrors from './en/errors.json';
+import enGame from './en/game.json';
+import enCatalog from './en/catalog.json';
+import type { ErrorCode } from '@cryptomeme/shared';
 import type { Locale } from '@/i18n/config';
 
 const fr = {
@@ -51,6 +58,11 @@ const fr = {
   create: frCreate,
   admin: frAdmin,
   notifications: frNotifications,
+  // Textes venus de l'API (voir lib/texts.ts) : codes d'erreur, textes générés par le jeu, contenus du catalogue.
+  // Chaque code d'erreur de l'API doit avoir sa traduction (sinon le typecheck échoue).
+  errors: frErrors satisfies Record<ErrorCode, string>,
+  game: frGame,
+  catalog: frCatalog,
 };
 
 export type Messages = typeof fr;
@@ -73,6 +85,9 @@ const en: Messages = {
   create: enCreate,
   admin: enAdmin,
   notifications: enNotifications,
+  errors: enErrors,
+  game: enGame,
+  catalog: enCatalog,
 };
 
 export const messages: Record<Locale, Messages> = { fr, en };

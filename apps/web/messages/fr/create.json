@@ -69,15 +69,7 @@
       "cash": "Cash disponible : {cash}"
     },
     "submit": "Envoyer en modération",
-    "sent": "Demande envoyée ! Un modérateur va vérifier le nom. Frais et dépôt sont séquestrés en attendant.",
-    "errors": {
-      "tooShort": "{min} caractères minimum",
-      "tooLong": "{max} caractères maximum",
-      "tooSmall": "Minimum : {min}",
-      "tooBig": "Maximum : {max}",
-      "symbol": "2 à 8 lettres ou chiffres",
-      "invalid": "Valeur invalide"
-    }
+    "sent": "Demande envoyée ! Un modérateur va vérifier le nom. Frais et dépôt sont séquestrés en attendant."
   },
   "mine": {
     "title": "Mes créations",

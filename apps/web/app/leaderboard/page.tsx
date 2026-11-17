@@ -10,6 +10,7 @@ import { LEADERBOARD_CATEGORIES, type LeaderboardCategory, type LeaderboardView,
 import { queryKeys } from '@/lib/queryKeys';
 import { Avatar, Name, PlayerTag } from '@/components/PlayerTag';
 import { Glyph } from '@/lib/icons';
+import { useTexts } from '@/lib/texts';
 
 /** Clé de message de chaque catégorie (les identifiants de l'API contiennent des tirets). */
 const CAT_KEY = {
@@ -32,6 +33,7 @@ type Entry = LeaderboardView['entries'][number];
 export default function LeaderboardPage() {
   const t = useTranslations('leaderboard');
   const f = useFormat();
+  const texts = useTexts();
   const [season, setSeason] = useState<number | null>(null);
   const [cat, setCat] = useState<LeaderboardCategory>('general');
   const { data: me } = useMe();
@@ -119,9 +121,9 @@ export default function LeaderboardPage() {
             </span>
             <span className={`mt-2 block font-bold group-hover:underline ${i === 0 ? 'text-3xl' : 'text-xl'}`}>
               <Name username={e.username} look={e.look} />
-              {e.look?.badges.map((b) => <span key={b.name} className="ml-1.5 text-[0.7em]"><Glyph name={b.icon} /></span>)}
+              {e.look?.badges.map((b) => <span key={b.slug} title={texts.cosmetic(b)} className="ml-1.5 text-[0.7em]"><Glyph name={b.icon} /></span>)}
             </span>
-            {e.look?.title && <span className="block text-xs uppercase tracking-widest text-ink-2">{e.look.title}</span>}
+            {e.look?.title && <span className="block text-xs uppercase tracking-widest text-ink-2">{texts.lookTitle(e.look)}</span>}
             <span className={`num mt-1 block text-lg font-semibold ${valueTone(e)}`}>{fmt(e)}</span>
             {sub(e) && <span className={`num text-sm font-semibold ${subTone(e)}`}>{sub(e)}</span>}
           </Link>

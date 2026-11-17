@@ -2,6 +2,7 @@ import { Global, Injectable, Module, NotFoundException } from '@nestjs/common';
 import { Prisma, Season } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { lockWallets } from '../economy/ledger';
+import { apiError } from '../common/errors';
 
 @Injectable()
 export class SeasonsService {
@@ -12,7 +13,7 @@ export class SeasonsService {
   async active(): Promise<Season> {
     if (this.cache && Date.now() - this.cache.at < 10_000) return this.cache.season;
     const season = await this.prisma.season.findFirst({ where: { status: 'ACTIVE' }, orderBy: { number: 'desc' } });
-    if (!season) throw new NotFoundException('Aucune saison active');
+    if (!season) throw new NotFoundException(apiError('NO_ACTIVE_SEASON', 'Aucune saison active'));
     this.cache = { season, at: Date.now() };
     return season;
   }

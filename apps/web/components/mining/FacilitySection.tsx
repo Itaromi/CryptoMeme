@@ -4,10 +4,12 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useFormat } from '@/lib/format';
 import { type Farm, type PoolsInfo, useMiningFormat } from '@/lib/mining';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useErrorMessage } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 import { RigBuilder } from './RigBuilder';
 import { RigRow } from './RigRow';
+import { useTexts } from '@/lib/texts';
 
 type Facility = Farm['facilities'][number];
 
@@ -28,13 +30,14 @@ export function FacilitySection({
 }) {
   const t = useTranslations('mining.facility');
   const f = useFormat();
+  const texts = useTexts();
   const { type } = facility;
 
   return (
     <section>
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3 border-b-2 border-ink pb-2">
         <div>
-          <h2 className="display text-3xl font-bold">{facility.name}</h2>
+          <h2 className="display text-3xl font-bold">{texts.facility(facility)}</h2>
           <p className="text-sm text-ink-2">
             {t('info', {
               type: type.name,
@@ -116,6 +119,7 @@ function PowerBar({ used, max }: { used: number; max: number }) {
 }
 
 function UninstallRack({ id }: { id: string }) {
+  const errorMessage = useErrorMessage();
   const t = useTranslations('mining.facility');
   const uninstall = useApiMutation({
     mutationFn: () => api(`/mining/items/${id}/install`, { method: 'POST', json: { facilityId: null } }),

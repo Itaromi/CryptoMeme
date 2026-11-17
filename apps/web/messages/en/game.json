@@ -1,0 +1,241 @@
+{
+  "market": {
+    "open": "Open: {gap} from the close",
+    "regime": "{from} → {to}",
+    "jump": "{move}",
+    "rugPull": "{move}",
+    "event": "{event}",
+    "earnings": "Q{quarter}: EPS {actual} vs {consensus} expected. {verdict}. {reaction}",
+    "dividend": "Dividend of {perShare} detached ({holders, plural, one {# shareholder paid} other {# shareholders paid}})",
+    "takeoverOffer": "Takeover bid by {by} for {name} at {offer} per share ({premium}). Verdict in 24 h.",
+    "takeoverFailed": "{by}’s takeover bid for {name} fails: the regulators say no.",
+    "takeoverDone": "{by} buys out {name}. Delisted, {holders, plural, one {# shareholder paid} other {# shareholders paid}} ({total}).",
+    "bankruptcy": "{name} files for bankruptcy. {ceo} is nowhere to be found. Stock struck off.",
+    "split": "{ratio}-for-1 split: each {symbol} share becomes {ratio} shares at {price}.",
+    "relist": "{name} is back on the market at {price}. New management, same promises.",
+    "ipo": "{name} enters the market at {price} (player creation)",
+    "poolScam": "{pool} runs off with the cash box",
+    "halving": "The block reward is cut in half"
+  },
+  "headline": "Q{quarter}: EPS {actual} vs {consensus} expected. {verdict}.",
+  "verdict": {
+    "BLOWOUT": "Blew past expectations",
+    "BEAT": "Above expectations",
+    "INLINE": "In line with expectations",
+    "MISS": "Disappointing",
+    "DISASTER": "Disaster"
+  },
+  "news": {
+    "bigContract": "{name} signs a giant deal with a client “very famous but confidential”.",
+    "buyback": "{ceo} announces a share buyback. Shareholders applaud.",
+    "upgrade": "A star analyst raises their target on {name}: “strong buy, maybe even very strong”.",
+    "newProduct": "{name} unveils a new product. Nobody knows what it does, but there’s AI in it.",
+    "index": "{name} joins a prestigious index. Index funds buy without thinking.",
+    "courted": "Rumor: {name} is being courted by an industry giant.",
+    "bestYear": "{ceo} promises “the best year in our history” on live TV.",
+    "recall": "{name} recalls 2 million products over “a slight risk of explosion”.",
+    "antitrust": "The competition authority opens an investigation into {name}.",
+    "insiderSale": "{ceo} quietly sells a big chunk of their shares. Pure coincidence, surely.",
+    "downgrade": "An analyst downgrades {name}: “we no longer understand their strategy”.",
+    "strike": "General strike at {name}. The coffee machine is said to be the cause.",
+    "cyberattack": "{name} hit by a cyberattack: the password was “admin1234”.",
+    "badTweet": "{ceo} tweets something regrettable. The PR team resigns."
+  },
+  "acquirers": {
+    "vulture": "the Vulture Capital fund",
+    "emir": "a very enthusiastic emir",
+    "blackroche": "BlackRoche",
+    "buffaitte": "Warren Buffaitte",
+    "cousin": "a cousin of Bernard Arnaque",
+    "groland": "the sovereign fund of Groland",
+    "softbank": "Softbank Not So Soft"
+  },
+  "notif": {
+    "earnings": {
+      "title": "{name} earnings",
+      "body": "Q{quarter}: EPS {actual} vs {consensus} expected. {verdict}. {dividend, select, none {No dividend this quarter.} other {Dividend of {dividend} per share in 6 h.}}"
+    },
+    "dividend": {
+      "title": "{name} dividend",
+      "body": "{qty} shares × {perShare}: +{amount}."
+    },
+    "takeoverOffer": {
+      "title": "Takeover bid for {name}",
+      "body": "Takeover bid by {by} for {name} at {offer} per share ({premium}). Verdict in 24 h. If it succeeds, your shares will be bought back at that price."
+    },
+    "takeoverFailed": {
+      "title": "Failed takeover of {name}",
+      "body": "{by}’s takeover bid for {name} fails: the regulators say no. The price drops back."
+    },
+    "takeoverSold": {
+      "title": "Successful takeover of {name}",
+      "body": "Your {qty} shares are bought back at {offer}: +{amount}."
+    },
+    "bankrupt": {
+      "title": "{name} goes bankrupt",
+      "body": "Your {qty} shares are now worthless (about {amount} gone up in smoke)."
+    },
+    "split": {
+      "title": "{name} split",
+      "body": "{ratio}-for-1 split: each {symbol} share becomes {ratio} shares at {price}. You now own {qty} shares."
+    },
+    "bankClosed": {
+      "title": "Account closed",
+      "body": "{bank} closed your account for insufficient funds. Back to {free}."
+    },
+    "insurance": {
+      "title": "Insurance",
+      "body": "{bank} refunds you {amount} ({what})."
+    },
+    "achievement": {
+      "title": "Achievement unlocked: {name}",
+      "body": "{description}{reward, select, none {} other { Reward: {reward}.}}"
+    },
+    "creationRejected": {
+      "title": "Creation rejected: {name}",
+      "body": "Reason: {note}. Fee and deposit refunded."
+    },
+    "creationLive": {
+      "title": "{name} is live!",
+      "body": "{kind, select, POOL {Your pool now accepts miners. You collect its fee.} CRYPTO {Your crypto is listed. Your share arrives over {days} days, royalties from the first trade.} other {Your company is listed. Your share arrives over {days} days, royalties from the first trade.}}"
+    },
+    "events": {
+      "flat-tax": {
+        "title": "{event}",
+        "body": "Flat tax on your capital gains: −{amount}."
+      },
+      "wealth-tax": {
+        "title": "{event}",
+        "body": "Wealth tax: −{amount}."
+      },
+      "tax-audit": {
+        "title": "{event}",
+        "body": "Tax audit at {bank}: {amount} fine."
+      },
+      "tax-refund": {
+        "title": "{event}",
+        "body": "The taxman refunds you {amount}. Don’t get used to it."
+      },
+      "bank-hack": {
+        "title": "{event}",
+        "body": "{bank} hacked: you lose {amount}{shield, plural, =0 {} other { (#% covered by your bank)}}."
+      },
+      "bank-run": {
+        "title": "{event}",
+        "body": "{bank} went bankrupt: you lose {amount} above the deposit guarantee."
+      },
+      "wallet-hack": {
+        "title": "{event}",
+        "body": "A hacker stole {qty} {symbol} from you (~{amount})."
+      },
+      "airdrop": {
+        "title": "{event}",
+        "body": "You get {qty} {symbol} for free."
+      },
+      "inheritance": {
+        "title": "{event}",
+        "body": "A rich uncle you never met leaves you {amount}."
+      },
+      "exceptional-dividend": {
+        "title": "{event}",
+        "body": "Special dividend on {symbol}: +{amount}."
+      }
+    }
+  },
+  "insurance": {
+    "fire": "fire in {rig}",
+    "break": "{part} failure"
+  },
+  "mining": {
+    "welcome": "You got your bedroom back and an old wooden crate. Your farm starts here.",
+    "breaker": "Breaker tripped! {facility} goes over {max, number} kW. All its rigs are shut down.",
+    "powerCut": "Power cut: not enough cash to pay for electricity. All your rigs are stopped.",
+    "block": "BLOCK FOUND! {rig} wins {qty} {symbol} solo.",
+    "fire": "FIRE in {rig} ({temp, number} °C). Every part is burnt to a crisp.",
+    "break": "{part} gave out in {rig}{worn, select, yes { (fully worn)} other {}}. Rig stopped.",
+    "scam": "EXIT SCAM: {pool} vanished with your {qty} pending {symbol}. The site now shows a “Down for maintenance” page.",
+    "payout": "{pool} (for once) paid out {qty} {symbol}."
+  },
+  "events": {
+    "flat-tax": {
+      "title": "Flat tax",
+      "description": "The State takes {rate, number}% of capital gains realized over the last 24 h. Sell before or after? Your call."
+    },
+    "wealth-tax": {
+      "title": "Tax on the rich",
+      "description": "Progressive tax on net worth: 2% above $50k, 5% above $200k, 10% above $1M. Paid in cash."
+    },
+    "tax-audit": {
+      "title": "Tax audit",
+      "description": "The taxman takes an interest in customers of “discreet” banks. One in two gets fined {rate, number}% of their cash."
+    },
+    "tax-refund": {
+      "title": "Tax refund",
+      "description": "Calculation error at the treasury: {rate, number}% of the taxes paid this week are refunded."
+    },
+    "bank-hack": {
+      "title": "Bank hack",
+      "description": "{bank} got hacked. Its customers lose between {min, number} and {max, number}% of their cash (minus the bank’s protection)."
+    },
+    "wallet-hack": {
+      "title": "Wallet theft",
+      "description": "A hacker drains {rate, number}% of a crypto from {count, plural, one {# random player} other {# random players}}. Shouldn’t have clicked that link."
+    },
+    "bank-run": {
+      "title": "Bank failure",
+      "description": "{bank} goes bankrupt. Deposits above the guarantee lose {rate, number}%. Customers are moved to the free bank."
+    },
+    "airdrop": {
+      "title": "Surprise airdrop",
+      "description": "Free {symbol} giveaway: about ${usd, number} for every active player."
+    },
+    "inheritance": {
+      "title": "Inheritance from a rich uncle",
+      "description": "{count, plural, one {# random player inherits} other {# random players inherit}} ${min, number} to ${max, number}. Condolences and congratulations."
+    },
+    "exceptional-dividend": {
+      "title": "Special dividend",
+      "description": "{symbol} holders receive {rate, number}% of their position’s value in cash."
+    },
+    "bull-run": {
+      "title": "Bull run",
+      "description": "Euphoria everywhere: the whole market goes into hype mode (+{pct, number}% fair value)."
+    },
+    "crash": {
+      "title": "Crash",
+      "description": "Panic on the markets: everything falls (−{pct, number}% fair value)."
+    },
+    "elon-tweet": {
+      "title": "Elon tweeted",
+      "description": "A 3 am tweet sends {symbol} soaring {pct, number}%."
+    },
+    "rug-pull": {
+      "title": "Organized rug pull",
+      "description": "The {symbol} devs ran off with the cash box. −{pct, number}%."
+    },
+    "heat-wave": {
+      "title": "Heat wave",
+      "description": "+{ambient, number} °C in every facility for 12 h. Poorly cooled rigs are going to suffer."
+    },
+    "energy-crisis": {
+      "title": "Energy crisis",
+      "description": "Electricity costs {mult, number}× more for 24 h."
+    },
+    "gpu-shortage": {
+      "title": "GPU shortage",
+      "description": "Hardware costs {mult, number}× more (buying and reselling) for 24 h. Good news for those who already own some."
+    },
+    "green-subsidy": {
+      "title": "Green mining subsidy",
+      "description": "Electricity is half price for 12 h. Turn everything on!"
+    },
+    "solar-storm": {
+      "title": "Solar storm",
+      "description": "Parts break down {mult, number}× more often for 4 h."
+    }
+  },
+  "eventResult": {
+    "bankRun": "{count, plural, one {# customer moved} other {# customers moved}} to {bank}",
+    "error": "Error while running"
+  }
+}

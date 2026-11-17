@@ -4,11 +4,14 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useFormat } from '@/lib/format';
 import { ALGO_LABEL, type Model, useMiningFormat } from '@/lib/mining';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useTexts } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 
 /** Une ligne du catalogue : caractéristiques du modèle et achat en quantité. */
 export function CatalogRow({ m, algo, cash, canBuy }: { m: Model; algo: string; cash: number; canBuy: boolean }) {
+  const texts = useTexts();
+  const errorMessage = texts.error;
   const t = useTranslations('mining.catalog');
   const f = useFormat();
   const mf = useMiningFormat();
@@ -31,7 +34,9 @@ export function CatalogRow({ m, algo, cash, canBuy }: { m: Model; algo: string; 
         <span className="block font-semibold">
           {m.brand} {m.name}
         </span>
-        {m.description && <span className="block text-xs italic text-ink-2">{m.description}</span>}
+        {m.description && (
+          <span className="block text-xs italic text-ink-2">{m.descriptionKey ? texts.translate(m.descriptionKey, undefined, m.description) : m.description}</span>
+        )}
       </td>
       <td className="py-2.5 pr-4">
         {m.kind === 'PSU' && t('psu', { power: mf.watts(m.watts), efficiency: mf.pct(m.efficiency ?? 0) })}

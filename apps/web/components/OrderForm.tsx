@@ -8,7 +8,8 @@ import { api } from '@/lib/api';
 import { useMe, usePortfolio } from '@/lib/hooks';
 import { queryKeys } from '@/lib/queryKeys';
 import { useFormat } from '@/lib/format';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useErrorMessage } from '@/lib/texts';
 import { KeyValueRow } from '@/components/market/KeyValueRow';
 
 interface Quote {
@@ -41,6 +42,7 @@ function useDebounced<T>(v: T, ms = 250) {
 }
 
 export function OrderForm({ symbol, name }: { symbol: string; name: string }) {
+  const errorMessage = useErrorMessage();
   const t = useTranslations('market.order');
   const f = useFormat();
   const { data: me } = useMe();

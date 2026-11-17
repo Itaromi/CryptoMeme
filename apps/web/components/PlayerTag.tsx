@@ -1,5 +1,7 @@
+'use client';
 import type { Look } from '@/lib/meta';
 import { Glyph } from '@/lib/icons';
+import { useTexts } from '@/lib/texts';
 
 const SIZES = {
   sm: { box: 'size-8 text-base', name: 'font-semibold', title: 'text-[11px]' },
@@ -24,6 +26,8 @@ export function Name({ username, look, className = '' }: { username: string; loo
 /** Avatar + pseudo + titre + badges : la « carte de visite » d'un joueur. */
 export function PlayerTag({ username, look, size = 'sm' }: { username: string; look?: Look | null; size?: 'sm' | 'md' }) {
   const s = SIZES[size];
+  const texts = useTexts();
+  const title = texts.lookTitle(look);
   return (
     <span className="inline-flex min-w-0 items-center gap-2.5">
       <Avatar look={look} size={size} />
@@ -31,10 +35,10 @@ export function PlayerTag({ username, look, size = 'sm' }: { username: string; l
         <span className="flex items-center gap-1.5">
           <Name username={username} look={look} className={`truncate ${s.name}`} />
           {look?.badges.map((b) => (
-            <span key={b.name} title={b.name} className="text-sm leading-none"><Glyph name={b.icon} /></span>
+            <span key={b.slug} title={texts.cosmetic(b)} className="text-sm leading-none"><Glyph name={b.icon} /></span>
           ))}
         </span>
-        {look?.title && <span className={`block uppercase tracking-widest text-ink-2 ${s.title}`}>{look.title}</span>}
+        {title && <span className={`block uppercase tracking-widest text-ink-2 ${s.title}`}>{title}</span>}
       </span>
     </span>
   );

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { api } from './api';
 import { type Format, useFormat } from './format';
 import { queryKeys } from './queryKeys';
+import type { GameText } from '@cryptomeme/shared';
 
 export type Kind = 'CPU' | 'GPU' | 'ASIC' | 'PSU' | 'MOTHERBOARD' | 'COOLING' | 'RACK';
 export type Hashrates = Partial<Record<string, number>>;
@@ -43,6 +44,8 @@ export interface Model {
   airflow: number | null;
   failureRate?: number;
   description?: string | null;
+  /** Clé de traduction de la description (null : description hors catalogue) */
+  descriptionKey?: string | null;
   bestAlgo?: string | null;
   usdPerDay?: number;
 }
@@ -56,9 +59,16 @@ export interface Item {
   model: Model;
 }
 
+/** Problème de montage d'une rig (code d'erreur traduit dans `errors`, `message` en repli). */
+export interface RigIssueView {
+  code: string;
+  message: string;
+  params?: Record<string, string | number>;
+}
+
 export interface RigStatsView {
   valid: boolean;
-  errors: string[];
+  errors: RigIssueView[];
   power: number;
   wallPower: number;
   psuCapacity: number;
@@ -96,12 +106,12 @@ export interface Farm {
     id: string;
     name: string;
     powerUsed: number;
-    type: { id: string; name: string; description: string; price: string; elecPrice: number; maxPowerKw: number; rackSlots: number; ambientTemp: number };
+    type: { id: string; slug: string; name: string; description: string; price: string; elecPrice: number; maxPowerKw: number; rackSlots: number; ambientTemp: number };
     racks: Array<Item & { rigs: RigView[] }>;
   }>;
   inventory: Item[];
   pending: Array<{ pool: string; symbol: string; amount: string; lastPaidAt: string }>;
-  logs: Array<{ type: string; message: string; at: string }>;
+  logs: Array<{ type: string; message: string; text: GameText | null; at: string }>;
 }
 
 export interface PoolsInfo {
@@ -118,7 +128,7 @@ export interface PoolsInfo {
     nextHalving: string;
     totalMined: string;
   }>;
-  pools: Array<{ id: string; name: string; description: string; symbol: string; emoji: string; type: string; feeBps: number; federation: string | null; scamRisk: number; miners: number; owner: string | null }>;
+  pools: Array<{ id: string; slug: string; name: string; description: string; symbol: string; emoji: string; type: string; feeBps: number; federation: string | null; scamRisk: number; miners: number; owner: string | null }>;
 }
 
 export interface FacilityType {

@@ -9,6 +9,7 @@ import { D, money } from '../common/decimal';
 import { MetaService } from '../meta/meta.service';
 import { NetWorthService } from '../economy/net-worth.service';
 import { WalletStatsService } from './wallet-stats.service';
+import { apiError } from '../common/errors';
 
 export const CATEGORIES = ['general', 'day', 'week', 'trader', 'miner', 'best-trade', 'worst-trade'] as const;
 export type Category = (typeof CATEGORIES)[number];
@@ -108,7 +109,7 @@ export class PlayersService {
     const season = seasonNumber
       ? await this.prisma.season.findUnique({ where: { number: seasonNumber } })
       : await this.seasons.active();
-    if (!season) throw new NotFoundException('Saison inconnue');
+    if (!season) throw new NotFoundException(apiError('SEASON_UNKNOWN', 'Saison inconnue'));
     const key = `${season.id}:${category}`;
     const hit = this.catCache.get(key);
     if (hit && Date.now() - hit.at < (category === 'general' ? 10_000 : 60_000)) return hit.data;
@@ -195,7 +196,7 @@ export class PlayersService {
       where: { username: { equals: username, mode: 'insensitive' } },
       select: { username: true, bio: true, createdAt: true, role: true, bannedAt: true, showcase: true, ...MetaService.LOOK_SELECT },
     });
-    if (!user || user.bannedAt) throw new NotFoundException('Joueur introuvable');
+    if (!user || user.bannedAt) throw new NotFoundException(apiError('PLAYER_NOT_FOUND', 'Joueur introuvable'));
     const season = await this.seasons.active();
     const wallet = await this.prisma.wallet.findUnique({
       where: { userId_seasonId: { userId: user.id, seasonId: season.id } },

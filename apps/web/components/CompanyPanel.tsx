@@ -3,12 +3,14 @@ import { useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/format';
 import { healthLevel, type StockDetail, useMarketClock, VERDICT_CLS } from '@/lib/stocks';
 import { Stat } from '@/components/ui/Stat';
+import { useTexts } from '@/lib/texts';
 
 /** Fondamentaux, résultats et dividendes d'une action. */
 export function CompanyPanel({ c }: { c: StockDetail }) {
   const t = useTranslations('stocks.company');
   const ts = useTranslations('stocks');
   const f = useFormat();
+  const texts = useTexts();
   const { now } = useMarketClock();
   const h = healthLevel(c.health);
   const listed = c.status === 'LISTED' || c.status === 'TAKEOVER';
@@ -19,7 +21,7 @@ export function CompanyPanel({ c }: { c: StockDetail }) {
       {c.offer && c.status === 'TAKEOVER' && (
         <div className="border-2 border-ink bg-acid p-5">
           <p className="text-xs font-bold uppercase tracking-widest">{t('takeover.label', { time: f.countdown(c.offer.endsAt, now) })}</p>
-          <p className="display mt-1 text-3xl font-bold">{t('takeover.offer', { buyer: c.offer.by, price: f.money(c.offer.price) })}</p>
+          <p className="display mt-1 text-3xl font-bold">{t('takeover.offer', { buyer: texts.param(c.offer.byText), price: f.money(c.offer.price) })}</p>
           <p className="mt-1">{t('takeover.explain')}</p>
         </div>
       )}
@@ -33,7 +35,7 @@ export function CompanyPanel({ c }: { c: StockDetail }) {
       <section>
         <h2 className="mb-3 border-b-2 border-ink pb-1 text-sm font-bold uppercase tracking-widest">{t('fundamentals.title')}</h2>
         <dl className="num grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 xl:grid-cols-4">
-          <Stat label={t('fundamentals.sector')}>{c.sector}</Stat>
+          <Stat label={t('fundamentals.sector')}>{texts.sector(c.sector)}</Stat>
           <Stat label={t('fundamentals.ceo')}>{c.ceo}</Stat>
           <Stat label={t('fundamentals.eps')}>{f.money(c.eps)}</Stat>
           <Stat label={t('fundamentals.pe')} hint={t('fundamentals.peHint', { fairPe: f.number(c.fairPe, { maximumFractionDigits: 0 }) })}>

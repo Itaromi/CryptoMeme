@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useFormat } from '@/lib/format';
 import { ALGO_LABEL, type PoolsInfo, type RigView, tempTone, useMiningFormat } from '@/lib/mining';
-import { errorMessage, useApiMutation } from '@/lib/mutation';
+import { useApiMutation } from '@/lib/mutation';
+import { useErrorMessage } from '@/lib/texts';
 import { queryKeys } from '@/lib/queryKeys';
 
 /** Niveaux d'overclock, dans l'ordre de l'API (0 = stock). */
@@ -14,6 +15,7 @@ const OC_LEVELS = ['stock', 'light', 'heavy', 'suicidal'] as const;
 type RigPatch = { poolId?: string | null; running?: boolean; overclock?: number };
 
 export function RigRow({ rig, pools }: { rig: RigView; pools?: PoolsInfo }) {
+  const errorMessage = useErrorMessage();
   const t = useTranslations('mining');
   const f = useFormat();
   const m = useMiningFormat();
