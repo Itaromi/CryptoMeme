@@ -14,12 +14,12 @@ Rien n'est ouvert sur la box : le tunnel sort du NAS vers Cloudflare. Seul Caddy
 ## 1. E-mails : Resend
 
 1. Crée un compte sur [resend.com](https://resend.com).
-2. **Domains → Add domain** : ajoute ton domaine (ex. `younsylvestre.fr`, ou un sous-domaine dédié comme `mail.younsylvestre.fr`). Si le DNS est chez Cloudflare, le bouton « Auto configure » crée les enregistrements SPF/DKIM ; sinon copie-les à la main. Attends le statut **Verified**.
+2. **Domains → Add domain** : ajoute ton domaine (ex. `exemple.fr`, ou un sous-domaine dédié comme `mail.exemple.fr`). Si le DNS est chez Cloudflare, le bouton « Auto configure » crée les enregistrements SPF/DKIM ; sinon copie-les à la main. Attends le statut **Verified**.
 3. **API Keys → Create** : permission **Sending access**, limitée à ce domaine. Garde la clé (`re_…`).
 4. Dans `.env` (étape 2) :
    ```env
    RESEND_API_KEY=re_xxxxxxxx
-   MAIL_FROM="CryptoMeme <no-reply@younsylvestre.fr>"
+   MAIL_FROM="CryptoMeme <no-reply@exemple.fr>"
    ```
 
 Les e-mails envoyés : confirmation d'adresse, mot de passe oublié, alerte « mot de passe modifié ».
@@ -28,7 +28,7 @@ Les e-mails envoyés : confirmation d'adresse, mot de passe oublié, alerte « m
 
 ```bash
 ssh <utilisateur>@<ip-du-nas>
-git clone https://github.com/Itaromi/CryptoMeme.git ~/cryptomeme
+git clone https://github.com/<compte>/CryptoMeme.git ~/cryptomeme
 cd ~/cryptomeme/deploy
 cp .env.example .env
 ```
@@ -42,11 +42,11 @@ openssl rand -hex 24      # → POSTGRES_PASSWORD
 ```
 
 ```env
-WEB_URL=https://cryptomeme.younsylvestre.fr
+WEB_URL=https://cryptomeme.exemple.fr
 POSTGRES_PASSWORD=…
 JWT_SECRET=…
 RESEND_API_KEY=re_…
-MAIL_FROM="CryptoMeme <no-reply@younsylvestre.fr>"
+MAIL_FROM="CryptoMeme <no-reply@exemple.fr>"
 TRUST_CLOUDFLARE=true
 HTTP_PORT=8088
 SEED_ADMIN_EMAIL=toi@exemple.fr
@@ -81,7 +81,7 @@ Dans **Cloudflare Zero Trust → Networks → Tunnels**, ouvre le tunnel du NAS 
 | Champ | Valeur |
 |---|---|
 | Subdomain | `cryptomeme` |
-| Domain | `younsylvestre.fr` |
+| Domain | `exemple.fr` |
 | Type | `HTTP` |
 | URL | `<ip-du-nas>:8088` (IP locale du NAS + `HTTP_PORT`) |
 
@@ -91,7 +91,7 @@ Les WebSockets passent nativement par le tunnel.
 
 ```yaml
 ingress:
-  - hostname: cryptomeme.younsylvestre.fr
+  - hostname: cryptomeme.exemple.fr
     service: http://<ip-du-nas>:8088
   # … tes autres services
   - service: http_status:404
