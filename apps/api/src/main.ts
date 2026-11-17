@@ -2,9 +2,11 @@ import 'reflect-metadata';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { toNodeHandler } from 'better-auth/node';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { type Auth, BETTER_AUTH } from './auth/auth';
 import { validateEnv } from './common/env';
 import { originGuard } from './common/security';
 
@@ -27,6 +29,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.use(cookieParser());
   app.use(originGuard(env.WEB_URL));
+  // Better Auth (inscription, connexion, e-mails) : monté avant le parseur JSON, qui consommerait le corps
+  app.getHttpAdapter().getInstance().all('/api/auth/{*any}', toNodeHandler(app.get<Auth>(BETTER_AUTH)));
   app.useBodyParser('json', { limit: '64kb' });
   app.enableCors({ origin: new URL(env.WEB_URL).origin, credentials: true });
   app.enableShutdownHooks();

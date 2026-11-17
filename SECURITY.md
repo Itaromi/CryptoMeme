@@ -26,7 +26,7 @@ Hors périmètre : déni de service volumétrique, ingénierie sociale, vulnéra
 
 ## Mesures en place
 
-- Mots de passe hachés en argon2id ; jetons de session et de réinitialisation hachés (SHA-256), à usage unique, avec rotation et révocation par famille des refresh tokens.
+- Authentification par [Better Auth](https://www.better-auth.com) : mots de passe hachés en argon2id, sessions en base dans un cookie httpOnly signé (révocables, et toutes révoquées après une réinitialisation ou un bannissement), jetons de vérification et de réinitialisation à durée limitée, limitation de débit sur les routes d'authentification.
 - Cookies `httpOnly`, `SameSite=Lax`, `Secure` en production ; contrôle d'origine et de `Content-Type` sur les requêtes qui modifient l'état.
 - Limitation de débit par IP réelle (en-tête Cloudflare), plus stricte sur l'authentification.
 - En-têtes de sécurité (CSP, HSTS, `X-Frame-Options`, etc.).

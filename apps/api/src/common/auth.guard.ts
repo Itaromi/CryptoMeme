@@ -1,31 +1,22 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
+import { fromNodeHeaders } from 'better-auth/node';
 import type { Request } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
+import { type Auth, BETTER_AUTH } from '../auth/auth';
 import { AuthUser, PUBLIC_KEY, ROLES_KEY } from './auth.decorators';
 import { apiError } from './errors';
-
-export const ACCESS_COOKIE = 'cm_at';
-export const REFRESH_COOKIE = 'cm_rt';
 
 /** Requête HTTP après passage du guard. */
 export type AuthRequest = Request & { user?: AuthUser };
 
-/** Valeur d'un cookie (cookie-parser), uniquement si c'est une chaîne. */
-export function readCookie(req: Request, name: string): string | undefined {
-  const cookies = req.cookies as Record<string, unknown> | undefined;
-  const v = cookies?.[name];
-  return typeof v === 'string' ? v : undefined;
-}
-
-/** Guard global : JWT en cookie httpOnly + vérification du ban + rôles. */
+/** Guard global : session Better Auth (cookie httpOnly) + vérification du ban + rôles. */
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly jwt: JwtService,
+    @Inject(BETTER_AUTH) private readonly auth: Auth,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -33,21 +24,14 @@ export class AuthGuard implements CanActivate {
     const targets = [ctx.getHandler(), ctx.getClass()];
     const isPublic = this.reflector.getAllAndOverride<boolean>(PUBLIC_KEY, targets);
     const req = ctx.switchToHttp().getRequest<AuthRequest>();
-    const token = readCookie(req, ACCESS_COOKIE);
 
-    if (!token) {
+    const session = await this.auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+    if (!session) {
       if (isPublic) return true;
       throw new UnauthorizedException(apiError('UNAUTHENTICATED', 'Non connecté'));
     }
-    let payload: { sub: string };
-    try {
-      payload = await this.jwt.verifyAsync<{ sub: string }>(token);
-    } catch {
-      if (isPublic) return true;
-      throw new UnauthorizedException(apiError('SESSION_EXPIRED', 'Session expirée'));
-    }
     const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
+      where: { id: session.user.id },
       select: { id: true, username: true, role: true, bannedAt: true },
     });
     if (!user) throw new UnauthorizedException(apiError('UNAUTHENTICATED', 'Non connecté'));

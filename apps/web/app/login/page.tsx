@@ -12,7 +12,7 @@ export default function LoginPage() {
   const t = useTranslations('auth');
   const router = useRouter();
   const login = useApiMutation({
-    mutationFn: (f: FormData) => api('/auth/login', { method: 'POST', json: { email: f.get('email'), password: f.get('password') } }),
+    mutationFn: (f: FormData) => api('/auth/sign-in/email', { method: 'POST', json: { email: f.get('email'), password: f.get('password') } }),
     invalidate: [ALL_QUERIES],
     onSuccess: () => router.push('/market'),
   });

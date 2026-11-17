@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { RealIpThrottlerGuard } from './common/security';
@@ -52,15 +51,6 @@ import { AdminEconomyService } from './economy/admin-economy.service';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
-    JwtModule.registerAsync({
-      global: true,
-      inject: [ConfigService],
-      useFactory: (c: ConfigService) => {
-        const secret = c.get<string>('JWT_SECRET');
-        if (!secret || secret.length < 32) throw new Error('JWT_SECRET manquant ou trop court (32 caractères min.)');
-        return { secret };
-      },
-    }),
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 300 }]),
     PrismaModule,

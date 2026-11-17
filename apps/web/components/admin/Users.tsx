@@ -16,7 +16,7 @@ interface UserRow {
   role: Me['role'];
   bannedAt: string | null;
   banReason: string | null;
-  emailVerifiedAt: string | null;
+  emailVerified: boolean;
   createdAt: string;
   lastLoginAt: string | null;
   cash: string | null;
@@ -91,7 +91,7 @@ function UserLine({ u, open, toggle, isAdmin }: { u: UserRow; open: boolean; tog
       <tr className={`border-b border-line ${u.bannedAt ? 'text-ink-3 line-through' : ''}`}>
         <td className="py-2 font-semibold">@{u.username}</td>
         <td className="py-2">
-          {u.email} {!u.emailVerifiedAt && <span className="text-xs text-ink-3">{t('unverified')}</span>}
+          {u.email} {!u.emailVerified && <span className="text-xs text-ink-3">{t('unverified')}</span>}
         </td>
         <td className="py-2">{u.role}</td>
         <td className="py-2 text-right">{u.netWorth ? f.money(u.netWorth) : '—'}</td>

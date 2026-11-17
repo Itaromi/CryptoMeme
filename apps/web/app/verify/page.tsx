@@ -14,7 +14,7 @@ function Verify() {
   const t = useTranslations('auth.verify');
   const token = useSearchParams().get('token');
   const verify = useApiMutation({
-    mutationFn: (tok: string) => api('/auth/verify-email', { method: 'POST', json: { token: tok } }),
+    mutationFn: (tok: string) => api(`/auth/verify-email?token=${encodeURIComponent(tok)}`),
     invalidate: [queryKeys.me],
   });
   const { mutate } = verify;

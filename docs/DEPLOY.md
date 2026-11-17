@@ -37,14 +37,14 @@ Remplis `.env` :
 
 ```bash
 # génère les secrets
-openssl rand -base64 48   # → JWT_SECRET
+openssl rand -base64 48   # → BETTER_AUTH_SECRET
 openssl rand -hex 24      # → POSTGRES_PASSWORD
 ```
 
 ```env
 WEB_URL=https://cryptomeme.exemple.fr
 POSTGRES_PASSWORD=…
-JWT_SECRET=…
+BETTER_AUTH_SECRET=…
 RESEND_API_KEY=re_…
 MAIL_FROM="CryptoMeme <no-reply@exemple.fr>"
 TRUST_CLOUDFLARE=true

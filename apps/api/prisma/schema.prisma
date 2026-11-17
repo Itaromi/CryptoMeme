@@ -98,71 +98,91 @@ enum PoolType {
   SHADY
 }
 
-enum TokenKind {
-  EMAIL_VERIFY
-  PASSWORD_RESET
-}
-
 model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  username        String    @unique
-  passwordHash    String
-  role            Role      @default(PLAYER)
-  emailVerifiedAt DateTime?
-  bannedAt        DateTime?
-  banReason       String?
-  bio             String?   @db.VarChar(280)
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String    @unique
+  role          Role      @default(PLAYER)
+  /// Adresse confirmée (Better Auth)
+  emailVerified Boolean   @default(false)
+  /// Requis par Better Auth, inutilisé (l'avatar du jeu est `avatar`)
+  image         String?
+  bannedAt      DateTime?
+  banReason     String?
+  bio           String?   @db.VarChar(280)
   /// Avatar (emoji) et cosmétiques équipés (slugs)
-  avatar          String    @default("Smiley")
-  frame           String?
-  banner          String?
-  title           String?
-  nameEffect      String?
+  avatar        String    @default("Smiley")
+  frame         String?
+  banner        String?
+  title         String?
+  nameEffect    String?
   /// Badges affichés (max 3, slugs de cosmétiques)
-  badges          String[]  @default([])
+  badges        String[]  @default([])
   /// Succès mis en vitrine (max 4, slugs)
-  showcase        String[]  @default([])
-  createdAt       DateTime  @default(now())
-  lastLoginAt     DateTime?
+  showcase      String[]  @default([])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  lastLoginAt   DateTime?
 
-  refreshTokens RefreshToken[]
+  sessions      Session[]
+  accounts      Account[]
   notifications Notification[]
-  tokens        UserToken[]
   wallets       Wallet[]
-  auditLogs     AuditLog[]     @relation("actor")
+  auditLogs     AuditLog[]        @relation("actor")
   cosmetics     UserCosmetic[]
   achievements  UserAchievement[]
   creations     Creation[]
-  createdAssets Asset[]        @relation("createdAssets")
-  ownedPools    MiningPool[]   @relation("ownedPools")
+  createdAssets Asset[]           @relation("createdAssets")
+  ownedPools    MiningPool[]      @relation("ownedPools")
 }
 
-model RefreshToken {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String    @unique
-  family    String
+// ─── Authentification (Better Auth) ────────────────────────────────
+
+/// Session ouverte (cookie httpOnly), révocable
+model Session {
+  id        String   @id
+  token     String   @unique
   expiresAt DateTime
-  revokedAt DateTime?
+  ipAddress String?
   userAgent String?
-  ip        String?
-  createdAt DateTime  @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
-  @@index([family])
 }
 
-model UserToken {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  kind      TokenKind
-  tokenHash String    @unique
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
+/// Moyen de connexion : `credential` (mot de passe argon2id) ou fournisseur OAuth
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+/// Jetons à usage unique (vérification d'adresse, mot de passe oublié)
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([identifier])
 }
 
 model Season {
@@ -209,29 +229,29 @@ model Bank {
 
 /// Un wallet = un joueur pour une saison. Reset de saison = nouveau wallet.
 model Wallet {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  seasonId    String
-  season      Season    @relation(fields: [seasonId], references: [id])
-  bankId      String
-  bank        Bank      @relation(fields: [bankId], references: [id])
-  cash        Decimal   @db.Decimal(24, 2)
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seasonId     String
+  season       Season    @relation(fields: [seasonId], references: [id])
+  bankId       String
+  bank         Bank      @relation(fields: [bankId], references: [id])
+  cash         Decimal   @db.Decimal(24, 2)
   /// Patrimoine net (valeur liquidative), recalculé périodiquement pour le classement.
-  netWorth    Decimal   @db.Decimal(24, 2)
-  peakNetWorth Decimal  @db.Decimal(24, 2)
-  lastOrderAt DateTime?
-  createdAt   DateTime  @default(now())
+  netWorth     Decimal   @db.Decimal(24, 2)
+  peakNetWorth Decimal   @db.Decimal(24, 2)
+  lastOrderAt  DateTime?
+  createdAt    DateTime  @default(now())
 
   /// Valeur de revente du matériel de minage (incluse dans netWorth)
-  hardwareValue Decimal @default(0) @db.Decimal(24, 2)
+  hardwareValue Decimal  @default(0) @db.Decimal(24, 2)
   /// Coupure de courant faute de cash
-  powerCut      Boolean @default(false)
+  powerCut      Boolean  @default(false)
   bankSince     DateTime @default(now())
   /// Frais bancaires et intérêts pas encore crédités/débités (fractions de centime)
   bankAccrued   Decimal  @default(0) @db.Decimal(24, 8)
   /// Électricité consommée pas encore facturée (fractions de centime)
-  elecAccrued   Decimal @default(0) @db.Decimal(24, 8)
+  elecAccrued   Decimal  @default(0) @db.Decimal(24, 8)
 
   holdings     Holding[]
   trades       Trade[]
@@ -399,26 +419,26 @@ model AuditLog {
 
 /// Catalogue du matériel (modèles), généré par le seed et éditable en admin.
 model ComponentModel {
-  id          String        @id @default(cuid())
-  slug        String        @unique
+  id          String          @id @default(cuid())
+  slug        String          @unique
   kind        ComponentKind
   brand       String
   name        String
   tier        Int
-  price       Decimal       @db.Decimal(24, 2)
+  price       Decimal         @db.Decimal(24, 2)
   /// Conso (W) — pour une alimentation : puissance max
   watts       Int
   /// MH/s par algo
-  hashrates   Json          @default("{}")
+  hashrates   Json            @default("{}")
   efficiency  Float?
   socket      String?
   gpuSlots    Int?
   coolingW    Int?
   rackSlots   Int?
   airflow     Float?
-  failureRate Float         @default(0.0005)
+  failureRate Float           @default(0.0005)
   description String?
-  available   Boolean       @default(true)
+  available   Boolean         @default(true)
   items       ComponentItem[]
 
   @@index([kind, price])
@@ -426,22 +446,22 @@ model ComponentModel {
 
 /// Un exemplaire possédé par un joueur.
 model ComponentItem {
-  id            String          @id @default(cuid())
+  id            String         @id @default(cuid())
   walletId      String
-  wallet        Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet        Wallet         @relation(fields: [walletId], references: [id], onDelete: Cascade)
   modelId       String
-  model         ComponentModel  @relation(fields: [modelId], references: [id])
-  wear          Float           @default(0)
-  status        ItemStatus      @default(OK)
-  purchasePrice Decimal         @db.Decimal(24, 2)
+  model         ComponentModel @relation(fields: [modelId], references: [id])
+  wear          Float          @default(0)
+  status        ItemStatus     @default(OK)
+  purchasePrice Decimal        @db.Decimal(24, 2)
   /// Pour un composant monté dans une rig
   rigId         String?
-  rig           Rig?            @relation("RigParts", fields: [rigId], references: [id], onDelete: SetNull)
+  rig           Rig?           @relation("RigParts", fields: [rigId], references: [id], onDelete: SetNull)
   /// Pour un rack installé dans un local
   facilityId    String?
-  facility      Facility?       @relation(fields: [facilityId], references: [id], onDelete: SetNull)
-  rigsInRack    Rig[]           @relation("RackRigs")
-  createdAt     DateTime        @default(now())
+  facility      Facility?      @relation(fields: [facilityId], references: [id], onDelete: SetNull)
+  rigsInRack    Rig[]          @relation("RackRigs")
+  createdAt     DateTime       @default(now())
 
   @@index([walletId, status])
 }
@@ -567,21 +587,21 @@ model JobLease {
 
 /// Catalogue des types d'événements (probabilités réglables en admin).
 model EventType {
-  id             String      @id @default(cuid())
-  slug           String      @unique
-  name           String
-  description    String
-  mood           EventMood
+  id              String      @id @default(cuid())
+  slug            String      @unique
+  name            String
+  description     String
+  mood            EventMood
   /// Nombre moyen de déclenchements spontanés par jour
-  ratePerDay     Float
-  cooldownHours  Float       @default(24)
+  ratePerDay      Float
+  cooldownHours   Float       @default(24)
   /// Préavis avant que l'événement frappe (0 = immédiat)
-  noticeMinutes  Int         @default(0)
+  noticeMinutes   Int         @default(0)
   /// Durée d'effet (0 = instantané)
-  durationMinutes Int        @default(0)
-  params         Json        @default("{}")
-  enabled        Boolean     @default(true)
-  events         GameEvent[]
+  durationMinutes Int         @default(0)
+  params          Json        @default("{}")
+  enabled         Boolean     @default(true)
+  events          GameEvent[]
 }
 
 model GameEvent {
@@ -632,29 +652,29 @@ enum CompanyStatus {
 
 /// Société cotée : fondamentaux qui pilotent la valeur de son action.
 model Company {
-  assetId        String        @id
-  asset          Asset         @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  sector         String
-  ceo            String
+  assetId         String        @id
+  asset           Asset         @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  sector          String
+  ceo             String
   /// BPA du dernier trimestre ($)
-  eps            Float
+  eps             Float
   /// Croissance attendue du BPA par trimestre (log)
-  growth         Float
-  epsVol         Float
-  pe             Float
-  payout         Float
-  health         Float         @default(0.7)
-  quarter        Int           @default(0)
-  nextEarningsAt DateTime
+  growth          Float
+  epsVol          Float
+  pe              Float
+  payout          Float
+  health          Float         @default(0.7)
+  quarter         Int           @default(0)
+  nextEarningsAt  DateTime
   /// BPA attendu par les analystes pour la prochaine publication
-  consensus      Float
+  consensus       Float
   /// Prix d'introduction (pour la réintroduction après faillite/rachat)
-  ipoPrice       Decimal       @db.Decimal(38, 18)
-  status         CompanyStatus @default(LISTED)
-  statusSince    DateTime      @default(now())
-  offerPrice     Decimal?      @db.Decimal(38, 18)
-  offerBy        String?
-  offerEndsAt    DateTime?
+  ipoPrice        Decimal       @db.Decimal(38, 18)
+  status          CompanyStatus @default(LISTED)
+  statusSince     DateTime      @default(now())
+  offerPrice      Decimal?      @db.Decimal(38, 18)
+  offerBy         String?
+  offerEndsAt     DateTime?
   /// log de la valeur juste avant l'OPA (retour si elle échoue)
   preOfferLogFair Float?
 
@@ -715,17 +735,17 @@ enum Rarity {
 
 /// Objet cosmétique. price = null → impossible à acheter (récompense de succès).
 model Cosmetic {
-  id          String       @id @default(cuid())
-  slug        String       @unique
+  id          String         @id @default(cuid())
+  slug        String         @unique
   kind        CosmeticKind
   name        String
   description String
   rarity      Rarity
-  price       Decimal?     @db.Decimal(24, 2)
+  price       Decimal?       @db.Decimal(24, 2)
   /// Données d'affichage (style, texte, icône…)
   data        Json
-  available   Boolean      @default(true)
-  sortOrder   Int          @default(0)
+  available   Boolean        @default(true)
+  sortOrder   Int            @default(0)
   owners      UserCosmetic[]
 }
 
@@ -749,17 +769,17 @@ enum AchievementTier {
 }
 
 model Achievement {
-  id          String          @id @default(cuid())
-  slug        String          @unique
+  id          String            @id @default(cuid())
+  slug        String            @unique
   name        String
   description String
   icon        String
   tier        AchievementTier
   /// Caché tant qu'il n'est pas débloqué
-  hidden      Boolean         @default(false)
+  hidden      Boolean           @default(false)
   /// Cosmétique offert au déblocage
   rewardSlug  String?
-  sortOrder   Int             @default(0)
+  sortOrder   Int               @default(0)
   unlocks     UserAchievement[]
 }
 

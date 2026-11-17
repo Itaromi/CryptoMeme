@@ -10,7 +10,7 @@ export default function ForgotPage() {
   const t = useTranslations('auth.forgot');
   const tf = useTranslations('auth.fields');
   const forgot = useApiMutation({
-    mutationFn: (f: FormData) => api('/auth/forgot-password', { method: 'POST', json: { email: f.get('email') } }),
+    mutationFn: (f: FormData) => api('/auth/request-password-reset', { method: 'POST', json: { email: f.get('email') } }),
   });
   return (
     <AuthShell kicker={t('kicker')} title={t('title')}>

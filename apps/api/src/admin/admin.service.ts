@@ -68,7 +68,7 @@ export class AdminService {
           role: true,
           bannedAt: true,
           banReason: true,
-          emailVerifiedAt: true,
+          emailVerified: true,
           createdAt: true,
           lastLoginAt: true,
           wallets: { where: { seasonId: season.id }, select: { cash: true, netWorth: true } },
@@ -86,19 +86,16 @@ export class AdminService {
   async user(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      select: { id: true, email: true, username: true, role: true, bannedAt: true, banReason: true, emailVerifiedAt: true, createdAt: true, lastLoginAt: true },
+      select: { id: true, email: true, username: true, role: true, bannedAt: true, banReason: true, emailVerified: true, createdAt: true, lastLoginAt: true },
     });
     if (!user) throw new NotFoundException(apiError('NOT_FOUND', 'Introuvable'));
     const season = await this.seasons.active();
     const wallet = await this.prisma.wallet.findUnique({ where: { userId_seasonId: { userId: id, seasonId: season.id } } });
     const [ledger, sessions] = await Promise.all([
       wallet ? this.prisma.ledgerEntry.findMany({ where: { walletId: wallet.id }, orderBy: { createdAt: 'desc' }, take: 100 }) : [],
-      this.prisma.refreshToken.findMany({
-        where: { userId: id },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-        select: { ip: true, userAgent: true, createdAt: true, revokedAt: true },
-      }),
+      this.prisma.session
+        .findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' }, take: 20, select: { ipAddress: true, userAgent: true, createdAt: true } })
+        .then((rows) => rows.map(({ ipAddress, ...s }) => ({ ip: ipAddress, ...s }))),
     ]);
     return { user, wallet, ledger, sessions };
   }
@@ -107,7 +104,8 @@ export class AdminService {
     if (id === actor.id) throw new BadRequestException(apiError('CANNOT_BAN_SELF', 'Impossible de se bannir soi-même'));
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id }, data: { bannedAt: new Date(), banReason: reason } });
-      await tx.refreshToken.updateMany({ where: { userId: id, revokedAt: null }, data: { revokedAt: new Date() } });
+      // Déconnecte le joueur partout
+      await tx.session.deleteMany({ where: { userId: id } });
       await this.audit.log({ actorId: actor.id, action: 'USER_BAN', targetType: 'User', targetId: id, reason }, tx);
     });
     return { ok: true };
